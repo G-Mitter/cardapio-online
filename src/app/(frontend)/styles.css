@@ -346,3 +346,38 @@ textarea {
     scroll-behavior: smooth;
   }
 }
+/* Páginas de texto (termos e privacidade) */
+.texto {
+  gap: 8px;
+  line-height: 1.6;
+}
+.texto h1 {
+  font: 700 28px var(--display);
+  margin: 8px 0 0;
+}
+.texto h2 {
+  font: 700 18px var(--display);
+  margin: 16px 0 0;
+}
+.texto p,
+.texto ul {
+  margin: 0;
+}
+.texto a,
+.aviso-dados a,
+.rodape a {
+  color: inherit;
+}
+.rodape {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--muted);
+  padding-block: 16px;
+}
+.aviso-dados {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}

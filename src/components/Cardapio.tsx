@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRef, useState, useTransition } from 'react'
 
 import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
@@ -149,6 +150,11 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
             })}
           </section>
         ))}
+
+        <footer className="rodape">
+          <Link href="/termos">Termos de uso</Link>
+          <Link href="/privacidade">Privacidade</Link>
+        </footer>
       </div>
 
       {quantidade > 0 && (
@@ -248,6 +254,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 Observações
                 <textarea name="observacoes" rows={2} maxLength={300} />
               </label>
+              <p className="aviso-dados">
+                Seu nome e endereço vão só para {loja.nome}.{' '}
+                <a href="/privacidade" target="_blank">
+                  Privacidade
+                </a>
+              </p>
               {resultado && !resultado.ok && (
                 <p className="erro" role="alert">
                   {resultado.erro}
