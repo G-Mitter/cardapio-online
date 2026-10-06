@@ -24,6 +24,10 @@ Cardápio e catálogo online para restaurantes e comércios. O cliente final mon
 | Endereço | Seu domínio (`/nome-da-loja`) | Domínio do cliente |
 | Cobrança | Implantação + mensalidade | Valor único + manutenção opcional |
 
+## Cadastrar um cliente novo
+
+Passo a passo em [docs/novo-cliente.md](docs/novo-cliente.md): criar a loja, o login do dono, importar os produtos e conferir o cardápio.
+
 ## Como funciona
 
 ```mermaid
