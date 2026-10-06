@@ -6,12 +6,13 @@ Cardápio e catálogo online para restaurantes e comércios. O cliente final mon
 |---|---|
 | ![Cardápio](docs/cardapio.png) | ![Pedido](docs/pedido.png) |
 
-## O que já funciona (Sprint 1)
+## O que já funciona
 
 - **Várias lojas num sistema só.** Cada loja tem o próprio endereço: `/nome-da-loja`.
 - **Visual por loja:** cor principal e fonte dos títulos escolhidas no painel.
 - **Cardápio público** com categorias, foto, preço e produto esgotado.
 - **Pedido pelo WhatsApp:** carrinho, entrega ou retirada, nome, endereço e observações. O pedido fica salvo no painel com número e status.
+- **Importar produtos por planilha** (`/admin/importar`): CSV ou Excel com nome, preço e categoria. Mostra uma prévia com o que vai ser criado ou atualizado e as linhas com erro antes de salvar.
 - **Painel em `/admin`:** você (administrador) vê todas as lojas; o dono de uma loja só vê e edita a dele.
 
 ## Dois modelos de venda, o mesmo código
@@ -45,8 +46,8 @@ src/
 ├── app/(frontend)/   # Cardápio público (/[loja]) e criação do pedido (actions.ts)
 ├── app/(payload)/    # Painel /admin e API, gerados pelo Payload
 ├── collections/      # Tabelas: lojas, categorias, produtos, pedidos, imagens, usuários
-├── components/       # Cardápio e carrinho
-├── lib/              # Regras pequenas e testadas: pedido, tema, WhatsApp
+├── components/       # Cardápio, carrinho e telas extras do /admin (importação)
+├── lib/              # Regras pequenas e testadas: pedido, planilha, tema, WhatsApp
 └── seed/             # Loja de demonstração (Cantina Dona Lurdes)
 tests/int/            # Testes das regras do pedido e do WhatsApp
 ```

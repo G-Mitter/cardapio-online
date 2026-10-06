@@ -25,6 +25,17 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      // Tela de importação de produtos por planilha, com atalho no menu lateral.
+      views: {
+        importar: {
+          Component: '/components/admin/ImportarView#ImportarView',
+          path: '/importar',
+          meta: { title: 'Importar produtos' },
+        },
+      },
+      afterNavLinks: ['/components/admin/LinkImportar#LinkImportar'],
+    },
   },
   collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users],
   // Painel /admin em português
