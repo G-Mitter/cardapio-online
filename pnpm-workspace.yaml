@@ -1,0 +1,15 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true
+
+# Segurança contra ataques na cadeia de suprimentos: só instala versões de
+# pacotes publicadas há pelo menos 1 dia (1440 minutos). É o padrão do pnpm 12.
+minimumReleaseAge: 1440
+
+# Força versões corrigidas de pacotes que vêm "de carona" com o Payload e
+# têm falhas conhecidas (pnpm audit). Pode remover quando o Payload atualizar.
+overrides:
+  undici: 7.29.1
+  dompurify: 3.4.16
