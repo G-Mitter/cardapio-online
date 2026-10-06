@@ -1,0 +1,35 @@
+
+/* Tela de importação de planilha (/admin/importar) */
+.importador {
+  display: grid;
+  gap: 16px;
+  max-width: 900px;
+  padding-bottom: 48px;
+
+  > .btn {
+    justify-self: start;
+    margin: 0;
+  }
+  .campo {
+    display: grid;
+    gap: 6px;
+    max-width: 360px;
+  }
+  .erro {
+    color: var(--theme-error-500);
+  }
+  .tabela {
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--theme-elevation-150);
+  }
+}
