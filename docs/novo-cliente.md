@@ -30,10 +30,10 @@ Passo a passo para colocar o cardápio de uma loja nova no ar. Meta: menos de 30
 1. Abra **Usuários** e clique em **Criar novo**.
 2. Preencha o e-mail do dono e uma senha provisória.
 3. Em **Tipo de usuário**, deixe só **Dono de loja**.
-4. Em **Tenants**, adicione uma linha e escolha a loja criada no passo 1.
+4. Em **Lojas**, clique em **Adicionar Loja** e escolha a loja criada no passo 1.
 5. Salve.
 
-O dono só vai ver e editar a loja dele. Ele pode trocar a senha depois, em **Conta**.
+O dono só vai ver e editar a loja dele. Ao entrar, ele cai direto em **Pedidos de hoje** e o menu mostra só Pedidos, Produtos, Categorias, Minha loja e o botão **Ver meu cardápio**. Ele pode trocar a senha depois, em **Conta**.
 
 ## 3. Importar os produtos (5 a 15 min)
 
