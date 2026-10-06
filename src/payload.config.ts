@@ -28,6 +28,7 @@ export default buildConfig({
     components: {
       // Telas extras para o dono da loja, com atalhos no menu lateral.
       views: {
+        dashboard: { Component: '/components/admin/Inicio#Inicio' },
         pedidos: {
           Component: '/components/admin/PedidosView#PedidosView',
           path: '/pedidos-de-hoje',
@@ -89,6 +90,18 @@ export default buildConfig({
         },
       },
     }),
+    // O plugin cria nos usuários a lista "tenants" sem rótulo; aqui ela vira "Lojas".
+    (config) => {
+      const tenants = config.collections
+        ?.find((c) => c.slug === 'users')
+        ?.fields.find((f) => 'name' in f && f.name === 'tenants')
+      if (tenants?.type === 'array') {
+        tenants.label = 'Lojas'
+        tenants.labels = { singular: 'Loja', plural: 'Lojas' }
+        tenants.fields.forEach((f) => 'name' in f && f.name === 'tenant' && (f.label = 'Loja'))
+      }
+      return config
+    },
     // Onde as imagens enviadas pelo /admin ficam guardadas.
     // Na Vercel o disco do servidor é apagado a cada deploy, então em produção
     // os arquivos vão para o Vercel Blob (um "HD na nuvem").
