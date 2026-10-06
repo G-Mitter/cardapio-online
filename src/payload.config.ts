@@ -26,15 +26,20 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     components: {
-      // Tela de importação de produtos por planilha, com atalho no menu lateral.
+      // Telas extras para o dono da loja, com atalhos no menu lateral.
       views: {
+        pedidos: {
+          Component: '/components/admin/PedidosView#PedidosView',
+          path: '/pedidos-de-hoje',
+          meta: { title: 'Pedidos de hoje' },
+        },
         importar: {
           Component: '/components/admin/ImportarView#ImportarView',
           path: '/importar',
           meta: { title: 'Importar produtos' },
         },
       },
-      afterNavLinks: ['/components/admin/LinkImportar#LinkImportar'],
+      afterNavLinks: ['/components/admin/AtalhosAdmin#AtalhosAdmin'],
     },
   },
   collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users],

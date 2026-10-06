@@ -12,6 +12,7 @@ Cardápio e catálogo online para restaurantes e comércios. O cliente final mon
 - **Visual por loja:** cor principal e fonte dos títulos escolhidas no painel.
 - **Cardápio público** com categorias, foto, preço e produto esgotado.
 - **Pedido pelo WhatsApp:** carrinho, entrega ou retirada, nome, endereço e observações. O pedido fica salvo no painel com número e status.
+- **Pedidos de hoje** (`/admin/pedidos-de-hoje`): os pedidos do dia em cartões, com pedido novo em destaque, troca de status em um toque (novo, preparando, pronto, entregue ou cancelado) e atualização sozinha a cada 20 segundos. Feita para usar no celular.
 - **Importar produtos por planilha** (`/admin/importar`): CSV ou Excel com nome, preço e categoria. Mostra uma prévia com o que vai ser criado ou atualizado e as linhas com erro antes de salvar.
 - **Painel em `/admin`:** você (administrador) vê todas as lojas; o dono de uma loja só vê e edita a dele.
 
