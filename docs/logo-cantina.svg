@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <circle cx="256" cy="256" r="248" fill="#9a3b1e"/>
+  <circle cx="256" cy="256" r="226" fill="none" stroke="#f6ead8" stroke-width="4"/>
+  <circle cx="256" cy="256" r="214" fill="none" stroke="#f6ead8" stroke-width="1.5" stroke-dasharray="3 7"/>
+  <!-- vapor -->
+  <g fill="none" stroke="#f6ead8" stroke-width="7" stroke-linecap="round">
+    <path d="M216 118 q-14 18 0 36 q14 18 0 36"/>
+    <path d="M256 104 q-14 18 0 36 q14 18 0 36"/>
+    <path d="M296 118 q-14 18 0 36 q14 18 0 36"/>
+  </g>
+  <!-- panela de barro -->
+  <rect x="150" y="196" width="212" height="16" rx="8" fill="#f6ead8"/>
+  <path d="M164 216 h184 q-4 74 -92 74 q-88 0 -92 -74z" fill="#f6ead8"/>
+  <path d="M164 228 q-30 -2 -32 14 q-1 12 30 10" fill="none" stroke="#f6ead8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M348 228 q30 -2 32 14 q1 12 -30 10" fill="none" stroke="#f6ead8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M190 240 h132" stroke="#9a3b1e" stroke-width="4" stroke-linecap="round"/>
+  <text x="256" y="344" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="26" letter-spacing="10" fill="#f6ead8">CANTINA</text>
+  <text x="256" y="398" text-anchor="middle" font-family="Liberation Serif" font-style="italic" font-weight="bold" font-size="54" fill="#f6ead8">Dona Lurdes</text>
+  <text x="256" y="434" text-anchor="middle" font-family="DejaVu Sans" font-size="15" letter-spacing="5" fill="#f6ead8">COMIDA MINEIRA</text>
+</svg>
