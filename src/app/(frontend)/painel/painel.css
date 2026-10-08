@@ -449,3 +449,9 @@ details.perigo form {
   padding: 0;
   margin-bottom: 4px;
 }
+
+.carregando {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--muted);
+}

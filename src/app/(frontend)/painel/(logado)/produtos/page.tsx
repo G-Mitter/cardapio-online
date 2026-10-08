@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 
 import { sessao } from '@/lib/painel'
@@ -51,8 +52,7 @@ export default async function Produtos() {
                 return (
                   <li key={p.id} className={p.esgotado ? 'esgotado' : undefined}>
                     <span className="miniatura">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- miniatura do painel */}
-                      {foto?.url ? <img src={foto.url} alt="" /> : p.nome[0]}
+                      {foto?.url ? <Image src={foto.url} alt="" width={52} height={52} /> : p.nome[0]}
                     </span>
                     <Link href={`/painel/produtos/${p.id}`} className="lista__nome">
                       <b>{p.nome}</b>
