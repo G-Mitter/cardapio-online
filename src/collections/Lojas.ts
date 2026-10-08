@@ -107,6 +107,13 @@ export const Lojas: CollectionConfig = {
       ],
     },
     {
+      name: 'aceitaAgendamento',
+      label: 'Aceita pedidos agendados',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'O cliente pode escolher dia e hora (de 1 hora até 7 dias à frente).' },
+    },
+    {
       name: 'bairros',
       label: 'Taxa por bairro',
       type: 'array',

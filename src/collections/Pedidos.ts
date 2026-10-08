@@ -93,6 +93,12 @@ export const Pedidos: CollectionConfig = {
     },
     { name: 'endereco', label: 'Endereço', type: 'text', admin: { readOnly: true } },
     {
+      name: 'agendadoPara',
+      label: 'Agendado para',
+      type: 'date',
+      admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } },
+    },
+    {
       type: 'row',
       admin: { readOnly: true },
       fields: [

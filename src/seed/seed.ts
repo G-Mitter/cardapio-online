@@ -83,6 +83,7 @@ if (jaTem.totalDocs) {
       fazEntrega: true,
       taxaEntrega: 6,
       aceitaRetirada: true,
+      aceitaAgendamento: true,
       aberta: true,
       formasPagamento: ['pix', 'cartao', 'dinheiro'],
     },

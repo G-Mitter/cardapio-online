@@ -152,6 +152,8 @@ export function mensagemPedido(args: {
   cpf?: string | null
   /** Só na retirada: o código que o cliente mostra ao buscar o pedido. */
   codigoRetirada?: string
+  /** Pedido agendado: dia e hora já formatados (rotuloAgendamento). */
+  agendadoPara?: string
 }): string {
   const {
     loja,
@@ -165,6 +167,7 @@ export function mensagemPedido(args: {
     trocoPara,
     cpf,
     codigoRetirada,
+    agendadoPara,
   } = args
   const linhas = [
     `*Pedido nº ${numero} · ${loja}*`,
@@ -180,6 +183,7 @@ export function mensagemPedido(args: {
     '',
     `Nome: ${nome}`,
   ]
+  if (agendadoPara) linhas.push(`*Agendado para: ${agendadoPara}*`)
   if (modo === 'entrega' && endereco) linhas.push(`Endereço: ${endereco}`)
   if (modo === 'retirada' && codigoRetirada) linhas.push(`*Código de retirada: ${codigoRetirada}*`)
   if (pagamento) {

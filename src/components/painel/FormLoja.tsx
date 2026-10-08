@@ -28,6 +28,7 @@ export type DadosLoja = {
   pagamentos: FormaPagamento[]
   chavePix: string
   aceitaRetirada: boolean
+  aceitaAgendamento: boolean
   logo: string | null
   capa: string | null
 }
@@ -161,6 +162,15 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Aceita retirada
           </label>
         </div>
+        <label className="marcar">
+          <input
+            type="checkbox"
+            name="aceitaAgendamento"
+            checked={d.aceitaAgendamento}
+            onChange={muda('aceitaAgendamento')}
+          />
+          Aceita pedidos agendados (dia e hora, de 1 hora até 7 dias à frente)
+        </label>
         {d.fazEntrega && (
           <CampoComExemplo
             name="bairros"
@@ -229,6 +239,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
               aberta: d.aberta,
               fazEntrega: d.fazEntrega,
               aceitaRetirada: d.aceitaRetirada,
+              aceitaAgendamento: d.aceitaAgendamento,
               taxaEntrega: d.taxaEntrega,
               bairros: bairrosDaPrevia(d.bairros),
               pagamentos: d.pagamentos,

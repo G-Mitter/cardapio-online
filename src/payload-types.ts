@@ -166,6 +166,7 @@ export interface Pedido {
   telefone?: string | null;
   codigoRetirada?: string | null;
   endereco?: string | null;
+  agendadoPara?: string | null;
   pagamento?: ('pix' | 'cartao' | 'dinheiro') | null;
   trocoPara?: number | null;
   cpf?: string | null;
@@ -209,6 +210,10 @@ export interface Loja {
    */
   taxaEntrega?: number | null;
   aceitaRetirada?: boolean | null;
+  /**
+   * O cliente pode escolher dia e hora (de 1 hora até 7 dias à frente).
+   */
+  aceitaAgendamento?: boolean | null;
   /**
    * Se tiver algum bairro aqui, a loja entrega só nestes, cada um com a sua taxa.
    */
@@ -521,6 +526,7 @@ export interface PedidosSelect<T extends boolean = true> {
   telefone?: T;
   codigoRetirada?: T;
   endereco?: T;
+  agendadoPara?: T;
   pagamento?: T;
   trocoPara?: T;
   cpf?: T;
@@ -590,6 +596,7 @@ export interface LojasSelect<T extends boolean = true> {
   fazEntrega?: T;
   taxaEntrega?: T;
   aceitaRetirada?: T;
+  aceitaAgendamento?: T;
   bairros?:
     | T
     | {
