@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react'
 
 import { rotuloAgendamento } from '@/lib/agendamento'
-import { PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
+import { PROXIMO, ROTULO, rotuloTipo, type Status } from '@/lib/pedidosDoDia'
 
 import { mudarStatus } from '@/app/(frontend)/painel/actions'
 
@@ -15,6 +15,7 @@ type PedidoCozinha = {
   createdAt: string
   nome: string
   modo: 'entrega' | 'retirada'
+  balcao: boolean
   agendadoPara: string | null
   observacoes: string
   itens: { nome: string; quantidade: number; opcoes: string }[]
@@ -126,7 +127,7 @@ export function TelaCozinha({ pedidos }: { pedidos: PedidoCozinha[] }) {
                     <header>
                       <b>Nº {p.numero}</b>
                       <span>
-                        {hora(p.createdAt)} · {p.modo === 'entrega' ? 'Entrega' : 'Retirada'}
+                        {hora(p.createdAt)} · {rotuloTipo(p.modo, p.balcao)}
                       </span>
                     </header>
                     <ul>

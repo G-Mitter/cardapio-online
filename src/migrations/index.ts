@@ -16,6 +16,7 @@ import * as migration_20261008_185332_promocao_quantidade from './20261008_18533
 import * as migration_20261008_185816_agendamento_pedidos from './20261008_185816_agendamento_pedidos';
 import * as migration_20261008_190223_carrinhos_abandonados from './20261008_190223_carrinhos_abandonados';
 import * as migration_20261008_190612_pixels_anuncios from './20261008_190612_pixels_anuncios';
+import * as migration_20261008_192057_pedido_balcao from './20261008_192057_pedido_balcao';
 
 export const migrations = [
   {
@@ -106,6 +107,11 @@ export const migrations = [
   {
     up: migration_20261008_190612_pixels_anuncios.up,
     down: migration_20261008_190612_pixels_anuncios.down,
-    name: '20261008_190612_pixels_anuncios'
+    name: '20261008_190612_pixels_anuncios',
+  },
+  {
+    up: migration_20261008_192057_pedido_balcao.up,
+    down: migration_20261008_192057_pedido_balcao.down,
+    name: '20261008_192057_pedido_balcao'
   },
 ];

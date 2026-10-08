@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { PainelPedidos } from '@/components/painel/PainelPedidos'
 import { sessao } from '@/lib/painel'
@@ -26,6 +27,7 @@ export default async function Pedidos() {
       nome: p.nome,
       telefone: p.telefone ?? '',
       modo: p.modo,
+      balcao: Boolean(p.balcao),
       endereco: p.endereco ?? '',
       observacoes: p.observacoes ?? '',
       agendadoPara: p.agendadoPara ?? null,
@@ -41,7 +43,12 @@ export default async function Pedidos() {
 
   return (
     <>
-      <h1>Pedidos de hoje</h1>
+      <div className="titulo">
+        <h1>Pedidos de hoje</h1>
+        <Link href="/painel/novo-pedido" className="botao">
+          Novo pedido
+        </Link>
+      </div>
       <PainelPedidos pedidos={pedidos} loja={loja.nome} />
     </>
   )

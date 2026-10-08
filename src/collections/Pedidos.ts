@@ -85,6 +85,8 @@ export const Pedidos: CollectionConfig = {
             { label: 'Retirada', value: 'retirada' },
           ],
         },
+        // Lançado pela loja no balcão (modo é retirada, sem código): aparece marcado "Balcão" no painel.
+        { name: 'balcao', label: 'Balcão', type: 'checkbox', defaultValue: false },
         { name: 'nome', label: 'Cliente', type: 'text', required: true },
         { name: 'telefone', label: 'Telefone', type: 'text' },
         // Só na retirada: o cliente mostra o código e a loja digita para marcar Entregue.

@@ -164,6 +164,7 @@ export interface Pedido {
   cupom?: string | null;
   total: number;
   modo: 'entrega' | 'retirada';
+  balcao?: boolean | null;
   nome: string;
   telefone?: string | null;
   codigoRetirada?: string | null;
@@ -550,6 +551,7 @@ export interface PedidosSelect<T extends boolean = true> {
   cupom?: T;
   total?: T;
   modo?: T;
+  balcao?: T;
   nome?: T;
   telefone?: T;
   codigoRetirada?: T;
