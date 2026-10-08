@@ -9,6 +9,7 @@ import sharp from 'sharp'
 
 import { ehAdmin } from './access/roles'
 import { Categorias } from './collections/Categorias'
+import { Clientes } from './collections/Clientes'
 import { Lojas } from './collections/Lojas'
 import { Media } from './collections/Media'
 import { Pedidos } from './collections/Pedidos'
@@ -36,7 +37,7 @@ export default buildConfig({
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
   },
-  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users],
+  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes],
   // Painel /admin em português
   i18n: {
     supportedLanguages: { pt },

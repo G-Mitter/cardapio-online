@@ -8,6 +8,8 @@
 import { getPayload } from 'payload'
 
 import { type ItemEscolhido, type Modo, mensagemPedido, montarPedido } from '@/lib/pedido'
+import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
+import { buscarCliente } from '@/lib/clientes-db'
 import { whatsappUrl } from '@/lib/whatsapp'
 import config from '@/payload.config'
 
@@ -15,8 +17,10 @@ export type DadosPedido = {
   loja: string
   itens: ItemEscolhido[]
   modo: Modo
-  nome: string
-  endereco: string
+  /** Cadastro do cliente (src/app/(frontend)/cliente-actions.ts). */
+  telefone: string
+  /** Id de um dos endereços do cadastro; só na entrega. */
+  enderecoId?: string
   observacoes: string
 }
 
@@ -30,16 +34,22 @@ const MAX_POR_HORA = 60
 const texto = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max)
 
 export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> {
-  const nome = texto(dados.nome, 80)
-  const endereco = texto(dados.endereco, 200)
+  const telefone = normalizarTelefone(dados.telefone)
   const observacoes = texto(dados.observacoes, 300)
   const modo: Modo = dados.modo === 'retirada' ? 'retirada' : 'entrega'
   const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 100) : []
 
-  if (!nome) return { ok: false, erro: 'Coloque seu nome.' }
-  if (modo === 'entrega' && !endereco) return { ok: false, erro: 'Coloque o endereço de entrega.' }
+  if (!telefone) return { ok: false, erro: 'Coloque seu telefone.' }
 
   const payload = await getPayload({ config })
+  // Nome e endereço vêm do cadastro, no servidor: o navegador só escolhe qual endereço.
+  const cliente = await buscarCliente(payload, telefone)
+  if (!cliente) return { ok: false, erro: 'Faça seu cadastro antes de enviar o pedido.' }
+  const nome = cliente.nome
+  const escolhido = cliente.enderecos?.find((e) => e.id === dados.enderecoId)
+  const endereco = escolhido ? enderecoCompleto(escolhido) : ''
+  if (modo === 'entrega' && !endereco) return { ok: false, erro: 'Escolha o endereço de entrega.' }
+
   const { docs } = await payload.find({
     collection: 'lojas',
     where: { slug: { equals: texto(dados.loja, 100) } },
@@ -106,6 +116,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       total: pedido.total,
       modo,
       nome,
+      telefone,
       endereco: modo === 'entrega' ? endereco : '',
       observacoes,
     },

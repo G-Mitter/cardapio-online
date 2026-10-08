@@ -77,6 +77,7 @@ export const Pedidos: CollectionConfig = {
           ],
         },
         { name: 'nome', label: 'Cliente', type: 'text', required: true },
+        { name: 'telefone', label: 'Telefone', type: 'text' },
       ],
     },
     { name: 'endereco', label: 'Endereço', type: 'text', admin: { readOnly: true } },
