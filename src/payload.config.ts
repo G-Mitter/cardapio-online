@@ -25,6 +25,16 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    // Prévia do cardápio ao lado do formulário da loja: muda enquanto o dono edita.
+    livePreview: {
+      collections: ['lojas'],
+      url: ({ data, req }) => {
+        const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host')
+        const protocolo = req.headers.get('x-forwarded-proto') ?? 'http'
+        return data?.slug ? `${protocolo}://${host}/${data.slug}` : ''
+      },
+      breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
+    },
     components: {
       // Telas extras para o dono da loja, com atalhos no menu lateral.
       views: {
