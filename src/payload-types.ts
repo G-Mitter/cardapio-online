@@ -78,6 +78,7 @@ export interface Config {
     carrinhos: Carrinho;
     entregadores: Entregadore;
     fechamentos: Fechamento;
+    acertos: Acerto;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -96,6 +97,7 @@ export interface Config {
     carrinhos: CarrinhosSelect<false> | CarrinhosSelect<true>;
     entregadores: EntregadoresSelect<false> | EntregadoresSelect<true>;
     fechamentos: FechamentosSelect<false> | FechamentosSelect<true>;
+    acertos: AcertosSelect<false> | AcertosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -498,6 +500,29 @@ export interface Fechamento {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "acertos".
+ */
+export interface Acerto {
+  id: number;
+  loja?: (number | null) | Loja;
+  entregador: number | Entregadore;
+  dia: string;
+  pedidos?: (number | Pedido)[] | null;
+  dinheiro: number;
+  cartao?: number | null;
+  pix?: number | null;
+  troco?: number | null;
+  taxas?: number | null;
+  descontouTaxa?: boolean | null;
+  esperado: number;
+  entregue: number;
+  diferenca: number;
+  conferidoPor?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -563,6 +588,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'fechamentos';
         value: number | Fechamento;
+      } | null)
+    | ({
+        relationTo: 'acertos';
+        value: number | Acerto;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -869,6 +898,28 @@ export interface FechamentosSelect<T extends boolean = true> {
   troco?: T;
   garcom?: T;
   fechadoPor?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "acertos_select".
+ */
+export interface AcertosSelect<T extends boolean = true> {
+  loja?: T;
+  entregador?: T;
+  dia?: T;
+  pedidos?: T;
+  dinheiro?: T;
+  cartao?: T;
+  pix?: T;
+  troco?: T;
+  taxas?: T;
+  descontouTaxa?: T;
+  esperado?: T;
+  entregue?: T;
+  diferenca?: T;
+  conferidoPor?: T;
   updatedAt?: T;
   createdAt?: T;
 }
