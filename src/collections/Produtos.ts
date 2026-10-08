@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { todos } from '../access/roles'
+import { hooksDeCardapio } from '../lib/revalidar'
 
 export const Produtos: CollectionConfig = {
   slug: 'produtos',
@@ -11,6 +12,7 @@ export const Produtos: CollectionConfig = {
   },
   access: { read: todos },
   defaultSort: 'ordem',
+  hooks: hooksDeCardapio,
   fields: [
     { name: 'nome', label: 'Nome', type: 'text', required: true },
     { name: 'descricao', label: 'Descrição', type: 'textarea' },

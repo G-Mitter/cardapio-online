@@ -8,6 +8,11 @@ import { LojaAoVivo } from '@/components/LojaAoVivo'
 import type { Media } from '@/payload-types'
 import config from '@/payload.config'
 
+// O cardápio é montado uma vez e servido do cache; mudanças no /admin refazem o cache
+// (src/lib/revalidar.ts). A cada hora ele é refeito de qualquer jeito, por segurança.
+export const revalidate = 3600
+export const generateStaticParams = async () => []
+
 type Props = { params: Promise<{ loja: string }> }
 
 // cache: o generateMetadata e a página pedem a mesma loja; o banco é consultado uma vez só.

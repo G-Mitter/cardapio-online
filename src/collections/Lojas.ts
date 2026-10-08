@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { soAdmin, todos } from '../access/roles'
 import { FONTES, corValida } from '../lib/tema'
 import { whatsappUrl } from '../lib/whatsapp'
+import { hooksDeCardapio } from '../lib/revalidar'
 
 /**
  * Cada loja é um cliente seu. Tudo o que muda de um cliente para outro
@@ -22,6 +23,7 @@ export const Lojas: CollectionConfig = {
     create: soAdmin,
     delete: soAdmin,
   },
+  hooks: hooksDeCardapio,
   fields: [
     { name: 'nome', label: 'Nome da loja', type: 'text', required: true },
     {

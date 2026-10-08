@@ -12,7 +12,7 @@
   --brand: #9a3b1e;
   --brand-ink: #ffffff;
   --ok: #1f7a45;
-  --warn: #a86a12;
+  --warn: #8a5610;
   --erro: #b3261e;
   --display: var(--font-classica), Georgia, serif;
   --body: var(--font-leve), system-ui, sans-serif;
@@ -228,8 +228,12 @@ section h2 {
   font-size: 18px;
   cursor: pointer;
 }
-.esgotado {
-  opacity: 0.55;
+.esgotado .foto {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.esgotado .preco {
+  color: var(--muted);
 }
 .tag {
   margin-top: 8px;

@@ -9,9 +9,12 @@ import './styles.css'
  * Cada fonte vira uma variável CSS. A loja escolhe no /admin qual delas
  * vai nos títulos (ver src/lib/tema.ts); o texto corrido usa sempre a Outfit.
  */
-const classica = Fraunces({ subsets: ['latin'], variable: '--font-classica' })
-const moderna = Archivo({ subsets: ['latin'], variable: '--font-moderna' })
-const tradicional = Bitter({ subsets: ['latin'], variable: '--font-tradicional' })
+// As fontes de título não são pré-carregadas: cada loja usa só uma delas, e pré-carregar
+// as três disputa a banda do celular com o que importa. O texto aparece na fonte
+// reserva (com o mesmo tamanho) e troca quando a escolhida chega.
+const classica = Fraunces({ subsets: ['latin'], variable: '--font-classica', preload: false })
+const moderna = Archivo({ subsets: ['latin'], variable: '--font-moderna', preload: false })
+const tradicional = Bitter({ subsets: ['latin'], variable: '--font-tradicional', preload: false })
 const leve = Outfit({ subsets: ['latin'], variable: '--font-leve' })
 
 export const metadata: Metadata = {
