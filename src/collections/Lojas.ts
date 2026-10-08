@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { soAdmin, todos } from '../access/roles'
+import { FORMAS_PAGAMENTO } from '../lib/pedido'
 import { FONTES, corValida } from '../lib/tema'
 import { whatsappUrl } from '../lib/whatsapp'
 import { hooksDeCardapio } from '../lib/revalidar'
@@ -101,6 +102,16 @@ export const Lojas: CollectionConfig = {
         },
         { name: 'aceitaRetirada', label: 'Aceita retirada', type: 'checkbox', defaultValue: true },
       ],
+    },
+    {
+      name: 'formasPagamento',
+      label: 'Formas de pagamento aceitas',
+      type: 'select',
+      hasMany: true,
+      required: true,
+      defaultValue: FORMAS_PAGAMENTO.map((f) => f.value),
+      options: [...FORMAS_PAGAMENTO],
+      admin: { description: 'O cliente escolhe uma destas ao fazer o pedido.' },
     },
     {
       name: 'aberta',

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRef, useState, useTransition } from 'react'
 
 import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
-import { brl, type Modo } from '@/lib/pedido'
+import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import { normalizar } from '@/lib/planilha'
 
 /** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
@@ -33,6 +33,7 @@ type LojaView = {
   fazEntrega: boolean
   aceitaRetirada: boolean
   taxaEntrega: number
+  pagamentos: FormaPagamento[]
 }
 
 /** Cardápio que o cliente final vê: escolhe produtos, monta o carrinho e envia no WhatsApp. */
@@ -117,6 +118,14 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
             {loja.horario && <span>{loja.horario}</span>}
             {loja.fazEntrega && <span>Entrega {brl(loja.taxaEntrega)}</span>}
             {loja.endereco && <span>{loja.endereco}</span>}
+            {loja.pagamentos.length > 0 && (
+              <span>
+                Pagamento:{' '}
+                {FORMAS_PAGAMENTO.filter((f) => loja.pagamentos.includes(f.value))
+                  .map((f) => f.label)
+                  .join(', ')}
+              </span>
+            )}
           </div>
         </header>
 

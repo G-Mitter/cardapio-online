@@ -10,6 +10,7 @@ import { getPayload, type Payload } from 'payload'
 
 import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
+import { FORMAS_PAGAMENTO } from '@/lib/pedido'
 import { lerPreco } from '@/lib/planilha'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
@@ -234,6 +235,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   const nome = texto(form, 'nome')
   if (!nome) return { erro: 'Coloque o nome da loja.' }
   const taxa = lerPreco(texto(form, 'taxaEntrega') || '0')
+  const formasPagamento = FORMAS_PAGAMENTO.map((f) => f.value).filter((v) => form.getAll('formasPagamento').includes(v))
+  if (!formasPagamento.length) return { erro: 'Marque pelo menos uma forma de pagamento.' }
   if (taxa === null) return { erro: 'Taxa de entrega inválida. Use, por exemplo, 6,00.' }
 
   try {
@@ -253,6 +256,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         fazEntrega: marcado(form, 'fazEntrega'),
         taxaEntrega: taxa,
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
+        formasPagamento,
         ...(logo !== undefined && { logo }),
         ...(capa !== undefined && { capa }),
       },

@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { salvarLoja } from '@/app/(frontend)/painel/actions'
 import { Cardapio, type CategoriaView } from '@/components/Cardapio'
+import { FORMAS_PAGAMENTO, type FormaPagamento } from '@/lib/pedido'
 import { COR_PADRAO, FONTES, temaDaLoja } from '@/lib/tema'
 
 import { CampoImagem } from './CampoImagem'
@@ -20,6 +21,7 @@ export type DadosLoja = {
   aberta: boolean
   fazEntrega: boolean
   taxaEntrega: number
+  pagamentos: FormaPagamento[]
   aceitaRetirada: boolean
   logo: string | null
   capa: string | null
@@ -122,6 +124,28 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Aceita retirada
           </label>
         </div>
+        <fieldset className="opcoes">
+          <legend>Formas de pagamento aceitas</legend>
+          {FORMAS_PAGAMENTO.map((f) => (
+            <label key={f.value} className="marcar">
+              <input
+                type="checkbox"
+                name="formasPagamento"
+                value={f.value}
+                checked={d.pagamentos.includes(f.value)}
+                onChange={(e) =>
+                  setD((a) => ({
+                    ...a,
+                    pagamentos: e.target.checked
+                      ? [...a.pagamentos, f.value]
+                      : a.pagamentos.filter((p) => p !== f.value),
+                  }))
+                }
+              />
+              {f.label}
+            </label>
+          ))}
+        </fieldset>
         <button className="botao">Salvar</button>
       </Formulario>
 
@@ -140,6 +164,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
               fazEntrega: d.fazEntrega,
               aceitaRetirada: d.aceitaRetirada,
               taxaEntrega: d.taxaEntrega,
+              pagamentos: d.pagamentos,
             }}
             categorias={categorias}
           />

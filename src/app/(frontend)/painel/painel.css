@@ -405,3 +405,16 @@ details.perigo form {
   margin: 0;
   color: var(--muted);
 }
+
+/* Grupo de opções (formas de pagamento) */
+.form fieldset.opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+.opcoes legend {
+  font-weight: 600;
+  font-size: 15px;
+  padding: 0;
+  margin-bottom: 4px;
+}
