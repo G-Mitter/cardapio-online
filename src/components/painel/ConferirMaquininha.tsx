@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 
 import { MAQUININHAS } from '@/lib/maquininha'
+import { FotoMaquininha } from './FotoMaquininha'
 import { brl } from '@/lib/pedido'
 
 import { conferirMaquininha } from '@/app/(frontend)/painel/actions'
@@ -16,6 +17,7 @@ const hora = (ms: number) =>
 /** Envia o relatório da maquininha (arquivo ou texto colado) e mostra o que confere e o que não. */
 export function ConferirMaquininha() {
   const [texto, setTexto] = useState('')
+  const [abrirCsv, setAbrirCsv] = useState(false)
   const [lancar, setLancar] = useState(false)
   const [retorno, setRetorno] = useState<Retorno | null>(null)
   const [conferindo, startTransition] = useTransition()
@@ -24,10 +26,15 @@ export function ConferirMaquininha() {
 
   return (
     <>
-      <p>
-        Envie o arquivo de vendas que a maquininha exporta (<b>.csv</b>) e veja se o que ela recebeu bate com os pedidos pagos
-        em cartão. O arquivo não fica guardado.
-      </p>
+      <p>Veja se o que a maquininha recebeu bate com os pedidos pagos em cartão. A foto e o arquivo não ficam guardados.</p>
+      <FotoMaquininha
+        onUsar={(csv) => {
+          setTexto(csv)
+          setAbrirCsv(true)
+        }}
+      />
+      <details open={abrirCsv} onToggle={(e) => setAbrirCsv(e.currentTarget.open)}>
+        <summary>Tenho o arquivo da maquininha (.csv) ou quero ver as vendas em texto</summary>
       <label className="campo">
         Arquivo da maquininha
         <input
@@ -53,6 +60,7 @@ export function ConferirMaquininha() {
         )}
         <small>Reconhecemos data, hora, valor, débito/crédito, bandeira, taxa, valor líquido e previsão de pagamento.</small>
       </div>
+      </details>
       <label>
         <input type="checkbox" checked={lancar} onChange={(e) => setLancar(e.target.checked)} /> Lançar o que a maquininha vai
         pagar em &quot;A receber&quot;, na data prevista

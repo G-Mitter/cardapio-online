@@ -8,7 +8,7 @@ export default function Privacidade() {
   return (
     <main className="wrap texto">
       <h1>Política de privacidade</h1>
-      <p className="vazio">Atualizada em 8 de outubro de 2026 (carrinhos abandonados).</p>
+      <p className="vazio">Atualizada em 8 de outubro de 2026 (leitura de foto da maquininha).</p>
 
       <h2>Quem cuida dos seus dados</h2>
       <p>
@@ -47,6 +47,15 @@ export default function Privacidade() {
         visitas e pedidos e criar anúncios. Nesse caso, o seu navegador envia à Meta e ao Google
         dados de navegação e o valor do pedido, e eles seguem as próprias políticas. Não enviamos o
         seu nome, telefone nem endereço.
+      </p>
+
+      <h2>Conferência da maquininha (só para lojas)</h2>
+      <p>
+        A loja pode fotografar o relatório de vendas da maquininha de cartão para conferir os pagamentos.
+        A foto é lida primeiro no celular da loja. Se a loja pedir, ela é enviada ao Google para leitura
+        (serviço de inteligência artificial, na camada gratuita, que pode usar o conteúdo para melhorar os
+        produtos do Google). O relatório traz valores, horários e bandeiras, não o nome do cliente. A foto
+        não é guardada por nós.
       </p>
 
       <h2>Quem vê o quê</h2>
