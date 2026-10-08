@@ -75,6 +75,7 @@ export interface Config {
     users: User;
     clientes: Cliente;
     cupons: Cupon;
+    carrinhos: Carrinho;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     clientes: ClientesSelect<false> | ClientesSelect<true>;
     cupons: CuponsSelect<false> | CuponsSelect<true>;
+    carrinhos: CarrinhosSelect<false> | CarrinhosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -400,6 +402,20 @@ export interface Cupon {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "carrinhos".
+ */
+export interface Carrinho {
+  id: number;
+  loja?: (number | null) | Loja;
+  telefone: string;
+  nome: string;
+  resumo: string;
+  total: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -453,6 +469,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'cupons';
         value: number | Cupon;
+      } | null)
+    | ({
+        relationTo: 'carrinhos';
+        value: number | Carrinho;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -694,6 +714,19 @@ export interface CuponsSelect<T extends boolean = true> {
   limiteUso?: T;
   usos?: T;
   ativo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "carrinhos_select".
+ */
+export interface CarrinhosSelect<T extends boolean = true> {
+  loja?: T;
+  telefone?: T;
+  nome?: T;
+  resumo?: T;
+  total?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -417,6 +417,18 @@ export async function apagarCupom(id: number) {
   redirect('/painel/cupons')
 }
 
+// ---------- Carrinhos abandonados ----------
+
+export async function apagarCarrinho(id: number) {
+  const { payload, loja, comoUsuario } = await sessao()
+  await payload.delete({
+    collection: 'carrinhos',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    ...comoUsuario,
+  })
+  redirect('/painel/carrinhos')
+}
+
 // ---------- Dados da loja ----------
 
 export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
