@@ -50,3 +50,32 @@ export function resumoPorEntregador(entregas: EntregaFeita[]): { entregador: str
 
 export const rotuloResumo = (r: { entregas: number; taxa: number }) =>
   `${r.entregas} ${r.entregas === 1 ? 'entrega' : 'entregas'} · taxa ${brl(r.taxa)}`
+
+export type EntregaParaAcerto = { total: number; taxa: number; pagamento?: string | null }
+
+/**
+ * O que o entregador deve trazer. Em dinheiro, ele recebe o total do pedido do cliente; Pix e cartão
+ * só aparecem para conferir. Se ele já descontou a taxa de entrega do dinheiro, a taxa sai do esperado.
+ * `troco` é o que a loja deu a ele para troco na saída e que deve voltar. Tudo em centavos por dentro.
+ */
+export function calcularAcerto(entregas: EntregaParaAcerto[], troco: number, descontouTaxa: boolean) {
+  const c = (v: number) => Math.round(v * 100)
+  const soma = (f: (e: EntregaParaAcerto) => boolean) => entregas.filter(f).reduce((s, e) => s + c(e.total), 0)
+  const dinheiro = soma((e) => e.pagamento === 'dinheiro')
+  const taxas = entregas.reduce((s, e) => s + c(e.taxa), 0)
+  const esperado = dinheiro + c(troco) - (descontouTaxa ? taxas : 0)
+  return {
+    dinheiro: dinheiro / 100,
+    cartao: soma((e) => e.pagamento === 'cartao') / 100,
+    pix: soma((e) => e.pagamento === 'pix') / 100,
+    taxas: taxas / 100,
+    esperado: esperado / 100,
+  }
+}
+
+/** Entregue menos esperado: "confere", "sobrou R$ x" ou "faltou R$ x". */
+export function diferencaDoAcerto(entregue: number, esperado: number) {
+  const d = Math.round(entregue * 100) - Math.round(esperado * 100)
+  const valor = d / 100
+  return { valor, rotulo: d === 0 ? 'Confere' : `${d > 0 ? 'Sobrou' : 'Faltou'} ${brl(Math.abs(valor))}` }
+}

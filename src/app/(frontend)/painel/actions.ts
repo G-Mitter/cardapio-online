@@ -12,7 +12,7 @@ import { COOKIE_LOJA, sessao, sessaoGarcom } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
-import type { Parada } from '@/lib/entregadores'
+import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
 import { fecharPagamento, lerTaxaServico, type Recebido, totalDaConta } from '@/lib/conta'
 import { lerMesas } from '@/lib/mesas'
@@ -470,6 +470,103 @@ export async function ligarEntregador(id: number, ativo: boolean) {
     data: { ativo },
     ...comoUsuario,
   })
+  redirect('/painel/entregadores')
+}
+
+/** Pedidos entregues pelo entregador no dia que ainda não entraram em nenhum acerto. */
+async function pendentesDoAcerto(entregador: number, dia: string) {
+  const { payload, loja, comoUsuario } = await sessao()
+  const { dia: diaValido, de, ate } = intervaloDoDia(dia)
+  const [entregues, feitos] = await Promise.all([
+    payload.find({
+      collection: 'pedidos',
+      where: {
+        loja: { equals: loja.id },
+        modo: { equals: 'entrega' },
+        status: { equals: 'entregue' },
+        entregador: { equals: entregador },
+        createdAt: { greater_than_equal: de, less_than: ate },
+      },
+      limit: 0,
+      depth: 0,
+      ...comoUsuario,
+    }),
+    payload.find({
+      collection: 'acertos',
+      where: { loja: { equals: loja.id }, entregador: { equals: entregador }, dia: { equals: diaValido } },
+      limit: 0,
+      depth: 0,
+      ...comoUsuario,
+    }),
+  ])
+  const jaFeitos = new Set(feitos.docs.flatMap((a) => (a.pedidos ?? []).map((p) => (typeof p === 'number' ? p : p.id))))
+  return { payload, loja, user: comoUsuario.user, comoUsuario, dia: diaValido, pedidos: entregues.docs.filter((p) => !jaFeitos.has(p.id)) }
+}
+
+/**
+ * "Acerto feito": guarda o que o entregador devia trazer, o que trouxe e a diferença. Os valores
+ * esperados saem dos pedidos no banco; do navegador vêm só o troco, o que ele entregou e a taxa descontada.
+ */
+export async function fazerAcerto(
+  entregador: number,
+  dia: string,
+  troco: string,
+  entregue: string,
+  descontouTaxa: boolean,
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const trocoR = lerPreco(String(troco ?? '').trim() || '0')
+  const entregueR = lerPreco(String(entregue ?? '').trim())
+  if (trocoR === null) return { ok: false, erro: 'Troco inválido. Use, por exemplo, 50,00.' }
+  if (entregueR === null) return { ok: false, erro: 'Coloque quanto o entregador entregou, por exemplo 125,50 (ou 0).' }
+  const { payload, loja, user, dia: diaValido, pedidos } = await pendentesDoAcerto(Number(entregador), dia)
+  if (!pedidos.length) return { ok: false, erro: 'Não há entregas para acertar neste dia.' }
+  const c = calcularAcerto(pedidos, trocoR, descontouTaxa === true)
+  const d = diferencaDoAcerto(entregueR, c.esperado)
+  try {
+    await payload.create({
+      collection: 'acertos',
+      overrideAccess: true,
+      data: {
+        loja: loja.id,
+        entregador: Number(entregador),
+        dia: diaValido,
+        pedidos: pedidos.map((p) => p.id),
+        dinheiro: c.dinheiro,
+        cartao: c.cartao,
+        pix: c.pix,
+        troco: trocoR,
+        taxas: c.taxas,
+        descontouTaxa: descontouTaxa === true,
+        esperado: c.esperado,
+        entregue: entregueR,
+        diferenca: d.valor,
+        conferidoPor: user.id,
+      },
+    })
+  } catch {
+    return { ok: false, erro: 'Não foi possível guardar o acerto. Tente de novo.' }
+  }
+  return { ok: true }
+}
+
+/** Troca a forma de pagamento de um pedido entregue (o cliente pagou diferente), antes do acerto. */
+export async function mudarPagamentoDoPedido(id: number, form: FormData) {
+  const { payload, loja, comoUsuario } = await sessao()
+  const forma = texto(form, 'forma') as FormaPagamento
+  if (!loja.formasPagamento?.includes(forma)) redirect('/painel/entregadores')
+  const feito = await payload.count({
+    collection: 'acertos',
+    where: { loja: { equals: loja.id }, pedidos: { contains: id } },
+    overrideAccess: true,
+  })
+  if (feito.totalDocs === 0) {
+    await payload.update({
+      collection: 'pedidos',
+      where: { id: { equals: id }, loja: { equals: loja.id }, status: { equals: 'entregue' } },
+      data: { pagamento: forma, ...(forma !== 'dinheiro' && { trocoPara: null }) },
+      ...comoUsuario,
+    })
+  }
   redirect('/painel/entregadores')
 }
 

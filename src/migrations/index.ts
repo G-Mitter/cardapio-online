@@ -23,6 +23,7 @@ import * as migration_20261008_202042_garcons from './20261008_202042_garcons';
 import * as migration_20261008_202353_garcom_no_pedido from './20261008_202353_garcom_no_pedido';
 import * as migration_20261008_202743_mesa_sem_garcom from './20261008_202743_mesa_sem_garcom';
 import * as migration_20261008_203548_fechar_conta from './20261008_203548_fechar_conta';
+import * as migration_20261008_204852_acerto_entregador from './20261008_204852_acerto_entregador';
 
 export const migrations = [
   {
@@ -148,6 +149,11 @@ export const migrations = [
   {
     up: migration_20261008_203548_fechar_conta.up,
     down: migration_20261008_203548_fechar_conta.down,
-    name: '20261008_203548_fechar_conta'
+    name: '20261008_203548_fechar_conta',
+  },
+  {
+    up: migration_20261008_204852_acerto_entregador.up,
+    down: migration_20261008_204852_acerto_entregador.down,
+    name: '20261008_204852_acerto_entregador'
   },
 ];

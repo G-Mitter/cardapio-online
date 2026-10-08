@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 
+import { AcertoEntregador } from '@/components/painel/AcertoEntregador'
 import { Formulario } from '@/components/painel/Formulario'
-import { intervaloDoDia, resumoPorEntregador, rotuloResumo } from '@/lib/entregadores'
+import { diferencaDoAcerto, intervaloDoDia, resumoPorEntregador, rotuloResumo } from '@/lib/entregadores'
 import { sessao } from '@/lib/painel'
+import { brl, FORMAS_PAGAMENTO, rotuloPagamento } from '@/lib/pedido'
 
-import { ligarEntregador, salvarEntregador } from '../../actions'
+import { ligarEntregador, mudarPagamentoDoPedido, salvarEntregador } from '../../actions'
 
 export const metadata: Metadata = { title: 'Entregadores' }
 
@@ -12,7 +14,7 @@ export const metadata: Metadata = { title: 'Entregadores' }
 export default async function Entregadores({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
   const { payload, loja, comoUsuario } = await sessao()
   const { dia, de, ate } = intervaloDoDia((await searchParams).dia)
-  const [entregadores, entregues] = await Promise.all([
+  const [entregadores, entregues, acertos] = await Promise.all([
     payload.find({
       collection: 'entregadores',
       where: { loja: { equals: loja.id } },
@@ -34,6 +36,14 @@ export default async function Entregadores({ searchParams }: { searchParams: Pro
       depth: 0,
       ...comoUsuario,
     }),
+    payload.find({
+      collection: 'acertos',
+      where: { loja: { equals: loja.id }, dia: { equals: dia } },
+      sort: 'createdAt',
+      limit: 0,
+      depth: 0,
+      ...comoUsuario,
+    }),
   ])
 
   const nomes = new Map(entregadores.docs.map((e) => [e.id, e.nome]))
@@ -42,6 +52,18 @@ export default async function Entregadores({ searchParams }: { searchParams: Pro
       typeof p.entregador === 'number' ? [{ entregador: nomes.get(p.entregador) ?? 'Removido', taxa: p.taxa }] : [],
     ),
   )
+
+  // Acerto do dia: por entregador, o que já foi conferido e o que ainda falta.
+  const jaAcertados = new Set(acertos.docs.flatMap((a) => (a.pedidos ?? []).map((p) => (typeof p === 'number' ? p : p.id))))
+  const formas = FORMAS_PAGAMENTO.filter((f) => loja.formasPagamento?.includes(f.value))
+  const doAcerto = [...new Set(entregues.docs.flatMap((p) => (typeof p.entregador === 'number' ? [p.entregador] : [])))]
+    .map((id) => ({
+      id,
+      nome: nomes.get(id) ?? 'Removido',
+      feitos: acertos.docs.filter((a) => (typeof a.entregador === 'number' ? a.entregador : a.entregador.id) === id),
+      pendentes: entregues.docs.filter((p) => p.entregador === id && !jaAcertados.has(p.id)),
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 
   return (
     <>
@@ -104,6 +126,53 @@ export default async function Entregadores({ searchParams }: { searchParams: Pro
       <p>
         <small>Conta só as entregas marcadas como Entregue, pelo dia em que o pedido foi feito.</small>
       </p>
+
+      <h2>Acerto do dia</h2>
+      {!doAcerto.length && <p className="vazio">Nenhuma entrega concluída neste dia para acertar.</p>}
+      {doAcerto.map((e) => (
+        <section key={e.id}>
+          <h3>{e.nome}</h3>
+          {e.feitos.map((a) => (
+            <p key={a.id}>
+              ✓ Acerto feito às{' '}
+              {new Date(a.createdAt).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}:
+              entregou {brl(a.entregue)} de {brl(a.esperado)} · {diferencaDoAcerto(a.entregue, a.esperado).rotulo}
+            </p>
+          ))}
+          {e.pendentes.length > 0 && (
+            <>
+              <ul className="lista">
+                {e.pendentes.map((p) => (
+                  <li key={p.id}>
+                    <div className="lista__nome">
+                      <b>Pedido nº {p.numero}</b>
+                      <span>
+                        {brl(p.total)} · {rotuloPagamento(p.pagamento) || 'Sem forma de pagamento'}
+                      </span>
+                    </div>
+                    <form action={mudarPagamentoDoPedido.bind(null, p.id)} className="linha">
+                      <select name="forma" defaultValue={p.pagamento ?? ''} aria-label={`Pagamento do pedido ${p.numero}`}>
+                        {formas.map((f) => (
+                          <option key={f.value} value={f.value}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button className="botao secundario">Trocar</button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+              <small>Se o cliente pagou diferente do pedido, troque a forma de pagamento antes do acerto.</small>
+              <AcertoEntregador
+                entregador={e.id}
+                dia={dia}
+                entregas={e.pendentes.map((p) => ({ total: p.total, taxa: p.taxa, pagamento: p.pagamento }))}
+              />
+            </>
+          )}
+        </section>
+      ))}
     </>
   )
 }
