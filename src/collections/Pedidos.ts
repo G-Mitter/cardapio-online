@@ -98,6 +98,8 @@ export const Pedidos: CollectionConfig = {
       ],
     },
     { name: 'endereco', label: 'Endereço', type: 'text', admin: { readOnly: true } },
+    // Quem leva a entrega; escolhido no painel (src/app/(frontend)/painel/actions.ts).
+    { name: 'entregador', label: 'Entregador', type: 'relationship', relationTo: 'entregadores' },
     {
       name: 'agendadoPara',
       label: 'Agendado para',
