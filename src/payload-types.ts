@@ -194,6 +194,10 @@ export interface Loja {
    */
   formasPagamento: ('pix' | 'cartao' | 'dinheiro')[];
   /**
+   * Aparece para o cliente copiar quando ele escolhe Pix.
+   */
+  chavePix?: string | null;
+  /**
    * Desmarque para pausar os pedidos (o cardápio continua visível).
    */
   aberta?: boolean | null;
@@ -485,6 +489,7 @@ export interface LojasSelect<T extends boolean = true> {
   taxaEntrega?: T;
   aceitaRetirada?: T;
   formasPagamento?: T;
+  chavePix?: T;
   aberta?: T;
   updatedAt?: T;
   createdAt?: T;

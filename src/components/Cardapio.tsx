@@ -233,6 +233,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               pedido. Para acompanhar ou tirar dúvidas, fale com a loja pelo WhatsApp; a mensagem já
               vai com o número e os itens do pedido.
             </p>
+            {resultado.pix && <PagarComPix {...resultado.pix} />}
             <a className="enviar" href={resultado.link} target="_blank" rel="noopener">
               Acompanhar pelo WhatsApp
             </a>
@@ -364,5 +365,42 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         )}
       </dialog>
     </>
+  )
+}
+
+/** Chave Pix da loja para copiar. O cliente paga no app do banco e manda o comprovante no WhatsApp. */
+function PagarComPix({ chave, valor }: { chave: string; valor: number }) {
+  const [copiado, setCopiado] = useState(false)
+  const campo = useRef<HTMLInputElement>(null)
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(chave)
+      setCopiado(true)
+    } catch {
+      // Sem permissão para a área de transferência: deixa o texto selecionado para copiar à mão.
+      campo.current?.select()
+    }
+  }
+
+  return (
+    <div className="pix">
+      <p>
+        <strong>Pague {brl(valor)} com Pix</strong> no app do seu banco usando a chave abaixo.
+        Depois, envie o comprovante para a loja pelo WhatsApp.
+      </p>
+      <div className="pix__chave">
+        <input
+          ref={campo}
+          readOnly
+          value={chave}
+          aria-label="Chave Pix da loja"
+          onFocus={(e) => e.target.select()}
+        />
+        <button type="button" className="secundario" onClick={copiar}>
+          {copiado ? 'Copiada!' : 'Copiar'}
+        </button>
+      </div>
+    </div>
   )
 }

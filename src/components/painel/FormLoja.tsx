@@ -22,6 +22,7 @@ export type DadosLoja = {
   fazEntrega: boolean
   taxaEntrega: number
   pagamentos: FormaPagamento[]
+  chavePix: string
   aceitaRetirada: boolean
   logo: string | null
   capa: string | null
@@ -146,6 +147,19 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             </label>
           ))}
         </fieldset>
+        {d.pagamentos.includes('pix') && (
+          <label className="campo">
+            Chave Pix (o cliente copia para pagar)
+            <input
+              name="chavePix"
+              value={d.chavePix}
+              onChange={muda('chavePix')}
+              required
+              maxLength={100}
+              placeholder="CNPJ, celular, e-mail ou chave aleatória"
+            />
+          </label>
+        )}
         <button className="botao">Salvar</button>
       </Formulario>
 

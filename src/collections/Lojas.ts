@@ -114,6 +114,15 @@ export const Lojas: CollectionConfig = {
       admin: { description: 'O cliente escolhe uma destas ao fazer o pedido.' },
     },
     {
+      name: 'chavePix',
+      label: 'Chave Pix',
+      type: 'text',
+      admin: {
+        description: 'Aparece para o cliente copiar quando ele escolhe Pix.',
+        condition: (data) => Boolean(data?.formasPagamento?.includes('pix')),
+      },
+    },
+    {
       name: 'aberta',
       label: 'Recebendo pedidos agora',
       type: 'checkbox',

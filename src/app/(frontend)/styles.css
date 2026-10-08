@@ -356,6 +356,31 @@ textarea {
   padding: 14px;
   cursor: pointer;
 }
+/* Chave Pix na confirmação do pedido */
+.enviado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.enviado p {
+  margin: 0;
+}
+.pix {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.pix__chave {
+  display: flex;
+  gap: 8px;
+}
+.pix__chave input {
+  flex: 1;
+  min-width: 0;
+}
 /* Telefone e cadastro do cliente, no carrinho */
 .pagamento {
   flex-wrap: wrap;

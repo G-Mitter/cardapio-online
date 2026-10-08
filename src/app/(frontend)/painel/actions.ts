@@ -237,6 +237,10 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   const taxa = lerPreco(texto(form, 'taxaEntrega') || '0')
   const formasPagamento = FORMAS_PAGAMENTO.map((f) => f.value).filter((v) => form.getAll('formasPagamento').includes(v))
   if (!formasPagamento.length) return { erro: 'Marque pelo menos uma forma de pagamento.' }
+  const chavePix = texto(form, 'chavePix').slice(0, 100)
+  if (formasPagamento.includes('pix') && !chavePix) {
+    return { erro: 'Coloque a chave Pix ou desmarque Pix nas formas de pagamento.' }
+  }
   if (taxa === null) return { erro: 'Taxa de entrega inválida. Use, por exemplo, 6,00.' }
 
   try {
@@ -257,6 +261,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         taxaEntrega: taxa,
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
         formasPagamento,
+        chavePix,
         ...(logo !== undefined && { logo }),
         ...(capa !== undefined && { capa }),
       },

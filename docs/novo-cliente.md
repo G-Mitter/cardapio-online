@@ -22,7 +22,7 @@ Passo a passo para colocar o cardápio de uma loja nova no ar. Meta: menos de 30
    - **WhatsApp que recebe os pedidos**: com DDD.
    - **Cor principal**: no formato `#rrggbb`. Sem cor da marca, deixe a padrão.
    - **Fonte dos títulos**: escolha a que combina com a loja (Clássica para restaurante tradicional, Moderna para lanchonete e pizzaria, Tradicional para empório, Leve para cafeteria).
-   - **Logo**, **Foto de capa** (opcional, uma foto deitada), **Horário**, **Endereço da loja**, **Faz entrega**, **Taxa de entrega**, **Aceita retirada** e **Formas de pagamento aceitas** (Pix, cartão, dinheiro).
+   - **Logo**, **Foto de capa** (opcional, uma foto deitada), **Horário**, **Endereço da loja**, **Faz entrega**, **Taxa de entrega**, **Aceita retirada** e **Formas de pagamento aceitas** (Pix, cartão, dinheiro). Com Pix marcado, preencha a **Chave Pix**: o cliente copia depois de finalizar o pedido.
 4. Salve.
 
 ## 2. Criar o login do dono (2 min)
