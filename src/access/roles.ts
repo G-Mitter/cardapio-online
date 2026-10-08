@@ -10,6 +10,8 @@ export const ehAdmin = (user: unknown): boolean =>
 
 export const soAdmin: Access = ({ req: { user } }) => ehAdmin(user)
 
-export const logado: Access = ({ req: { user } }) => Boolean(user)
+/** Logado e não desligado (garçom desligado perde o acesso na hora, mesmo com o login aberto). */
+export const logado: Access = ({ req: { user } }) =>
+  Boolean(user) && (user as { ativo?: boolean }).ativo !== false
 
 export const todos: Access = () => true

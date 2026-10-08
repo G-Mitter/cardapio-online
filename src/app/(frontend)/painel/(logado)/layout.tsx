@@ -1,5 +1,5 @@
 import { Menu } from '@/components/painel/Menu'
-import { sessao } from '@/lib/painel'
+import { sessaoGarcom } from '@/lib/painel'
 
 import { sair, trocarLoja } from '../actions'
 
@@ -8,6 +8,7 @@ const MENU = [
   ['/painel/cozinha', 'Cozinha'],
   ['/painel/mesas', 'Mesas'],
   ['/painel/entregadores', 'Entregadores'],
+  ['/painel/garcons', 'Garçons'],
   ['/painel/produtos', 'Produtos'],
   ['/painel/categorias', 'Categorias'],
   ['/painel/cupons', 'Cupons'],
@@ -16,9 +17,11 @@ const MENU = [
   ['/painel/importar', 'Importar planilha'],
 ] as const
 
+const MENU_GARCOM = [['/painel/garcom', 'Mesas']] as const
+
 /** Moldura das telas do painel: nome da loja, menu e sair. Sem login, `sessao` manda para /painel/entrar. */
 export default async function LayoutLogado({ children }: { children: React.ReactNode }) {
-  const { loja, lojas } = await sessao()
+  const { loja, lojas, garcom } = await sessaoGarcom()
 
   return (
     <>
@@ -38,12 +41,14 @@ export default async function LayoutLogado({ children }: { children: React.React
           ) : (
             <b>{loja.nome}</b>
           )}
-          <a href={`/${loja.slug}`} target="_blank" rel="noreferrer">
-            Ver meu cardápio ↗
-          </a>
+          {!garcom && (
+            <a href={`/${loja.slug}`} target="_blank" rel="noreferrer">
+              Ver meu cardápio ↗
+            </a>
+          )}
         </div>
         <nav aria-label="Painel">
-          <Menu itens={MENU} />
+          <Menu itens={garcom ? MENU_GARCOM : MENU} />
           <form action={sair}>
             <button className="sair">Sair</button>
           </form>

@@ -26,8 +26,8 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
       <p>Entre para cuidar do seu cardápio e dos pedidos.</p>
       <Formulario acao={entrar}>
         <label className="campo">
-          E-mail
-          <input type="email" name="email" autoComplete="email" required />
+          E-mail ou usuário
+          <input name="login" autoComplete="username" autoCapitalize="none" required />
         </label>
         <label className="campo">
           Senha

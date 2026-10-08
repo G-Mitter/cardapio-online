@@ -19,6 +19,7 @@ import * as migration_20261008_190612_pixels_anuncios from './20261008_190612_pi
 import * as migration_20261008_192057_pedido_balcao from './20261008_192057_pedido_balcao';
 import * as migration_20261008_192626_mesas_qrcode from './20261008_192626_mesas_qrcode';
 import * as migration_20261008_193017_entregadores from './20261008_193017_entregadores';
+import * as migration_20261008_202042_garcons from './20261008_202042_garcons';
 
 export const migrations = [
   {
@@ -124,6 +125,11 @@ export const migrations = [
   {
     up: migration_20261008_193017_entregadores.up,
     down: migration_20261008_193017_entregadores.down,
-    name: '20261008_193017_entregadores'
+    name: '20261008_193017_entregadores',
+  },
+  {
+    up: migration_20261008_202042_garcons.up,
+    down: migration_20261008_202042_garcons.down,
+    name: '20261008_202042_garcons'
   },
 ];
