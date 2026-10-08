@@ -150,6 +150,7 @@ export function Identificacao({
             telefone,
             nome: String(f.get('nome') ?? ''),
             endereco: modo === 'entrega' ? endereco(f) : undefined,
+            aceite: f.get('aceite') === 'on',
           }),
         )}
       >
@@ -164,6 +165,20 @@ export function Identificacao({
           <input name="nome" required maxLength={80} autoComplete="name" />
         </label>
         {modo === 'entrega' && <CamposEndereco />}
+        <label className="marcar">
+          <input type="checkbox" name="aceite" required />
+          <span>
+            Li e aceito os{' '}
+            <a href="/termos" target="_blank">
+              termos de uso
+            </a>{' '}
+            e a{' '}
+            <a href="/privacidade" target="_blank">
+              política de privacidade
+            </a>
+            .
+          </span>
+        </label>
         {mensagemErro}
         <button className="secundario" disabled={enviando}>
           {enviando ? 'Salvando…' : 'Salvar cadastro'}

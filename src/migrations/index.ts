@@ -4,6 +4,7 @@ import * as migration_20261008_112229_capa_da_loja from './20261008_112229_capa_
 import * as migration_20261008_123138_formas_pagamento from './20261008_123138_formas_pagamento';
 import * as migration_20261008_123734_clientes from './20261008_123734_clientes';
 import * as migration_20261008_124359_pagamento_pedido from './20261008_124359_pagamento_pedido';
+import * as migration_20261008_125107_aceite_cliente from './20261008_125107_aceite_cliente';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20261008_124359_pagamento_pedido.up,
     down: migration_20261008_124359_pagamento_pedido.down,
-    name: '20261008_124359_pagamento_pedido'
+    name: '20261008_124359_pagamento_pedido',
+  },
+  {
+    up: migration_20261008_125107_aceite_cliente.up,
+    down: migration_20261008_125107_aceite_cliente.down,
+    name: '20261008_125107_aceite_cliente'
   },
 ];

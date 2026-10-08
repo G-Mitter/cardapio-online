@@ -24,7 +24,10 @@ export type Identificacao =
 /** Um cliente não precisa de mais que isso; evita alguém lotar um cadastro. */
 const MAX_ENDERECOS = 10
 
-const texto = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max)
+const texto = (v: unknown, max: number) =>
+  String(v ?? '')
+    .trim()
+    .slice(0, max)
 
 function lerEndereco(e: Partial<Endereco> | undefined): Endereco | string {
   const rua = texto(e?.rua, 120)
@@ -54,11 +57,15 @@ export async function cadastrarCliente(dados: {
   telefone: string
   nome: string
   endereco?: Partial<Endereco>
+  /** "Li e aceito os termos e a privacidade" marcado (LGPD). */
+  aceite: boolean
 }): Promise<Identificacao> {
   const tel = normalizarTelefone(dados.telefone)
   const nome = texto(dados.nome, 80)
   if (!tel) return { ok: false, erro: 'Telefone incompleto. Coloque o DDD e o número.' }
   if (!nome) return { ok: false, erro: 'Coloque seu nome.' }
+  if (dados.aceite !== true)
+    return { ok: false, erro: 'Para criar o cadastro, aceite os termos e a privacidade.' }
   // Endereço é opcional (quem só retira não precisa); se veio, precisa estar completo.
   const endereco = dados.endereco ? lerEndereco(dados.endereco) : null
   if (typeof endereco === 'string') return { ok: false, erro: endereco }
@@ -67,13 +74,21 @@ export async function cadastrarCliente(dados: {
   if (await buscar(payload, tel)) return { ok: false, erro: 'Este telefone já tem cadastro.' }
   const cliente = await payload.create({
     collection: 'clientes',
-    data: { telefone: tel, nome, enderecos: endereco ? [endereco] : [] },
+    data: {
+      telefone: tel,
+      nome,
+      enderecos: endereco ? [endereco] : [],
+      aceitouEm: new Date().toISOString(),
+    },
     overrideAccess: true,
   })
   return resumo(cliente)
 }
 
-export async function adicionarEndereco(telefone: string, dados: Partial<Endereco>): Promise<Identificacao> {
+export async function adicionarEndereco(
+  telefone: string,
+  dados: Partial<Endereco>,
+): Promise<Identificacao> {
   const tel = normalizarTelefone(telefone)
   const endereco = lerEndereco(dados)
   if (!tel) return { ok: false, erro: 'Telefone incompleto.' }
