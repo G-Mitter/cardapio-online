@@ -97,3 +97,18 @@ describe('pagamento, troco e CPF na nota', () => {
     expect(msg).toContain('CPF na nota: 529.982.247-25')
   })
 })
+
+describe('código de retirada', () => {
+  it('vai na mensagem só quando é retirada', () => {
+    const r = montarPedido(
+      [{ id: 1, nome: 'X', preco: 30 }],
+      [{ produto: 1, quantidade: 1 }],
+      5,
+      'retirada',
+    )
+    if (!r.ok) throw new Error(r.erro)
+    const base = { loja: 'L', numero: 1, pedido: r.pedido, nome: 'Ana', codigoRetirada: '0427' }
+    expect(mensagemPedido({ ...base, modo: 'retirada' })).toContain('*Código de retirada: 0427*')
+    expect(mensagemPedido({ ...base, modo: 'entrega' })).not.toContain('Código')
+  })
+})

@@ -233,6 +233,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               pedido. Para acompanhar ou tirar dúvidas, fale com a loja pelo WhatsApp; a mensagem já
               vai com o número e os itens do pedido.
             </p>
+            {resultado.codigoRetirada && (
+              <p className="codigo-retirada">
+                Código de retirada <strong>{resultado.codigoRetirada}</strong>
+                <span>Mostre este código na loja para retirar o pedido.</span>
+              </p>
+            )}
             {resultado.pix && <PagarComPix {...resultado.pix} />}
             <a className="enviar" href={resultado.link} target="_blank" rel="noopener">
               Acompanhar pelo WhatsApp

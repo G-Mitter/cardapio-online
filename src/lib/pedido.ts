@@ -101,9 +101,22 @@ export function mensagemPedido(args: {
   /** Só no dinheiro: o cliente paga com quanto, para a loja levar o troco. */
   trocoPara?: number | null
   cpf?: string | null
+  /** Só na retirada: o código que o cliente mostra ao buscar o pedido. */
+  codigoRetirada?: string
 }): string {
-  const { loja, numero, pedido, modo, nome, endereco, observacoes, pagamento, trocoPara, cpf } =
-    args
+  const {
+    loja,
+    numero,
+    pedido,
+    modo,
+    nome,
+    endereco,
+    observacoes,
+    pagamento,
+    trocoPara,
+    cpf,
+    codigoRetirada,
+  } = args
   const linhas = [
     `*Pedido nº ${numero} · ${loja}*`,
     '',
@@ -116,6 +129,7 @@ export function mensagemPedido(args: {
     `Nome: ${nome}`,
   ]
   if (modo === 'entrega' && endereco) linhas.push(`Endereço: ${endereco}`)
+  if (modo === 'retirada' && codigoRetirada) linhas.push(`*Código de retirada: ${codigoRetirada}*`)
   if (pagamento) {
     const troco = trocoPara ? `, troco para ${brl(trocoPara)}` : ''
     linhas.push(`Pagamento: ${rotuloPagamento(pagamento)}${troco}`)

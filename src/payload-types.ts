@@ -148,6 +148,7 @@ export interface Pedido {
   modo: 'entrega' | 'retirada';
   nome: string;
   telefone?: string | null;
+  codigoRetirada?: string | null;
   endereco?: string | null;
   pagamento?: ('pix' | 'cartao' | 'dinheiro') | null;
   trocoPara?: number | null;
@@ -436,6 +437,7 @@ export interface PedidosSelect<T extends boolean = true> {
   modo?: T;
   nome?: T;
   telefone?: T;
+  codigoRetirada?: T;
   endereco?: T;
   pagamento?: T;
   trocoPara?: T;

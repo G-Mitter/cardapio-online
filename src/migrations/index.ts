@@ -6,6 +6,7 @@ import * as migration_20261008_123734_clientes from './20261008_123734_clientes'
 import * as migration_20261008_124359_pagamento_pedido from './20261008_124359_pagamento_pedido';
 import * as migration_20261008_125107_aceite_cliente from './20261008_125107_aceite_cliente';
 import * as migration_20261008_132134_chave_pix from './20261008_132134_chave_pix';
+import * as migration_20261008_134615_codigo_retirada from './20261008_134615_codigo_retirada';
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20261008_132134_chave_pix.up,
     down: migration_20261008_132134_chave_pix.down,
     name: '20261008_132134_chave_pix'
+  },
+  {
+    up: migration_20261008_134615_codigo_retirada.up,
+    down: migration_20261008_134615_codigo_retirada.down,
+    name: '20261008_134615_codigo_retirada'
   },
 ];

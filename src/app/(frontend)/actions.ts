@@ -5,6 +5,8 @@
  * o cardápio chama a função como se ela estivesse no navegador, mas ela
  * roda no servidor. Assim preço e total nunca dependem do que o navegador mandou.
  */
+import { randomInt } from 'node:crypto'
+
 import { getPayload } from 'payload'
 
 import {
@@ -45,6 +47,8 @@ export type ResultadoPedido =
       link: string
       /** Só quando o cliente escolheu Pix e a loja tem chave: para ele copiar e pagar. */
       pix?: { chave: string; valor: number }
+      /** Só na retirada: o cliente mostra este código ao buscar o pedido. */
+      codigoRetirada?: string
     }
   | { ok: false; erro: string }
 
@@ -135,6 +139,8 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     overrideAccess: true,
   })
   const numero = total.totalDocs + 1
+  const codigoRetirada =
+    modo === 'retirada' ? String(randomInt(10_000)).padStart(4, '0') : undefined
 
   await payload.create({
     collection: 'pedidos',
@@ -159,6 +165,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       pagamento,
       trocoPara,
       cpf,
+      codigoRetirada,
     },
   })
 
@@ -173,8 +180,16 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     pagamento,
     trocoPara,
     cpf,
+    codigoRetirada,
   })
   const pix =
     pagamento === 'pix' && loja.chavePix ? { chave: loja.chavePix, valor: pedido.total } : undefined
-  return { ok: true, numero, mensagem, link: whatsappUrl(loja.whatsapp, mensagem)!, pix }
+  return {
+    ok: true,
+    numero,
+    mensagem,
+    link: whatsappUrl(loja.whatsapp, mensagem)!,
+    pix,
+    codigoRetirada,
+  }
 }
