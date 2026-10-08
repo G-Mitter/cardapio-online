@@ -5,7 +5,7 @@ import { useEffect, useOptimistic, useState, useTransition } from 'react'
 
 import { rotuloAgendamento } from '@/lib/agendamento'
 import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
-import { avisoDeStatus, PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
+import { avisoDeStatus, PROXIMO, ROTULO, rotuloTipo, type Status } from '@/lib/pedidosDoDia'
 import { whatsappUrl } from '@/lib/whatsapp'
 
 import { montarRota, mudarStatus, type Rota } from '@/app/(frontend)/painel/actions'
@@ -18,6 +18,7 @@ export type PedidoView = {
   nome: string
   telefone: string
   modo: 'entrega' | 'retirada'
+  balcao: boolean
   endereco: string
   observacoes: string
   /** ISO; só em pedido agendado. */
@@ -101,7 +102,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
                   · <a href={`tel:${p.telefone}`}>{p.telefone}</a>
                 </>
               )}{' '}
-              · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : 'Retirada'}
+              · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : rotuloTipo(p.modo, p.balcao)}
             </div>
             {p.modo === 'entrega' && p.endereco && PROXIMO[p.status] && (
               <label className="marcar">

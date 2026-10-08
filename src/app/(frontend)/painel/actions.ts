@@ -11,12 +11,13 @@ import { getPayload, type Payload } from 'payload'
 import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
-import { lerBairros } from '@/lib/entrega'
+import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
-import { lerOpcoes } from '@/lib/opcoes'
+import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
 import { lerSelos } from '@/lib/selos'
-import { FORMAS_PAGAMENTO } from '@/lib/pedido'
+import { FORMAS_PAGAMENTO, type FormaPagamento, type ItemEscolhido, montarPedido } from '@/lib/pedido'
+import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
 import type { Loja } from '@/payload-types'
@@ -113,6 +114,108 @@ export async function mudarStatus(
   } catch {
     return { ok: false }
   }
+}
+
+export type DadosPedidoPainel = {
+  /** Balcão: retira na hora. Retirada e entrega: pedido feito por telefone. */
+  tipo: 'balcao' | 'retirada' | 'entrega'
+  itens: ItemEscolhido[]
+  /** Opcionais; sem nome o pedido fica "Balcão" ou "Cliente". */
+  nome: string
+  telefone: string
+  /** Só na entrega. */
+  endereco: string
+  bairro: string
+  pagamento: FormaPagamento
+  trocoPara: string
+  observacoes: string
+}
+
+/**
+ * Pedido lançado pela loja (balcão ou telefone). Mesma conta do site: preço, taxa e total
+ * saem do banco, nunca do que o navegador mandou. Sem cupom, agendamento ou CPF.
+ */
+export async function criarPedidoPainel(
+  dados: DadosPedidoPainel,
+): Promise<{ ok: true; numero: number } | { ok: false; erro: string }> {
+  const { payload, loja, comoUsuario } = await sessao()
+  const tipo = dados.tipo
+  if (tipo !== 'balcao' && tipo !== 'retirada' && tipo !== 'entrega') return { ok: false, erro: 'Escolha o tipo do pedido.' }
+  const modo = tipo === 'entrega' ? 'entrega' : 'retirada'
+  const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 100) : []
+
+  const telefoneDigitado = String(dados.telefone ?? '').trim()
+  const telefone = normalizarTelefone(telefoneDigitado)
+  if (telefoneDigitado && !telefone) return { ok: false, erro: 'Telefone incompleto. Use DDD e número, ou deixe em branco.' }
+  if (modo === 'entrega' && loja.fazEntrega === false) return { ok: false, erro: 'Esta loja não faz entrega.' }
+  if (tipo === 'retirada' && loja.aceitaRetirada === false) return { ok: false, erro: 'Esta loja não aceita retirada.' }
+  if (!loja.formasPagamento?.includes(dados.pagamento)) return { ok: false, erro: 'Escolha a forma de pagamento.' }
+
+  const endereco = String(dados.endereco ?? '').trim().slice(0, 200)
+  const bairro = String(dados.bairro ?? '').trim().slice(0, 100)
+  let taxa = 0
+  if (modo === 'entrega') {
+    if (!endereco) return { ok: false, erro: 'Coloque o endereço da entrega.' }
+    const t = taxaDoBairro(loja.bairros, bairro, loja.taxaEntrega ?? 0)
+    if (t === null) return { ok: false, erro: 'Escolha um bairro em que a loja entrega.' }
+    taxa = t
+  }
+
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: { loja: { equals: loja.id }, id: { in: itens.map((i) => i.produto) } },
+    limit: 100,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const r = montarPedido(produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })), itens, taxa, modo)
+  if (!r.ok) return r
+  const { pedido } = r
+
+  const trocoDigitado = dados.pagamento === 'dinheiro' ? String(dados.trocoPara ?? '').trim().slice(0, 20) : ''
+  const trocoPara = trocoDigitado ? lerPreco(trocoDigitado) : null
+  if (trocoDigitado && (trocoPara === null || trocoPara < pedido.total)) {
+    return { ok: false, erro: 'O troco precisa ser para um valor maior que o total.' }
+  }
+
+  // ponytail: mesmo número do site (total de pedidos + 1), com a mesma chance de repetir em pedidos no mesmo instante.
+  const total = await payload.count({ collection: 'pedidos', where: { loja: { equals: loja.id } }, overrideAccess: true })
+  const numero = total.totalDocs + 1
+  try {
+    await payload.create({
+      collection: 'pedidos',
+      overrideAccess: true,
+      data: {
+        loja: loja.id,
+        numero,
+        status: 'novo',
+        itens: pedido.itens.map(({ produto, nome, quantidade, precoUnitario, opcoes, escolhas }) => ({
+          produto: Number(produto),
+          nome,
+          quantidade,
+          precoUnitario,
+          opcoes,
+          escolhas,
+        })),
+        subtotal: pedido.subtotal,
+        taxa: pedido.taxa,
+        promocao: pedido.promocao,
+        desconto: pedido.desconto,
+        total: pedido.total,
+        modo,
+        balcao: tipo === 'balcao',
+        nome: String(dados.nome ?? '').trim().slice(0, 100) || (tipo === 'balcao' ? 'Balcão' : 'Cliente'),
+        telefone,
+        endereco: modo === 'entrega' ? [endereco, bairro].filter(Boolean).join(', ') : '',
+        observacoes: String(dados.observacoes ?? '').trim().slice(0, 300),
+        pagamento: dados.pagamento,
+        trocoPara,
+      },
+    })
+  } catch {
+    return { ok: false, erro: 'Não foi possível salvar. Tente de novo.' }
+  }
+  return { ok: true, numero }
 }
 
 // ---------- Rota de entrega ----------
