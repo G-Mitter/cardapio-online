@@ -35,23 +35,6 @@ export default buildConfig({
       },
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
-    components: {
-      // Telas extras para o dono da loja, com atalhos no menu lateral.
-      views: {
-        dashboard: { Component: '/components/admin/Inicio#Inicio' },
-        pedidos: {
-          Component: '/components/admin/PedidosView#PedidosView',
-          path: '/pedidos-de-hoje',
-          meta: { title: 'Pedidos de hoje' },
-        },
-        importar: {
-          Component: '/components/admin/ImportarView#ImportarView',
-          path: '/importar',
-          meta: { title: 'Importar produtos' },
-        },
-      },
-      afterNavLinks: ['/components/admin/AtalhosAdmin#AtalhosAdmin'],
-    },
   },
   collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users],
   // Painel /admin em português

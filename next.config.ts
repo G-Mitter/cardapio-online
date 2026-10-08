@@ -41,6 +41,12 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  // Fotos do painel da loja vão por Server Action. O navegador já reduz cada uma
+  // (src/components/painel/CampoImagem.tsx); o limite cobre logo + capa juntos,
+  // abaixo dos 4,5 MB que a Vercel aceita por requisição.
+  experimental: {
+    serverActions: { bodySizeLimit: '4mb' },
+  },
   turbopack: {
     root: path.resolve(dirname),
   },

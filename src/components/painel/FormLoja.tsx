@@ -1,0 +1,150 @@
+'use client'
+
+import { useState } from 'react'
+
+import { salvarLoja } from '@/app/(frontend)/painel/actions'
+import { Cardapio, type CategoriaView } from '@/components/Cardapio'
+import { COR_PADRAO, FONTES, temaDaLoja } from '@/lib/tema'
+
+import { CampoImagem } from './CampoImagem'
+import { Formulario } from './Formulario'
+
+export type DadosLoja = {
+  nome: string
+  slug: string
+  whatsapp: string
+  corPrincipal: string
+  fonte: string
+  horario: string
+  endereco: string
+  aberta: boolean
+  fazEntrega: boolean
+  taxaEntrega: number
+  aceitaRetirada: boolean
+  logo: string | null
+  capa: string | null
+}
+
+const reais = (v: number) => v.toFixed(2).replace('.', ',')
+
+/**
+ * Dados da loja com a prévia do cardápio ao lado: cada mudança (nome, cor, fonte,
+ * logo, capa, horário...) aparece na prévia antes de salvar.
+ */
+export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: CategoriaView[] }) {
+  const [d, setD] = useState(loja)
+  const muda = (campo: keyof DadosLoja) => (e: { target: HTMLInputElement | HTMLSelectElement }) =>
+    setD((atual) => ({
+      ...atual,
+      [campo]: e.target instanceof HTMLInputElement && e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+    }))
+
+  return (
+    <div className="com-previa">
+      <Formulario acao={salvarLoja}>
+        <label className="campo">
+          Nome da loja
+          <input name="nome" value={d.nome} onChange={muda('nome')} required maxLength={80} />
+        </label>
+        <label className="campo">
+          WhatsApp que recebe os pedidos
+          <input
+            name="whatsapp"
+            type="tel"
+            value={d.whatsapp}
+            onChange={muda('whatsapp')}
+            placeholder="(31) 99999-0000"
+            required
+          />
+        </label>
+        <div className="linha">
+          <label className="campo">
+            Cor principal
+            <input name="corPrincipal" type="color" value={d.corPrincipal} onChange={muda('corPrincipal')} />
+          </label>
+          <label className="campo">
+            Fonte dos títulos
+            <select name="fonte" value={d.fonte} onChange={muda('fonte')}>
+              {Object.entries(FONTES).map(([valor, f]) => (
+                <option key={valor} value={valor}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <CampoImagem nome="logo" rotulo="Logo" atual={loja.logo} aoMudar={(logo) => setD((a) => ({ ...a, logo }))} />
+        <CampoImagem
+          nome="capa"
+          rotulo="Foto de capa"
+          atual={loja.capa}
+          aoMudar={(capa) => setD((a) => ({ ...a, capa }))}
+        />
+        <div className="linha">
+          <label className="campo">
+            Horário
+            <input name="horario" value={d.horario} onChange={muda('horario')} placeholder="11h às 15h" />
+          </label>
+          <label className="campo">
+            Endereço da loja
+            <input name="endereco" value={d.endereco} onChange={muda('endereco')} />
+          </label>
+        </div>
+        <label className="marcar">
+          <input type="checkbox" name="aberta" checked={d.aberta} onChange={muda('aberta')} />
+          Recebendo pedidos agora (desmarque para pausar)
+        </label>
+        <div className="linha">
+          <label className="marcar">
+            <input type="checkbox" name="fazEntrega" checked={d.fazEntrega} onChange={muda('fazEntrega')} />
+            Faz entrega
+          </label>
+          {d.fazEntrega && (
+            <label className="campo curto">
+              Taxa de entrega (R$)
+              <input
+                name="taxaEntrega"
+                inputMode="decimal"
+                defaultValue={reais(loja.taxaEntrega)}
+                onChange={(e) =>
+                  setD((a) => ({ ...a, taxaEntrega: Number(e.target.value.replace(',', '.')) || 0 }))
+                }
+              />
+            </label>
+          )}
+          <label className="marcar">
+            <input
+              type="checkbox"
+              name="aceitaRetirada"
+              checked={d.aceitaRetirada}
+              onChange={muda('aceitaRetirada')}
+            />
+            Aceita retirada
+          </label>
+        </div>
+        <button className="botao">Salvar</button>
+      </Formulario>
+
+      <section className="previa" aria-label="Prévia do cardápio">
+        <p className="vazio">Prévia: assim fica o seu cardápio (ainda não salvo).</p>
+        <div className="previa__tela" inert style={temaDaLoja({ corPrincipal: d.corPrincipal || COR_PADRAO, fonte: d.fonte })}>
+          <Cardapio
+            loja={{
+              slug: d.slug,
+              nome: d.nome || 'Sua loja',
+              logo: d.logo,
+              capa: d.capa,
+              horario: d.horario,
+              endereco: d.endereco,
+              aberta: d.aberta,
+              fazEntrega: d.fazEntrega,
+              aceitaRetirada: d.aceitaRetirada,
+              taxaEntrega: d.taxaEntrega,
+            }}
+            categorias={categorias}
+          />
+        </div>
+      </section>
+    </div>
+  )
+}
