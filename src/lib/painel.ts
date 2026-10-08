@@ -26,8 +26,11 @@ export const sessao = async () => {
 
 /** Como `sessao`, mas aceita o garçom (e diz quem é). Só para as telas e ações feitas para ele. */
 export const sessaoGarcom = cache(async () => {
+  // headers() antes de abrir o banco: o painel nunca é gerado no build, que assim não migra o banco
+  // em paralelo (vários processos criando as mesmas tabelas derrubavam o build do CI).
+  const h = await headers()
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: await headers() })
+  const { user } = await payload.auth({ headers: h })
   if (!user || user.ativo === false) redirect('/painel/entrar')
 
   if (user.roles?.includes('garcom')) {

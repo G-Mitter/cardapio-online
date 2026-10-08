@@ -1,0 +1,47 @@
+﻿ref;dia;hora;canal;status;cliente;telefone;endereco;bairro;itens;cupom;pagamento;troco_para;agendado_dia;agendado_hora;entregador;garcom;mesa;fechamento;pediu_conta;cpf;observacoes
+P01;-2;11:10;entrega;entregue;Gabriela Torres;31900000007;Rua Curitiba, 1500;Lourdes;3x Pão de queijo | 4x Refrigerante lata (Sabor: Coca Zero);;dinheiro;auto;;;Renata Bike;;;;;;Sem cebola, por favor
+P02;-2;11:35;entrega;entregue;Henrique Alves;31900000008;Rua Antônio de Albuquerque, 90, apto 4;Savassi;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);BEMVINDO10;cartao;;;;Carlos Moto;;;;;;
+P03;-2;12:05;retirada;entregue;Ana Paula Souza;31900000001;;;1x Feijão tropeiro (Adicionais: Ovo extra, Torresmo extra) | 1x Refrigerante lata (Sabor: Coca-Cola);;pix;;;;;;;;;;
+P04;-2;12:20;entrega;entregue;Bruno Lima;31900000002;Rua Gonçalves Dias, 450;Lourdes;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);;cartao;;;;Carlos Moto;;;;;123.456.789-09;
+P05;-2;12:40;balcao;entregue;Balcão;;;;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;dinheiro;;;;;;;;;;
+P06;-2;13:00;entrega;entregue;Diego Martins;31900000004;Rua Pernambuco, 820, casa;Funcionários;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;dinheiro;auto;;;Carlos Moto;;;;;;
+P07;-2;13:25;retirada;cancelado;Elaine Costa;31900000005;;;"1x Pizza de frango (Tamanho: Média; Borda: Cheddar)";;cartao;;;;;;;;;;Cliente desistiu
+P08;-2;19:10;entrega;entregue;Fábio Nunes;31900000006;Rua Espírito Santo, 77, apto 1101;Centro;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;cartao;;;;Carlos Moto;;;;;;
+P09;-2;19:45;balcao;entregue;Balcão;;;;3x Pão de queijo | 4x Refrigerante lata (Sabor: Coca Zero);;cartao;;;;;;;;;;
+P10;-2;20:30;entrega;entregue;Henrique Alves;31900000008;Rua Antônio de Albuquerque, 90, apto 4;Savassi;1x Frango com quiabo | 1x Salada da casa (Molho: Sem molho) | 2x Suco de laranja;;pix;;;;Carlos Moto;;;;;;
+P11;-2;12:15;mesa;entregue;Mesa 2;;;;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;;;;;;marcos;2;F-2a;;;
+P12;-2;12:50;mesa;entregue;Mesa 2;;;;"1x Pizza de frango (Tamanho: Média; Borda: Cheddar)";;;;;;;marcos;2;F-2a;;;
+P13;-2;13:05;mesa;entregue;Mesa 5;;;;1x Frango com quiabo | 1x Pão de queijo;;;;;;;juliana;5;F-2b;;;
+P14;-2;20:00;mesa;entregue;Mesa 7;;;;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;;;;;;;7;F-2c;;;
+P15;-1;11:10;entrega;entregue;Henrique Alves;31900000008;Rua Antônio de Albuquerque, 90, apto 4;Savassi;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;dinheiro;auto;;;Renata Bike;;;;;;Sem cebola, por favor
+P16;-1;11:35;entrega;entregue;Ana Paula Souza;31900000001;Rua da Bahia, 1000, apto 302;Centro;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);BEMVINDO10;cartao;;;;Carlos Moto;;;;;;
+P17;-1;12:05;retirada;entregue;Bruno Lima;31900000002;;;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);;pix;;;;;;;;;;
+P18;-1;12:20;entrega;entregue;Camila Ferreira;31900000003;Av. Getúlio Vargas, 1300, sala 5;Savassi;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);;cartao;;;;Carlos Moto;;;;;123.456.789-09;
+P19;-1;12:40;balcao;entregue;Balcão;;;;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;dinheiro;;;;;;;;;;
+P20;-1;13:00;entrega;entregue;Elaine Costa;31900000005;Rua Mármore, 210;Santa Efigênia;1x Frango com quiabo | 1x Pão de queijo;;dinheiro;auto;;;Carlos Moto;;;;;;
+P21;-1;13:25;retirada;entregue;Fábio Nunes;31900000006;;;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;cartao;;;;;;;;;;
+P22;-1;19:10;entrega;entregue;Gabriela Torres;31900000007;Rua Curitiba, 1500;Lourdes;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);FRETEGRATIS;cartao;;;;Carlos Moto;;;;;;
+P23;-1;19:45;balcao;entregue;Balcão;;;;"1x Pizza de frango (Tamanho: Média; Borda: Cheddar)";;cartao;;;;;;;;;;
+P24;-1;20:30;entrega;entregue;Ana Paula Souza;31900000001;Rua da Bahia, 1000, apto 302;Centro;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);;pix;;;;Carlos Moto;;;;;;
+P25;-1;12:15;mesa;entregue;Mesa 2;;;;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;;;;;;marcos;2;F-1a;;;
+P26;-1;12:50;mesa;entregue;Mesa 2;;;;1x Frango com quiabo | 1x Salada da casa (Molho: Sem molho) | 2x Suco de laranja;;;;;;;marcos;2;F-1a;;;
+P27;-1;13:05;mesa;entregue;Mesa 5;;;;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;;;;;;juliana;5;F-1b;;;
+P28;-1;20:00;mesa;entregue;Mesa 7;;;;1x Frango com quiabo | 1x Pão de queijo;;;;;;;;7;F-1c;;;
+P29;0;11:05;entrega;entregue;Ana Paula Souza;31900000001;Rua da Bahia, 1000, apto 302;Centro;1x Frango com quiabo | 1x Salada da casa (Molho: Sem molho) | 2x Suco de laranja;;dinheiro;auto;;;Carlos Moto;;;;;;
+P30;0;11:20;entrega;entregue;Diego Martins;31900000004;Rua Pernambuco, 820, casa;Funcionários;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;cartao;;;;Carlos Moto;;;;;;
+P31;0;11:40;retirada;entregue;Bruno Lima;31900000002;;;1x Frango com quiabo | 1x Salada da casa (Molho: Sem molho) | 2x Suco de laranja;;pix;;;;;;;;;;
+P32;0;11:55;balcao;entregue;Balcão;;;;1x Frango com quiabo | 1x Salada da casa (Molho: Sem molho) | 2x Suco de laranja;;cartao;;;;;;;;;;
+P33;0;12:10;entrega;pronto;Camila Ferreira;31900000003;Av. Getúlio Vargas, 1300, sala 5;Savassi;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);BEMVINDO10;dinheiro;auto;;;Renata Bike;;;;;;
+P34;0;12:12;entrega;pronto;Elaine Costa;31900000005;Rua Mármore, 210;Santa Efigênia;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);;cartao;;;;Renata Bike;;;;;;
+P35;0;12:20;retirada;pronto;Fábio Nunes;31900000006;;;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;cartao;;;;;;;;;;
+P36;0;12:25;entrega;preparando;Gabriela Torres;31900000007;Rua Curitiba, 1500;Lourdes;1x Frango com quiabo | 1x Pão de queijo;;pix;;;;;;;;;;
+P37;0;12:30;balcao;preparando;Balcão;;;;"1x Pizza de frango (Tamanho: Grande; Borda: Catupiry) | 2x Refrigerante lata (Sabor: Guaraná)";;dinheiro;;;;;;;;;;
+P38;0;12:35;entrega;novo;Henrique Alves;31900000008;Rua Antônio de Albuquerque, 90, apto 4;Savassi;"1x Pizza de frango (Tamanho: Média; Borda: Cheddar)";;cartao;;;;;;;;;;Interfone com defeito, ligar ao chegar
+P39;0;12:36;retirada;novo;Ana Paula Souza;31900000001;;;1x Feijão tropeiro (Adicionais: Ovo extra, Torresmo extra) | 1x Refrigerante lata (Sabor: Coca-Cola);;dinheiro;auto;;;;;;;;;
+P40;0;10:00;entrega;novo;Bruno Lima;31900000002;Rua Gonçalves Dias, 450;Lourdes;1x Salada da casa (Molho: Iogurte) | 1x Suco de laranja (Gelo: Com gelo);;cartao;;0;+50m;;;;;;;
+P41;0;09:30;retirada;novo;Camila Ferreira;31900000003;;;1x Jantar a dois | 2x Refrigerante lata (Sabor: Coca-Cola);;pix;;1;19:30;;;;;;;
+P42;0;12:00;mesa;entregue;Mesa 1;;;;1x Feijão tropeiro (Adicionais: Ovo extra, Torresmo extra) | 1x Refrigerante lata (Sabor: Coca-Cola);;;;;;;marcos;1;F0a;;;
+P43;0;12:05;mesa;entregue;Mesa 3;;;;"1x Pizza de frango (Tamanho: Média; Borda: Cheddar)";;;;;;;juliana;3;;;;
+P44;0;12:40;mesa;preparando;Mesa 3;;;;2x Vaca atolada | 2x Suco de laranja (Gelo: Sem gelo);;;;;;;juliana;3;;;;
+P45;0;12:15;mesa;pronto;Mesa 4;;;;1x Frango com quiabo | 1x Salada da casa (Molho: Sem molho) | 2x Suco de laranja;;;;;;;;4;;sim;;
+P46;0;12:45;mesa;novo;Mesa 6;;;;1x Salada da casa (Molho: Iogurte) | 1x Suco de laranja (Gelo: Com gelo);;;;;;;marcos;6;;;;

@@ -1,4 +1,6 @@
+import { ehAdmin } from '@/access/roles'
 import { Menu } from '@/components/painel/Menu'
+import { SLUG_EXEMPLO } from '@/lib/exemplo'
 import { sessaoGarcom } from '@/lib/painel'
 
 import { sair, trocarLoja } from '../actions'
@@ -22,7 +24,9 @@ const MENU_GARCOM = [['/painel/garcom', 'Mesas']] as const
 
 /** Moldura das telas do painel: nome da loja, menu e sair. Sem login, `sessao` manda para /painel/entrar. */
 export default async function LayoutLogado({ children }: { children: React.ReactNode }) {
-  const { loja, lojas, garcom } = await sessaoGarcom()
+  const { loja, lojas, garcom, user } = await sessaoGarcom()
+  // Os dados de exemplo só aparecem para o administrador geral, na loja de demonstração.
+  const itens = [...MENU, ...(ehAdmin(user) && loja.slug === SLUG_EXEMPLO ? ([['/painel/exemplo', 'Dados de exemplo']] as const) : [])]
 
   return (
     <>
@@ -49,7 +53,7 @@ export default async function LayoutLogado({ children }: { children: React.React
           )}
         </div>
         <nav aria-label="Painel">
-          <Menu itens={garcom ? MENU_GARCOM : MENU} />
+          <Menu itens={garcom ? MENU_GARCOM : itens} />
           <form action={sair}>
             <button className="sair">Sair</button>
           </form>
