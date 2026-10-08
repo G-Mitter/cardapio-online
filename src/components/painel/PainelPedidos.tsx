@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useOptimistic, useTransition } from 'react'
+import { useEffect, useOptimistic, useState, useTransition } from 'react'
 
 import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
 import { avisoDeStatus, PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
@@ -22,6 +22,8 @@ export type PedidoView = {
   pagamento: string
   trocoPara: number | null
   cpf: string
+  /** Retirada com código: para marcar Entregue, a loja digita o código do cliente. */
+  pedeCodigo: boolean
   total: number
   itens: { nome: string; quantidade: number }[]
 }
@@ -112,10 +114,20 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
                 {p.trocoPara ? ` (troco para ${brl(p.trocoPara)})` : ''}
               </b>
               <div className="pedido__acoes">
-                {proximo && (
-                  <button type="button" className="botao" onClick={() => mudar(p, proximo)}>
-                    {ROTULO[proximo]}
-                  </button>
+                {proximo === 'entregue' && p.pedeCodigo ? (
+                  <ConferirCodigo
+                    aoConferir={async (codigo) => {
+                      const r = await mudarStatus(p.id, 'entregue', codigo)
+                      if (r.ok) router.refresh()
+                      return r.ok ? '' : (r.erro ?? 'Não foi possível salvar. Tente de novo.')
+                    }}
+                  />
+                ) : (
+                  proximo && (
+                    <button type="button" className="botao" onClick={() => mudar(p, proximo)}>
+                      {ROTULO[proximo]}
+                    </button>
+                  )
                 )}
                 {p.status !== 'cancelado' && p.status !== 'entregue' && (
                   <button
@@ -137,5 +149,36 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
         )
       })}
     </div>
+  )
+}
+
+/** Retirada: a loja confere o nome, digita o código que o cliente mostra e só então entrega. */
+function ConferirCodigo({ aoConferir }: { aoConferir: (codigo: string) => Promise<string> }) {
+  const [erro, setErro] = useState('')
+  const [enviando, startTransition] = useTransition()
+  return (
+    <form
+      className="conferir-codigo"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const codigo = String(new FormData(e.currentTarget).get('codigo') ?? '')
+        startTransition(async () => setErro(await aoConferir(codigo)))
+      }}
+    >
+      <input
+        name="codigo"
+        aria-label="Código de retirada"
+        placeholder="Código"
+        inputMode="numeric"
+        pattern="[0-9]{4}"
+        maxLength={4}
+        required
+        autoComplete="off"
+      />
+      <button className="botao" disabled={enviando}>
+        {enviando ? 'Conferindo…' : 'Entregue'}
+      </button>
+      {erro && <p className="erro">{erro}</p>}
+    </form>
   )
 }

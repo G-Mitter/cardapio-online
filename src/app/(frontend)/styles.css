@@ -365,6 +365,20 @@ textarea {
 .enviado p {
   margin: 0;
 }
+.codigo-retirada {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px;
+  border: 2px dashed currentColor;
+  border-radius: 12px;
+  text-align: center;
+}
+.codigo-retirada strong {
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
 .pix {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
