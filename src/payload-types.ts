@@ -76,6 +76,7 @@ export interface Config {
     clientes: Cliente;
     cupons: Cupon;
     carrinhos: Carrinho;
+    entregadores: Entregadore;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,6 +93,7 @@ export interface Config {
     clientes: ClientesSelect<false> | ClientesSelect<true>;
     cupons: CuponsSelect<false> | CuponsSelect<true>;
     carrinhos: CarrinhosSelect<false> | CarrinhosSelect<true>;
+    entregadores: EntregadoresSelect<false> | EntregadoresSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -171,6 +173,7 @@ export interface Pedido {
   telefone?: string | null;
   codigoRetirada?: string | null;
   endereco?: string | null;
+  entregador?: (number | null) | Entregadore;
   agendadoPara?: string | null;
   pagamento?: ('pix' | 'cartao' | 'dinheiro') | null;
   trocoPara?: number | null;
@@ -280,6 +283,19 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "entregadores".
+ */
+export interface Entregadore {
+  id: number;
+  loja?: (number | null) | Loja;
+  nome: string;
+  whatsapp: string;
+  ativo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -488,6 +504,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'carrinhos';
         value: number | Carrinho;
+      } | null)
+    | ({
+        relationTo: 'entregadores';
+        value: number | Entregadore;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -564,6 +584,7 @@ export interface PedidosSelect<T extends boolean = true> {
   telefone?: T;
   codigoRetirada?: T;
   endereco?: T;
+  entregador?: T;
   agendadoPara?: T;
   pagamento?: T;
   trocoPara?: T;
@@ -748,6 +769,18 @@ export interface CarrinhosSelect<T extends boolean = true> {
   nome?: T;
   resumo?: T;
   total?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "entregadores_select".
+ */
+export interface EntregadoresSelect<T extends boolean = true> {
+  loja?: T;
+  nome?: T;
+  whatsapp?: T;
+  ativo?: T;
   updatedAt?: T;
   createdAt?: T;
 }

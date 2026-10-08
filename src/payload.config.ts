@@ -12,6 +12,7 @@ import { Categorias } from './collections/Categorias'
 import { Clientes } from './collections/Clientes'
 import { Carrinhos } from './collections/Carrinhos'
 import { Cupons } from './collections/Cupons'
+import { Entregadores } from './collections/Entregadores'
 import { Lojas } from './collections/Lojas'
 import { Media } from './collections/Media'
 import { Pedidos } from './collections/Pedidos'
@@ -39,7 +40,7 @@ export default buildConfig({
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
   },
-  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos],
+  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores],
   // Painel /admin em português
   i18n: {
     supportedLanguages: { pt },
@@ -74,6 +75,7 @@ export default buildConfig({
         pedidos: {},
         cupons: {},
         carrinhos: {},
+        entregadores: {},
         media: {},
       },
       userHasAccessToAllTenants: (user) => ehAdmin(user),

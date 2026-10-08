@@ -12,6 +12,8 @@ import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
+import type { Parada } from '@/lib/entregadores'
+import { whatsappUrl } from '@/lib/whatsapp'
 import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
@@ -278,7 +280,7 @@ async function ordemGoogle(chave: string, loja: string, paradas: string[]) {
 }
 
 export type Rota =
-  | { ok: true; link: string; numeros: number[]; otimizada: boolean }
+  | { ok: true; link: string; numeros: number[]; paradas: Parada[]; otimizada: boolean }
   | { ok: false; erro: string }
 
 /** Monta a rota do entregador com os pedidos de entrega escolhidos no painel. */
@@ -318,7 +320,69 @@ export async function montarRota(ids: number[]): Promise<Rota> {
       indices.map((i) => paradas[i]),
     ),
     numeros: indices.map((i) => pedidos[i].numero),
+    paradas: indices.map((i) => ({
+      numero: pedidos[i].numero,
+      nome: pedidos[i].nome,
+      telefone: pedidos[i].telefone ?? '',
+      endereco: pedidos[i].endereco!,
+    })),
     otimizada: Boolean(ordem),
+  }
+}
+
+// ---------- Entregadores ----------
+
+export async function salvarEntregador(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao()
+  const nome = texto(form, 'nome').slice(0, 80)
+  const whatsapp = texto(form, 'whatsapp')
+  if (!nome) return { erro: 'Coloque o nome do entregador.' }
+  if (!whatsappUrl(whatsapp)) return { erro: 'WhatsApp incompleto. Use DDD e número, por exemplo (31) 99999-0000.' }
+  try {
+    await payload.create({
+      collection: 'entregadores',
+      data: { loja: loja.id, nome, whatsapp, ativo: true },
+      ...comoUsuario,
+    })
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect('/painel/entregadores')
+}
+
+export async function ligarEntregador(id: number, ativo: boolean) {
+  const { payload, loja, comoUsuario } = await sessao()
+  await payload.update({
+    collection: 'entregadores',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    data: { ativo },
+    ...comoUsuario,
+  })
+  redirect('/painel/entregadores')
+}
+
+/** Põe o entregador (ou tira, com null) nos pedidos de entrega escolhidos. */
+export async function atribuirEntregador(ids: number[], entregador: number | null): Promise<{ ok: boolean }> {
+  const { payload, loja, comoUsuario } = await sessao()
+  try {
+    if (entregador !== null) {
+      // Só entregador desta loja.
+      const { totalDocs } = await payload.count({
+        collection: 'entregadores',
+        where: { id: { equals: entregador }, loja: { equals: loja.id } },
+        ...comoUsuario,
+      })
+      if (!totalDocs) return { ok: false }
+    }
+    await payload.update({
+      collection: 'pedidos',
+      where: { id: { in: ids }, loja: { equals: loja.id }, modo: { equals: 'entrega' } },
+      data: { entregador },
+      ...comoUsuario,
+    })
+    return { ok: true }
+  } catch {
+    return { ok: false }
   }
 }
 

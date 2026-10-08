@@ -18,6 +18,16 @@ export default async function Pedidos() {
     ...comoUsuario,
   })
 
+  const { docs: entregadores } = await payload.find({
+    collection: 'entregadores',
+    where: { loja: { equals: loja.id }, ativo: { not_equals: false } },
+    sort: 'nome',
+    depth: 0,
+    limit: 0,
+    ...comoUsuario,
+  })
+  const nomeDoEntregador = new Map(entregadores.map((e) => [e.id, e.nome]))
+
   const pedidos = ordenar(
     docs.map((p) => ({
       id: p.id,
@@ -30,6 +40,8 @@ export default async function Pedidos() {
       balcao: Boolean(p.balcao),
       mesa: p.mesa ?? '',
       endereco: p.endereco ?? '',
+      entregadorId: typeof p.entregador === 'number' ? p.entregador : null,
+      entregador: typeof p.entregador === 'number' ? (nomeDoEntregador.get(p.entregador) ?? '') : '',
       observacoes: p.observacoes ?? '',
       agendadoPara: p.agendadoPara ?? null,
       pagamento: p.pagamento ?? '',
@@ -50,7 +62,11 @@ export default async function Pedidos() {
           Novo pedido
         </Link>
       </div>
-      <PainelPedidos pedidos={pedidos} loja={loja.nome} />
+      <PainelPedidos
+        pedidos={pedidos}
+        loja={loja.nome}
+        entregadores={entregadores.map((e) => ({ id: e.id, nome: e.nome, whatsapp: e.whatsapp }))}
+      />
     </>
   )
 }

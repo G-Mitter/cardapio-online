@@ -5,10 +5,11 @@ import { useEffect, useOptimistic, useState, useTransition } from 'react'
 
 import { rotuloAgendamento } from '@/lib/agendamento'
 import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
+import { mensagemRota } from '@/lib/entregadores'
 import { avisoDeStatus, PROXIMO, ROTULO, rotuloTipo, type Status } from '@/lib/pedidosDoDia'
 import { whatsappUrl } from '@/lib/whatsapp'
 
-import { montarRota, mudarStatus, type Rota } from '@/app/(frontend)/painel/actions'
+import { atribuirEntregador, montarRota, mudarStatus, type Rota } from '@/app/(frontend)/painel/actions'
 
 export type PedidoView = {
   id: number
@@ -22,6 +23,9 @@ export type PedidoView = {
   /** Pedido do QR Code da mesa; vazio nos demais. */
   mesa: string
   endereco: string
+  /** Quem leva a entrega, se já escolhido. */
+  entregadorId: number | null
+  entregador: string
   observacoes: string
   /** ISO; só em pedido agendado. */
   agendadoPara: string | null
@@ -44,7 +48,17 @@ const hora = (iso: string) =>
     timeZone: 'America/Sao_Paulo',
   })
 
-export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: string }) {
+export type EntregadorView = { id: number; nome: string; whatsapp: string }
+
+export function PainelPedidos({
+  pedidos,
+  loja,
+  entregadores,
+}: {
+  pedidos: PedidoView[]
+  loja: string
+  entregadores: EntregadorView[]
+}) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [naRota, setNaRota] = useState<number[]>([])
@@ -85,7 +99,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
       <p>
         {abertos} em aberto · {lista.length} hoje. A lista se atualiza sozinha.
       </p>
-      <MontarRota escolhidos={naRota} aoLimpar={() => setNaRota([])} />
+      <MontarRota escolhidos={naRota} entregadores={entregadores} aoLimpar={() => setNaRota([])} />
       {lista.map((p) => {
         const proximo = PROXIMO[p.status]
         const avisoAtual = p.status !== 'novo' && aviso(p, p.status)
@@ -118,6 +132,28 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
                   }
                 />
                 Vai na rota do entregador
+              </label>
+            )}
+            {p.modo === 'entrega' && PROXIMO[p.status] && entregadores.length > 0 && (
+              <label className="marcar">
+                Entregador
+                <select
+                  value={p.entregadorId ?? ''}
+                  onChange={(e) => {
+                    const id = e.target.value ? Number(e.target.value) : null
+                    startTransition(async () => {
+                      await atribuirEntregador([p.id], id)
+                      router.refresh()
+                    })
+                  }}
+                >
+                  <option value="">Sem entregador</option>
+                  {entregadores.map((en) => (
+                    <option key={en.id} value={en.id}>
+                      {en.nome}
+                    </option>
+                  ))}
+                </select>
               </label>
             )}
             <ul>
@@ -182,12 +218,25 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
 }
 
 /** Pedidos marcados viram uma rota no Google Maps para mandar ao entregador pelo WhatsApp. */
-function MontarRota({ escolhidos, aoLimpar }: { escolhidos: number[]; aoLimpar: () => void }) {
+function MontarRota({
+  escolhidos,
+  entregadores,
+  aoLimpar,
+}: {
+  escolhidos: number[]
+  entregadores: EntregadorView[]
+  aoLimpar: () => void
+}) {
+  const router = useRouter()
   const [rota, setRota] = useState<Rota | null>(null)
+  const [entregadorId, setEntregadorId] = useState<number | null>(null)
   const [montando, startTransition] = useTransition()
+  const entregador = entregadores.find((e) => e.id === entregadorId)
 
   if (rota?.ok) {
-    const texto = `Rota de entrega: pedidos ${rota.numeros.map((n) => `nº ${n}`).join(', ')}\n${rota.link}`
+    const texto = mensagemRota(rota.paradas, rota.link, entregador?.nome)
+    // Com entregador, a conversa já abre no número dele; sem, a loja escolhe o contato no WhatsApp.
+    const zap = (entregador && whatsappUrl(entregador.whatsapp, texto)) || `https://wa.me/?text=${encodeURIComponent(texto)}`
     return (
       <section className="rota">
         <p>
@@ -195,13 +244,8 @@ function MontarRota({ escolhidos, aoLimpar }: { escolhidos: number[]; aoLimpar: 
           {!rota.otimizada && ' (na ordem dos pedidos; o Google não ordenou desta vez)'}
         </p>
         <div className="pedido__acoes">
-          <a
-            className="botao"
-            href={`https://wa.me/?text=${encodeURIComponent(texto)}`}
-            target="_blank"
-            rel="noopener"
-          >
-            Mandar para o entregador
+          <a className="botao" href={zap} target="_blank" rel="noopener">
+            {entregador ? `Mandar para ${entregador.nome}` : 'Mandar para o entregador'}
           </a>
           <a className="botao secundario" href={rota.link} target="_blank" rel="noopener">
             Ver no Maps
@@ -224,11 +268,31 @@ function MontarRota({ escolhidos, aoLimpar }: { escolhidos: number[]; aoLimpar: 
   if (!escolhidos.length) return null
   return (
     <section className="rota rota--fixa">
+      {entregadores.length > 0 && (
+        <label className="marcar">
+          Entregador
+          <select value={entregadorId ?? ''} onChange={(e) => setEntregadorId(e.target.value ? Number(e.target.value) : null)}>
+            <option value="">Escolher depois</option>
+            {entregadores.map((en) => (
+              <option key={en.id} value={en.id}>
+                {en.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <button
         type="button"
         className="botao"
         disabled={montando}
-        onClick={() => startTransition(async () => setRota(await montarRota(escolhidos)))}
+        onClick={() =>
+          startTransition(async () => {
+            // O entregador fica anotado nos pedidos da rota, para o relatório do dia.
+            if (entregadorId) await atribuirEntregador(escolhidos, entregadorId)
+            setRota(await montarRota(escolhidos))
+            router.refresh()
+          })
+        }
       >
         {montando ? 'Montando a rota…' : `Montar rota (${escolhidos.length})`}
       </button>

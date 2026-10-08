@@ -18,6 +18,7 @@ import * as migration_20261008_190223_carrinhos_abandonados from './20261008_190
 import * as migration_20261008_190612_pixels_anuncios from './20261008_190612_pixels_anuncios';
 import * as migration_20261008_192057_pedido_balcao from './20261008_192057_pedido_balcao';
 import * as migration_20261008_192626_mesas_qrcode from './20261008_192626_mesas_qrcode';
+import * as migration_20261008_193017_entregadores from './20261008_193017_entregadores';
 
 export const migrations = [
   {
@@ -118,6 +119,11 @@ export const migrations = [
   {
     up: migration_20261008_192626_mesas_qrcode.up,
     down: migration_20261008_192626_mesas_qrcode.down,
-    name: '20261008_192626_mesas_qrcode'
+    name: '20261008_192626_mesas_qrcode',
+  },
+  {
+    up: migration_20261008_193017_entregadores.up,
+    down: migration_20261008_193017_entregadores.down,
+    name: '20261008_193017_entregadores'
   },
 ];
