@@ -4,12 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRef, useState, useTransition } from 'react'
 
-import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
+import { criarPedido, repetirUltimoPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import type { Bairro } from '@/lib/entrega'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
 import { normalizar } from '@/lib/planilha'
+import { sugerir } from '@/lib/sugestoes'
 
 /** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
 type Foto = string | null
@@ -31,7 +32,11 @@ export type ProdutoView = {
 type Linha = { chave: string; produto: number; escolhas: Escolhas; quantidade: number }
 
 const chaveDe = (produto: number, escolhas: Escolhas) =>
-  `${produto}:${JSON.stringify(Object.entries(escolhas).filter(([, v]) => v.length).sort())}`
+  `${produto}:${JSON.stringify(
+    Object.entries(escolhas)
+      .filter(([, v]) => v.length)
+      .sort(),
+  )}`
 
 export type CategoriaView = { id: number; nome: string; produtos: ProdutoView[] }
 
@@ -65,6 +70,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [pagamento, setPagamento] = useState<FormaPagamento | undefined>(loja.pagamentos[0])
   const [cpfNaNota, setCpfNaNota] = useState(false)
   const [enviando, startTransition] = useTransition()
+  const [repetindo, startRepetir] = useTransition()
+  const [avisoRepetir, setAvisoRepetir] = useState('')
   const dialogo = useRef<HTMLDialogElement>(null)
   const [busca, setBusca] = useState('')
 
@@ -86,12 +93,15 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     const p = produtos.find((x) => x.id === l.produto)
     if (!p) return []
     const o = resolverEscolhas(p.opcoes, l.escolhas)
-    return [{ ...l, p, descricao: o.ok ? o.descricao : '', preco: p.preco + (o.ok ? o.adicional : 0) }]
+    return [
+      { ...l, p, descricao: o.ok ? o.descricao : '', preco: p.preco + (o.ok ? o.adicional : 0) },
+    ]
   })
   const quantidade = itens.reduce((s, i) => s + i.quantidade, 0)
   // Só para mostrar na tela; o valor que vale é o que o servidor recalcula.
   const subtotal = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
-  const noPedido = (id: number) => itens.filter((i) => i.produto === id).reduce((s, i) => s + i.quantidade, 0)
+  const noPedido = (id: number) =>
+    itens.filter((i) => i.produto === id).reduce((s, i) => s + i.quantidade, 0)
   const entrega = modo === 'entrega'
   // Com bairros, a taxa depende do endereço escolhido (calculada no servidor, junto do cadastro).
   const semEntrega = entrega && cliente?.taxa === null
@@ -131,11 +141,40 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     dialogoOpcoes.current?.close()
   }
 
+  const abrirPedido = () => {
+    setResultado(null)
+    dialogo.current?.showModal()
+  }
+
+  /** Coloca no carrinho os itens do último pedido deste telefone nesta loja. */
+  function repetir() {
+    if (!cliente) return
+    startRepetir(async () => {
+      const r = await repetirUltimoPedido(cliente.telefone, loja.slug)
+      if (!r.ok) return setAvisoRepetir(r.erro)
+      for (const i of r.itens) mudar(i.produto, i.escolhas, i.quantidade)
+      setAvisoRepetir(
+        r.faltaram.length
+          ? `Não deu para repetir: ${r.faltaram.join(', ')} (esgotou ou mudou no cardápio).`
+          : '',
+      )
+    })
+  }
+
+  const sugestoes = sugerir(
+    categorias,
+    itens.map((i) => i.produto),
+  )
+
   function enviar(form: FormData) {
     startTransition(async () => {
       const r = await criarPedido({
         loja: loja.slug,
-        itens: itens.map((i) => ({ produto: i.produto, quantidade: i.quantidade, escolhas: i.escolhas })),
+        itens: itens.map((i) => ({
+          produto: i.produto,
+          quantidade: i.quantidade,
+          escolhas: i.escolhas,
+        })),
         modo,
         telefone: cliente?.telefone ?? '',
         enderecoId: cliente?.enderecoId,
@@ -196,6 +235,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
           />
         )}
 
+        {loja.aberta && categorias.length > 0 && linhas.length === 0 && (
+          <button type="button" className="link repetir" onClick={abrirPedido}>
+            Já pediu aqui? Repetir meu último pedido
+          </button>
+        )}
+
         {!termo && categorias.length > 1 && (
           <nav className="cats" aria-label="Categorias">
             {categorias.map((c) => (
@@ -240,7 +285,10 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                       </button>
                     ) : q ? (
                       <div className="qtd">
-                        <button onClick={() => mudar(p.id, {}, -1)} aria-label={`Tirar um ${p.nome}`}>
+                        <button
+                          onClick={() => mudar(p.id, {}, -1)}
+                          aria-label={`Tirar um ${p.nome}`}
+                        >
                           −
                         </button>
                         <b>{q}</b>
@@ -271,12 +319,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
 
       {quantidade > 0 && (
         <div className="barra">
-          <button
-            onClick={() => {
-              setResultado(null)
-              dialogo.current?.showModal()
-            }}
-          >
+          <button onClick={abrirPedido}>
             <span>
               Ver pedido ({quantidade} {quantidade > 1 ? 'itens' : 'item'})
             </span>
@@ -365,6 +408,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
           </div>
         ) : (
           <>
+            {itens.length === 0 && <p className="vazio">Seu pedido está vazio.</p>}
             {itens.map((i) => (
               <div key={i.chave} className="linha">
                 <span>
@@ -384,16 +428,31 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 <span>{brl(i.preco * i.quantidade)}</span>
               </div>
             ))}
-            {taxa > 0 && (
-              <div className="linha">
-                <span>Taxa de entrega</span>
-                <span>{brl(taxa)}</span>
+            {itens.length > 0 && (
+              <>
+                {taxa > 0 && (
+                  <div className="linha">
+                    <span>Taxa de entrega</span>
+                    <span>{brl(taxa)}</span>
+                  </div>
+                )}
+                <div className="linha total">
+                  <span>Total</span>
+                  <span>{brl(subtotal + taxa)}</span>
+                </div>
+              </>
+            )}
+            {itens.length > 0 && sugestoes.length > 0 && (
+              <div className="sugestoes">
+                <h3>Peça também</h3>
+                {sugestoes.map((p) => (
+                  <button key={p.id} type="button" onClick={() => mudar(p.id, {}, 1)}>
+                    <span>{p.nome}</span>
+                    <span>+ {brl(p.preco)}</span>
+                  </button>
+                ))}
               </div>
             )}
-            <div className="linha total">
-              <span>Total</span>
-              <span>{brl(subtotal + taxa)}</span>
-            </div>
 
             {loja.fazEntrega && loja.aceitaRetirada && (
               <fieldset className="modo">
@@ -419,92 +478,107 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               </fieldset>
             )}
             <Identificacao loja={loja.slug} modo={modo} aoMudar={setCliente} />
+            {cliente && itens.length === 0 && (
+              <>
+                <button type="button" className="secundario" disabled={repetindo} onClick={repetir}>
+                  {repetindo ? 'Procurando…' : 'Repetir meu último pedido'}
+                </button>
+                {avisoRepetir && (
+                  <p className="erro" role="status">
+                    {avisoRepetir}
+                  </p>
+                )}
+              </>
+            )}
 
             {/* onSubmit em vez de action: assim o React não limpa os campos quando o servidor devolve um erro. */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                enviar(new FormData(e.currentTarget))
-              }}
-            >
-              <fieldset className="modo pagamento">
-                <legend>Pagamento na {modo === 'entrega' ? 'entrega' : 'retirada'}</legend>
-                {FORMAS_PAGAMENTO.filter((f) => loja.pagamentos.includes(f.value)).map((f) => (
-                  <label key={f.value}>
-                    <input
-                      type="radio"
-                      name="pagamento"
-                      checked={pagamento === f.value}
-                      onChange={() => setPagamento(f.value)}
-                    />
-                    {f.label}
-                  </label>
-                ))}
-              </fieldset>
-              {pagamento === 'dinheiro' && (
-                <label>
-                  Troco para quanto? (deixe vazio se não precisa)
-                  <input
-                    name="trocoPara"
-                    inputMode="decimal"
-                    placeholder="Ex.: 50"
-                    maxLength={10}
-                  />
-                </label>
-              )}
-              <label className="marcar">
-                <input
-                  type="checkbox"
-                  checked={cpfNaNota}
-                  onChange={(e) => setCpfNaNota(e.target.checked)}
-                />
-                CPF na nota
-              </label>
-              {cpfNaNota && (
-                <label>
-                  CPF
-                  <input
-                    name="cpf"
-                    inputMode="numeric"
-                    required
-                    maxLength={14}
-                    placeholder="000.000.000-00"
-                  />
-                </label>
-              )}
-              <label>
-                Observações
-                <textarea name="observacoes" rows={2} maxLength={300} />
-              </label>
-              <p className="aviso-dados">
-                Seu cadastro fica guardado para os próximos pedidos. Nome, endereço e CPF vão só
-                para a loja que recebe o pedido; o CPF não fica no cadastro.{' '}
-                <a href="/privacidade" target="_blank">
-                  Privacidade
-                </a>
-              </p>
-              {semEntrega && (
-                <p className="erro" role="alert">
-                  A loja não entrega no bairro deste endereço. Escolha outro endereço ou retire na loja.
-                </p>
-              )}
-              {resultado && !resultado.ok && (
-                <p className="erro" role="alert">
-                  {resultado.erro}
-                </p>
-              )}
-              <button
-                className="enviar"
-                disabled={
-                  enviando ||
-                  !cliente ||
-                  !pagamento ||
-                  (entrega && (!cliente.enderecoId || semEntrega))
-                }
+            {itens.length > 0 && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  enviar(new FormData(e.currentTarget))
+                }}
               >
-                {enviando ? 'Enviando…' : 'Finalizar pedido'}
-              </button>
-            </form>
+                <fieldset className="modo pagamento">
+                  <legend>Pagamento na {modo === 'entrega' ? 'entrega' : 'retirada'}</legend>
+                  {FORMAS_PAGAMENTO.filter((f) => loja.pagamentos.includes(f.value)).map((f) => (
+                    <label key={f.value}>
+                      <input
+                        type="radio"
+                        name="pagamento"
+                        checked={pagamento === f.value}
+                        onChange={() => setPagamento(f.value)}
+                      />
+                      {f.label}
+                    </label>
+                  ))}
+                </fieldset>
+                {pagamento === 'dinheiro' && (
+                  <label>
+                    Troco para quanto? (deixe vazio se não precisa)
+                    <input
+                      name="trocoPara"
+                      inputMode="decimal"
+                      placeholder="Ex.: 50"
+                      maxLength={10}
+                    />
+                  </label>
+                )}
+                <label className="marcar">
+                  <input
+                    type="checkbox"
+                    checked={cpfNaNota}
+                    onChange={(e) => setCpfNaNota(e.target.checked)}
+                  />
+                  CPF na nota
+                </label>
+                {cpfNaNota && (
+                  <label>
+                    CPF
+                    <input
+                      name="cpf"
+                      inputMode="numeric"
+                      required
+                      maxLength={14}
+                      placeholder="000.000.000-00"
+                    />
+                  </label>
+                )}
+                <label>
+                  Observações
+                  <textarea name="observacoes" rows={2} maxLength={300} />
+                </label>
+                <p className="aviso-dados">
+                  Seu cadastro fica guardado para os próximos pedidos. Nome, endereço e CPF vão só
+                  para a loja que recebe o pedido; o CPF não fica no cadastro.{' '}
+                  <a href="/privacidade" target="_blank">
+                    Privacidade
+                  </a>
+                </p>
+                {semEntrega && (
+                  <p className="erro" role="alert">
+                    A loja não entrega no bairro deste endereço. Escolha outro endereço ou retire na
+                    loja.
+                  </p>
+                )}
+                {resultado && !resultado.ok && (
+                  <p className="erro" role="alert">
+                    {resultado.erro}
+                  </p>
+                )}
+                <button
+                  className="enviar"
+                  disabled={
+                    enviando ||
+                    !cliente ||
+                    !pagamento ||
+                    (entrega && (!cliente.enderecoId || semEntrega))
+                  }
+                >
+                  {enviando ? 'Enviando…' : 'Finalizar pedido'}
+                </button>
+              </form>
+            )}
           </>
         )}
       </dialog>

@@ -21,7 +21,7 @@ import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
 import { taxaDoBairro } from '@/lib/entrega'
-import { gruposDoProduto } from '@/lib/opcoes'
+import { type Escolhas, gruposDoProduto, resolverEscolhas } from '@/lib/opcoes'
 import { whatsappUrl } from '@/lib/whatsapp'
 import config from '@/payload.config'
 
@@ -163,11 +163,13 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       loja: loja.id,
       numero,
       status: 'novo',
-      itens: pedido.itens.map(({ nome, quantidade, precoUnitario, opcoes }) => ({
+      itens: pedido.itens.map(({ produto, nome, quantidade, precoUnitario, opcoes, escolhas }) => ({
+        produto: Number(produto),
         nome,
         quantidade,
         precoUnitario,
         opcoes,
+        escolhas,
       })),
       subtotal: pedido.subtotal,
       taxa: pedido.taxa,
@@ -207,4 +209,60 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     pix,
     codigoRetirada,
   }
+}
+
+export type ResultadoRepetir =
+  | { ok: true; itens: { produto: number; quantidade: number; escolhas: Escolhas }[]; faltaram: string[] }
+  | { ok: false; erro: string }
+
+/**
+ * "Repetir pedido": os itens do último pedido do telefone nesta loja, só os que ainda dá para
+ * pedir (produto existe, não esgotou, opções continuam valendo). Não devolve endereço,
+ * pagamento nem CPF, só o que vai para o carrinho.
+ */
+export async function repetirUltimoPedido(telefone: string, loja: string): Promise<ResultadoRepetir> {
+  const tel = normalizarTelefone(telefone)
+  if (!tel) return { ok: false, erro: 'Telefone incompleto.' }
+  const payload = await getPayload({ config })
+  const lojas = await payload.find({
+    collection: 'lojas',
+    where: { slug: { equals: texto(loja, 100) } },
+    limit: 1,
+    depth: 0,
+  })
+  if (!lojas.docs[0]) return { ok: false, erro: 'Loja não encontrada.' }
+  const { docs } = await payload.find({
+    collection: 'pedidos',
+    where: {
+      loja: { equals: lojas.docs[0].id },
+      telefone: { equals: tel },
+      status: { not_equals: 'cancelado' },
+    },
+    sort: '-createdAt',
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const ultimo = docs[0]
+  if (!ultimo) return { ok: false, erro: 'Você ainda não fez pedidos nesta loja.' }
+
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: {
+      loja: { equals: lojas.docs[0].id },
+      id: { in: (ultimo.itens ?? []).map((i) => i.produto).filter(Boolean) },
+    },
+    limit: 100,
+    depth: 0,
+  })
+  const itens: { produto: number; quantidade: number; escolhas: Escolhas }[] = []
+  const faltaram: string[] = []
+  for (const i of ultimo.itens ?? []) {
+    const p = produtos.docs.find((x) => x.id === i.produto)
+    const escolhas = (i.escolhas ?? {}) as Escolhas
+    const ok = p && !p.esgotado && resolverEscolhas(gruposDoProduto(p.opcoes), escolhas).ok
+    if (ok) itens.push({ produto: p.id, quantidade: i.quantidade, escolhas })
+    else faltaram.push(i.nome)
+  }
+  return { ok: true, itens, faltaram }
 }
