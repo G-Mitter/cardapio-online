@@ -7,7 +7,7 @@
  */
 import { randomInt } from 'node:crypto'
 
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 
 import {
   type FormaPagamento,
@@ -20,6 +20,7 @@ import {
 import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
+import { type Cupom, normalizarCodigo } from '@/lib/cupom'
 import { taxaDoBairro } from '@/lib/entrega'
 import { type Escolhas, gruposDoProduto, resolverEscolhas } from '@/lib/opcoes'
 import { whatsappUrl } from '@/lib/whatsapp'
@@ -39,6 +40,8 @@ export type DadosPedido = {
   trocoPara?: string
   /** Só se o cliente marcou "CPF na nota". */
   cpf?: string
+  /** Código do cupom que o cliente aplicou, se algum. */
+  cupom?: string
 }
 
 export type ResultadoPedido =
@@ -61,6 +64,18 @@ const texto = (v: unknown, max: number) =>
   String(v ?? '')
     .trim()
     .slice(0, max)
+
+async function buscarCupom(payload: Payload, loja: number, digitado: string): Promise<Cupom | null> {
+  const codigo = normalizarCodigo(digitado)
+  if (!codigo) return null
+  const { docs } = await payload.find({
+    collection: 'cupons',
+    where: { loja: { equals: loja }, codigo: { equals: codigo } },
+    limit: 1,
+    depth: 0,
+  })
+  return docs[0] ?? null
+}
 
 export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> {
   const telefone = normalizarTelefone(dados.telefone)
@@ -131,11 +146,14 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   if (taxaEntrega === null) {
     return { ok: false, erro: 'A loja não entrega no bairro deste endereço. Escolha outro ou retire na loja.' }
   }
+  const cupom = dados.cupom ? await buscarCupom(payload, loja.id, dados.cupom) : null
+  if (dados.cupom && !cupom) return { ok: false, erro: 'Cupom não encontrado.' }
   const resultado = montarPedido(
     produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })),
     itens,
     taxaEntrega,
     modo,
+    cupom,
   )
   if (!resultado.ok) return resultado
   const { pedido } = resultado
@@ -173,6 +191,8 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       })),
       subtotal: pedido.subtotal,
       taxa: pedido.taxa,
+      desconto: pedido.desconto,
+      cupom: pedido.cupom,
       total: pedido.total,
       modo,
       nome,
@@ -185,6 +205,16 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       codigoRetirada,
     },
   })
+
+  if (cupom) {
+    // ponytail: soma sem trava; dois pedidos no mesmo instante podem passar do limite de usos em 1.
+    await payload.update({
+      collection: 'cupons',
+      where: { loja: { equals: loja.id }, codigo: { equals: cupom.codigo } },
+      data: { usos: (cupom.usos ?? 0) + 1 },
+      overrideAccess: true,
+    })
+  }
 
   const mensagem = mensagemPedido({
     loja: loja.nome,
@@ -265,4 +295,40 @@ export async function repetirUltimoPedido(telefone: string, loja: string): Promi
     else faltaram.push(i.nome)
   }
   return { ok: true, itens, faltaram }
+}
+
+export type ResultadoCupom = { ok: true; codigo: string; desconto: number } | { ok: false; erro: string }
+
+/** Mostra no carrinho quanto o cupom abate. Quem vale mesmo é a conferência dentro de `criarPedido`. */
+export async function aplicarCupom(dados: {
+  loja: string
+  codigo: string
+  itens: ItemEscolhido[]
+}): Promise<ResultadoCupom> {
+  const payload = await getPayload({ config })
+  const { docs } = await payload.find({
+    collection: 'lojas',
+    where: { slug: { equals: texto(dados.loja, 100) } },
+    limit: 1,
+    depth: 0,
+  })
+  const loja = docs[0]
+  if (!loja) return { ok: false, erro: 'Loja não encontrada.' }
+  const cupom = await buscarCupom(payload, loja.id, texto(dados.codigo, 40))
+  if (!cupom) return { ok: false, erro: 'Cupom não encontrado.' }
+  const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 100) : []
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: { loja: { equals: loja.id }, id: { in: itens.map((i) => i.produto) } },
+    limit: 100,
+    depth: 0,
+  })
+  const r = montarPedido(
+    produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })),
+    itens,
+    0,
+    'retirada',
+    cupom,
+  )
+  return r.ok ? { ok: true, codigo: cupom.codigo, desconto: r.pedido.desconto } : r
 }

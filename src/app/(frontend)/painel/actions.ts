@@ -10,6 +10,7 @@ import { getPayload, type Payload } from 'payload'
 
 import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
+import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros } from '@/lib/entrega'
 import { lerOpcoes } from '@/lib/opcoes'
 import { lerSelos } from '@/lib/selos'
@@ -339,6 +340,73 @@ export async function apagarCategoria(id: number, _: Estado): Promise<Estado> {
     ...comoUsuario,
   })
   redirect('/painel/categorias')
+}
+
+// ---------- Cupons ----------
+
+export async function salvarCupom(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao()
+  const codigo = normalizarCodigo(texto(form, 'codigo'))
+  const porcentagem = texto(form, 'tipo') === 'porcentagem'
+  const valor = lerPreco(texto(form, 'valor'))
+  const minimo = texto(form, 'minimo') ? lerPreco(texto(form, 'minimo')) : null
+  const dia = texto(form, 'validoAte')
+  const limite = texto(form, 'limiteUso') ? Number(texto(form, 'limiteUso')) : null
+
+  if (codigo.length < 3) return { erro: 'O código precisa de pelo menos 3 letras ou números.' }
+  if (!valor || (porcentagem && valor > 100)) {
+    return { erro: porcentagem ? 'Coloque uma porcentagem de 1 a 100.' : 'Coloque o valor do desconto.' }
+  }
+  if (texto(form, 'minimo') && minimo === null) return { erro: 'Pedido mínimo inválido. Use, por exemplo, 40,00.' }
+  if (dia && !/^\d{4}-\d{2}-\d{2}$/.test(dia)) return { erro: 'Data inválida.' }
+  if (limite !== null && (!Number.isInteger(limite) || limite < 1)) return { erro: 'O limite de usos precisa ser 1 ou mais.' }
+
+  const { totalDocs } = await payload.count({
+    collection: 'cupons',
+    where: { loja: { equals: loja.id }, codigo: { equals: codigo } },
+  })
+  if (totalDocs) return { erro: `Já existe um cupom ${codigo}.` }
+
+  try {
+    await payload.create({
+      collection: 'cupons',
+      data: {
+        loja: loja.id,
+        codigo,
+        tipo: porcentagem ? 'porcentagem' : 'valor',
+        valor,
+        minimo,
+        validoAte: dia ? fimDoDia(dia) : null,
+        limiteUso: limite,
+        ativo: true,
+      },
+      ...comoUsuario,
+    })
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect('/painel/cupons')
+}
+
+export async function ligarCupom(id: number, ativo: boolean) {
+  const { payload, loja, comoUsuario } = await sessao()
+  await payload.update({
+    collection: 'cupons',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    data: { ativo },
+    ...comoUsuario,
+  })
+  redirect('/painel/cupons')
+}
+
+export async function apagarCupom(id: number) {
+  const { payload, loja, comoUsuario } = await sessao()
+  await payload.delete({
+    collection: 'cupons',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    ...comoUsuario,
+  })
+  redirect('/painel/cupons')
 }
 
 // ---------- Dados da loja ----------

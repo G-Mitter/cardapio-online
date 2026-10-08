@@ -674,3 +674,17 @@ label.marcar {
   padding: 10px 12px;
   cursor: pointer;
 }
+.cupom {
+  margin-top: 12px;
+}
+.cupom p {
+  margin: 0;
+}
+.cupom__campo {
+  display: flex;
+  gap: 8px;
+}
+.cupom__campo input {
+  flex: 1;
+  text-transform: uppercase;
+}

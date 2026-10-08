@@ -2,10 +2,16 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 
-import { criarPedido, repetirUltimoPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
+import {
+  aplicarCupom,
+  criarPedido,
+  repetirUltimoPedido,
+  type ResultadoPedido,
+} from '@/app/(frontend)/actions'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
+import { normalizarCodigo } from '@/lib/cupom'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import type { Bairro } from '@/lib/entrega'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
@@ -72,6 +78,11 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [enviando, startTransition] = useTransition()
   const [repetindo, startRepetir] = useTransition()
   const [avisoRepetir, setAvisoRepetir] = useState('')
+  // Cupom: o que o cliente digitou, o código aplicado e quanto ele abate (calculado no servidor).
+  const [campoCupom, setCampoCupom] = useState('')
+  const [cupom, setCupom] = useState<string | null>(null)
+  const [desconto, setDesconto] = useState(0)
+  const [erroCupom, setErroCupom] = useState('')
   const dialogo = useRef<HTMLDialogElement>(null)
   const [busca, setBusca] = useState('')
 
@@ -161,6 +172,37 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     })
   }
 
+  // Mexeu no carrinho com cupom aplicado: o desconto (e o mínimo do cupom) são conferidos de novo.
+  const chaveCarrinho = linhas.map((l) => `${l.chave}x${l.quantidade}`).join('|')
+  useEffect(() => {
+    if (!cupom || !linhas.length) return
+    let vivo = true
+    aplicarCupom({
+      loja: loja.slug,
+      codigo: cupom,
+      itens: linhas.map((l) => ({
+        produto: l.produto,
+        quantidade: l.quantidade,
+        escolhas: l.escolhas,
+      })),
+    }).then((r) => {
+      if (!vivo) return
+      if (r.ok) {
+        setDesconto(r.desconto)
+        setErroCupom('')
+      } else {
+        setCupom(null)
+        setDesconto(0)
+        setErroCupom(r.erro)
+      }
+    })
+    return () => {
+      vivo = false
+    }
+    // linhas muda junto com chaveCarrinho; depender só da chave evita refazer a conta sem necessidade.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveCarrinho, cupom, loja.slug])
+
   const sugestoes = sugerir(
     categorias,
     itens.map((i) => i.produto),
@@ -182,9 +224,15 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         pagamento: pagamento!,
         trocoPara: String(form.get('trocoPara') ?? ''),
         cpf: cpfNaNota ? String(form.get('cpf') ?? '') : '',
+        cupom: cupom ?? undefined,
       })
       setResultado(r)
-      if (r.ok) setLinhas([])
+      if (r.ok) {
+        setLinhas([])
+        setCupom(null)
+        setDesconto(0)
+        setCampoCupom('')
+      }
     })
   }
 
@@ -436,9 +484,58 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     <span>{brl(taxa)}</span>
                   </div>
                 )}
+                {desconto > 0 && (
+                  <div className="linha">
+                    <span>Cupom {cupom}</span>
+                    <span>- {brl(desconto)}</span>
+                  </div>
+                )}
                 <div className="linha total">
                   <span>Total</span>
-                  <span>{brl(subtotal + taxa)}</span>
+                  <span>{brl(subtotal + taxa - desconto)}</span>
+                </div>
+                <div className="cupom">
+                  {cupom ? (
+                    <p>
+                      Cupom <b>{cupom}</b> aplicado.{' '}
+                      <button
+                        type="button"
+                        className="link"
+                        onClick={() => {
+                          setCupom(null)
+                          setDesconto(0)
+                        }}
+                      >
+                        Remover
+                      </button>
+                    </p>
+                  ) : (
+                    <div className="cupom__campo">
+                      <input
+                        value={campoCupom}
+                        onChange={(e) => setCampoCupom(e.target.value)}
+                        placeholder="Cupom de desconto"
+                        aria-label="Cupom de desconto"
+                        maxLength={20}
+                      />
+                      <button
+                        type="button"
+                        className="secundario"
+                        disabled={!normalizarCodigo(campoCupom)}
+                        onClick={() => {
+                          setErroCupom('')
+                          setCupom(normalizarCodigo(campoCupom))
+                        }}
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                  )}
+                  {erroCupom && (
+                    <p className="erro" role="alert">
+                      {erroCupom}
+                    </p>
+                  )}
                 </div>
               </>
             )}

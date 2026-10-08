@@ -136,3 +136,23 @@ describe('opções do produto', () => {
     expect(montarPedido([pizza], [{ produto: 1, quantidade: 1, escolhas: { g: ['x'] } }], 0, 'retirada').ok).toBe(false)
   })
 })
+
+describe('cupom no pedido', () => {
+  const cupom = { codigo: 'BEMVINDO10', tipo: 'porcentagem' as const, valor: 10 }
+
+  it('abate dos produtos, não da taxa, e aparece na mensagem', () => {
+    const r = montarPedido([{ id: 1, nome: 'X', preco: 50 }], [{ produto: 1, quantidade: 2 }], 6, 'entrega', cupom)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.pedido).toMatchObject({ subtotal: 100, taxa: 6, desconto: 10, cupom: 'BEMVINDO10', total: 96 })
+    const msg = mensagemPedido({ loja: 'L', numero: 1, pedido: r.pedido, modo: 'entrega', nome: 'Ana' })
+    expect(msg).toContain('• Cupom BEMVINDO10: -R$')
+  })
+
+  it('cupom que não vale derruba o pedido com o motivo', () => {
+    const r = montarPedido([{ id: 1, nome: 'X', preco: 20 }], [{ produto: 1, quantidade: 1 }], 0, 'retirada', {
+      ...cupom,
+      minimo: 40,
+    })
+    expect(r.ok).toBe(false)
+  })
+})

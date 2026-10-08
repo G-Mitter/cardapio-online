@@ -7,6 +7,7 @@ const MENU = [
   ['/painel', 'Pedidos'],
   ['/painel/produtos', 'Produtos'],
   ['/painel/categorias', 'Categorias'],
+  ['/painel/cupons', 'Cupons'],
   ['/painel/loja', 'Minha loja'],
   ['/painel/importar', 'Importar planilha'],
 ] as const

@@ -74,6 +74,7 @@ export interface Config {
     media: Media;
     users: User;
     clientes: Cliente;
+    cupons: Cupon;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +89,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     clientes: ClientesSelect<false> | ClientesSelect<true>;
+    cupons: CuponsSelect<false> | CuponsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -155,6 +157,8 @@ export interface Pedido {
   }[];
   subtotal: number;
   taxa: number;
+  desconto?: number | null;
+  cupom?: string | null;
   total: number;
   modo: 'entrega' | 'retirada';
   nome: string;
@@ -367,6 +371,24 @@ export interface Cliente {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupons".
+ */
+export interface Cupon {
+  id: number;
+  loja?: (number | null) | Loja;
+  codigo: string;
+  tipo: 'porcentagem' | 'valor';
+  valor: number;
+  minimo?: number | null;
+  validoAte?: string | null;
+  limiteUso?: number | null;
+  usos?: number | null;
+  ativo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -416,6 +438,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'clientes';
         value: number | Cliente;
+      } | null)
+    | ({
+        relationTo: 'cupons';
+        value: number | Cupon;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -480,6 +506,8 @@ export interface PedidosSelect<T extends boolean = true> {
       };
   subtotal?: T;
   taxa?: T;
+  desconto?: T;
+  cupom?: T;
   total?: T;
   modo?: T;
   nome?: T;
@@ -633,6 +661,23 @@ export interface ClientesSelect<T extends boolean = true> {
         bairro?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupons_select".
+ */
+export interface CuponsSelect<T extends boolean = true> {
+  loja?: T;
+  codigo?: T;
+  tipo?: T;
+  valor?: T;
+  minimo?: T;
+  validoAte?: T;
+  limiteUso?: T;
+  usos?: T;
+  ativo?: T;
   updatedAt?: T;
   createdAt?: T;
 }

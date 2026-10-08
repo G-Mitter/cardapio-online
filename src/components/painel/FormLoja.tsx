@@ -8,6 +8,7 @@ import { type Bairro, lerBairros } from '@/lib/entrega'
 import { FORMAS_PAGAMENTO, type FormaPagamento } from '@/lib/pedido'
 import { COR_PADRAO, FONTES, temaDaLoja } from '@/lib/tema'
 
+import { CampoComExemplo } from './CampoComExemplo'
 import { CampoImagem } from './CampoImagem'
 import { Formulario } from './Formulario'
 
@@ -48,7 +49,10 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
   const muda = (campo: keyof DadosLoja) => (e: { target: HTMLInputElement | HTMLSelectElement }) =>
     setD((atual) => ({
       ...atual,
-      [campo]: e.target instanceof HTMLInputElement && e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+      [campo]:
+        e.target instanceof HTMLInputElement && e.target.type === 'checkbox'
+          ? e.target.checked
+          : e.target.value,
     }))
 
   return (
@@ -72,7 +76,12 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
         <div className="linha">
           <label className="campo">
             Cor principal
-            <input name="corPrincipal" type="color" value={d.corPrincipal} onChange={muda('corPrincipal')} />
+            <input
+              name="corPrincipal"
+              type="color"
+              value={d.corPrincipal}
+              onChange={muda('corPrincipal')}
+            />
           </label>
           <label className="campo">
             Fonte dos títulos
@@ -85,7 +94,12 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             </select>
           </label>
         </div>
-        <CampoImagem nome="logo" rotulo="Logo" atual={loja.logo} aoMudar={(logo) => setD((a) => ({ ...a, logo }))} />
+        <CampoImagem
+          nome="logo"
+          rotulo="Logo"
+          atual={loja.logo}
+          aoMudar={(logo) => setD((a) => ({ ...a, logo }))}
+        />
         <CampoImagem
           nome="capa"
           rotulo="Foto de capa"
@@ -95,7 +109,12 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
         <div className="linha">
           <label className="campo">
             Horário
-            <input name="horario" value={d.horario} onChange={muda('horario')} placeholder="11h às 15h" />
+            <input
+              name="horario"
+              value={d.horario}
+              onChange={muda('horario')}
+              placeholder="11h às 15h"
+            />
           </label>
           <label className="campo">
             Endereço da loja
@@ -108,7 +127,12 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
         </label>
         <div className="linha">
           <label className="marcar">
-            <input type="checkbox" name="fazEntrega" checked={d.fazEntrega} onChange={muda('fazEntrega')} />
+            <input
+              type="checkbox"
+              name="fazEntrega"
+              checked={d.fazEntrega}
+              onChange={muda('fazEntrega')}
+            />
             Faz entrega
           </label>
           {d.fazEntrega && (
@@ -119,7 +143,10 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
                 inputMode="decimal"
                 defaultValue={reais(loja.taxaEntrega)}
                 onChange={(e) =>
-                  setD((a) => ({ ...a, taxaEntrega: Number(e.target.value.replace(',', '.')) || 0 }))
+                  setD((a) => ({
+                    ...a,
+                    taxaEntrega: Number(e.target.value.replace(',', '.')) || 0,
+                  }))
                 }
               />
             </label>
@@ -135,20 +162,16 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
           </label>
         </div>
         {d.fazEntrega && (
-          <label className="campo">
-            Taxa por bairro (opcional)
-            <textarea
-              name="bairros"
-              rows={4}
-              value={d.bairros}
-              onChange={(e) => setD((a) => ({ ...a, bairros: e.target.value }))}
-              placeholder={'Centro = 5,00\nSanta Efigênia = 8,00'}
-            />
-            <small>
-              Um bairro por linha, com o valor depois do sinal de igual. Se preencher, a loja entrega só
-              nesses bairros e a taxa única acima não é usada.
-            </small>
-          </label>
+          <CampoComExemplo
+            name="bairros"
+            rotulo="Taxa por bairro (opcional)"
+            defaultValue={loja.bairros}
+            exemplo={'Centro = 5,00\nSanta Efigênia = 8,00'}
+            aoMudar={(bairros) => setD((a) => ({ ...a, bairros }))}
+          >
+            Um bairro por linha, com o valor depois do sinal de igual. Se preencher, a loja entrega
+            só nesses bairros e a taxa única acima não é usada.
+          </CampoComExemplo>
         )}
         <fieldset className="opcoes">
           <legend>Formas de pagamento aceitas</legend>
@@ -190,7 +213,11 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
 
       <section className="previa" aria-label="Prévia do cardápio">
         <p className="vazio">Prévia: assim fica o seu cardápio (ainda não salvo).</p>
-        <div className="previa__tela" inert style={temaDaLoja({ corPrincipal: d.corPrincipal || COR_PADRAO, fonte: d.fonte })}>
+        <div
+          className="previa__tela"
+          inert
+          style={temaDaLoja({ corPrincipal: d.corPrincipal || COR_PADRAO, fonte: d.fonte })}
+        >
           <Cardapio
             loja={{
               slug: d.slug,

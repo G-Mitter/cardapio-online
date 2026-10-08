@@ -6,6 +6,7 @@
  * o preço editando a página.
  */
 
+import { type Cupom, descontoDoCupom } from './cupom'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from './opcoes'
 
 export type Modo = 'entrega' | 'retirada'
@@ -59,7 +60,15 @@ export type ItemPedido = {
   escolhas: Escolhas
 }
 
-export type Pedido = { itens: ItemPedido[]; subtotal: number; taxa: number; total: number }
+export type Pedido = {
+  itens: ItemPedido[]
+  subtotal: number
+  taxa: number
+  /** Abatido pelo cupom, se houver. */
+  desconto: number
+  cupom?: string
+  total: number
+}
 
 export const MAX_QUANTIDADE = 50
 
@@ -71,6 +80,7 @@ export function montarPedido(
   escolhidos: ItemEscolhido[],
   taxaEntrega: number,
   modo: Modo,
+  cupom?: Cupom | null,
 ): { ok: true; pedido: Pedido } | { ok: false; erro: string } {
   if (escolhidos.length === 0) return { ok: false, erro: 'O pedido está vazio.' }
 
@@ -96,9 +106,22 @@ export function montarPedido(
 
   const subtotal = itens.reduce((s, i) => s + centavos(i.precoUnitario) * i.quantidade, 0)
   const taxa = modo === 'entrega' ? centavos(taxaEntrega) : 0
+  let desconto = 0
+  if (cupom) {
+    const d = descontoDoCupom(cupom, subtotal / 100)
+    if (!d.ok) return { ok: false, erro: d.erro }
+    desconto = centavos(d.desconto)
+  }
   return {
     ok: true,
-    pedido: { itens, subtotal: subtotal / 100, taxa: taxa / 100, total: (subtotal + taxa) / 100 },
+    pedido: {
+      itens,
+      subtotal: subtotal / 100,
+      taxa: taxa / 100,
+      desconto: desconto / 100,
+      cupom: cupom?.codigo,
+      total: (subtotal + taxa - desconto) / 100,
+    },
   }
 }
 
@@ -140,6 +163,7 @@ export function mensagemPedido(args: {
       (i) =>
         `• ${i.quantidade}x ${i.nome}${i.opcoes ? ` (${i.opcoes})` : ''}: ${brl(i.precoUnitario * i.quantidade)}`,
     ),
+    ...(pedido.desconto > 0 ? [`• Cupom ${pedido.cupom}: -${brl(pedido.desconto)}`] : []),
     modo === 'entrega' ? `• Entrega: ${brl(pedido.taxa)}` : '• Retirada no local',
     `*Total: ${brl(pedido.total)}*`,
     '',
