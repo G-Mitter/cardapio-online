@@ -6,6 +6,7 @@ import { bairrosComoTexto } from '@/lib/entrega'
 import { gruposDoProduto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
 import { COR_PADRAO } from '@/lib/tema'
+import { rotulosDosSelos } from '@/lib/selos'
 import type { Media } from '@/payload-types'
 
 export const metadata: Metadata = { title: 'Minha loja' }
@@ -38,6 +39,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
             esgotado: Boolean(p.esgotado),
             foto: url(p.foto),
             opcoes: gruposDoProduto(p.opcoes),
+            selos: rotulosDosSelos(p.selos),
           })),
         },
       ]

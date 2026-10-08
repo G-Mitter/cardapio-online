@@ -6,6 +6,7 @@ import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
 import { gruposDoProduto, opcoesComoTexto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
+import { SELOS } from '@/lib/selos'
 import type { Media } from '@/payload-types'
 
 import { apagarProduto, salvarProduto } from '../../../actions'
@@ -75,6 +76,20 @@ export default async function Produto({ params }: { params: Promise<{ id: string
             </select>
           </label>
         </div>
+        <fieldset className="opcoes">
+          <legend>Selos (aparecem junto do nome no cardápio)</legend>
+          {SELOS.map((s) => (
+            <label key={s.value} className="marcar">
+              <input
+                type="checkbox"
+                name="selos"
+                value={s.value}
+                defaultChecked={Boolean(produto?.selos?.includes(s.value))}
+              />
+              {s.label}
+            </label>
+          ))}
+        </fieldset>
         <label className="campo">
           Opções e adicionais (opcional)
           <textarea
