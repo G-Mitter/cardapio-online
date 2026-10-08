@@ -7,14 +7,16 @@
  * um número já cadastrado só vê o primeiro nome e os endereços escondidos
  * (src/lib/cliente.ts); o endereço completo só vai para a loja, dentro do pedido.
  */
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 
 import { type Endereco, mascararEndereco, normalizarTelefone, primeiroNome } from '@/lib/cliente'
 import { buscarCliente as buscar } from '@/lib/clientes-db'
-import type { Cliente } from '@/payload-types'
+import { taxaDoBairro } from '@/lib/entrega'
+import type { Cliente, Loja } from '@/payload-types'
 import config from '@/payload.config'
 
-export type EnderecoResumo = { id: string; resumo: string }
+/** `taxa`: o que a loja cobra para entregar neste endereço; null se ela não entrega naquele bairro. */
+export type EnderecoResumo = { id: string; resumo: string; taxa: number | null }
 
 export type Identificacao =
   | { ok: true; novo: true }
@@ -38,23 +40,39 @@ function lerEndereco(e: Partial<Endereco> | undefined): Endereco | string {
 }
 
 /** O que pode voltar para o navegador: nada de sobrenome, rua completa ou complemento. */
-const resumo = (c: Cliente): Identificacao => ({
+const resumo = (c: Cliente, loja: Loja | undefined): Identificacao => ({
   ok: true,
   novo: false,
   nome: primeiroNome(c.nome),
-  enderecos: (c.enderecos ?? []).map((e) => ({ id: e.id!, resumo: mascararEndereco(e) })),
+  enderecos: (c.enderecos ?? []).map((e) => ({
+    id: e.id!,
+    resumo: mascararEndereco(e),
+    taxa: loja ? taxaDoBairro(loja.bairros, e.bairro, loja.taxaEntrega ?? 0) : null,
+  })),
 })
 
-export async function identificarCliente(telefone: string): Promise<Identificacao> {
+const buscarLoja = async (payload: Payload, slug: string) =>
+  (
+    await payload.find({
+      collection: 'lojas',
+      where: { slug: { equals: texto(slug, 100) } },
+      limit: 1,
+      depth: 0,
+    })
+  ).docs[0]
+
+export async function identificarCliente(telefone: string, loja: string): Promise<Identificacao> {
   const tel = normalizarTelefone(telefone)
   if (!tel) return { ok: false, erro: 'Telefone incompleto. Coloque o DDD e o número.' }
   // ponytail: sem limite de consultas por IP; se alguém usar para varrer telefones, limitar aqui.
-  const cliente = await buscar(await getPayload({ config }), tel)
-  return cliente ? resumo(cliente) : { ok: true, novo: true }
+  const payload = await getPayload({ config })
+  const cliente = await buscar(payload, tel)
+  return cliente ? resumo(cliente, await buscarLoja(payload, loja)) : { ok: true, novo: true }
 }
 
 export async function cadastrarCliente(dados: {
   telefone: string
+  loja: string
   nome: string
   endereco?: Partial<Endereco>
   /** "Li e aceito os termos e a privacidade" marcado (LGPD). */
@@ -82,12 +100,13 @@ export async function cadastrarCliente(dados: {
     },
     overrideAccess: true,
   })
-  return resumo(cliente)
+  return resumo(cliente, await buscarLoja(payload, dados.loja))
 }
 
 export async function adicionarEndereco(
   telefone: string,
   dados: Partial<Endereco>,
+  loja: string,
 ): Promise<Identificacao> {
   const tel = normalizarTelefone(telefone)
   const endereco = lerEndereco(dados)
@@ -105,5 +124,5 @@ export async function adicionarEndereco(
     data: { enderecos: [...enderecos, endereco] },
     overrideAccess: true,
   })
-  return resumo(atualizado)
+  return resumo(atualizado, await buscarLoja(payload, loja))
 }

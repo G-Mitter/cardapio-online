@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { salvarLoja } from '@/app/(frontend)/painel/actions'
 import { Cardapio, type CategoriaView } from '@/components/Cardapio'
+import { type Bairro, lerBairros } from '@/lib/entrega'
 import { FORMAS_PAGAMENTO, type FormaPagamento } from '@/lib/pedido'
 import { COR_PADRAO, FONTES, temaDaLoja } from '@/lib/tema'
 
@@ -21,11 +22,19 @@ export type DadosLoja = {
   aberta: boolean
   fazEntrega: boolean
   taxaEntrega: number
+  /** Um bairro por linha, "Centro = 5,00". */
+  bairros: string
   pagamentos: FormaPagamento[]
   chavePix: string
   aceitaRetirada: boolean
   logo: string | null
   capa: string | null
+}
+
+/** Na prévia, texto com erro simplesmente não mostra bairros; o erro aparece ao salvar. */
+const bairrosDaPrevia = (texto: string): Bairro[] => {
+  const r = lerBairros(texto)
+  return r.ok ? r.bairros : []
 }
 
 const reais = (v: number) => v.toFixed(2).replace('.', ',')
@@ -125,6 +134,22 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Aceita retirada
           </label>
         </div>
+        {d.fazEntrega && (
+          <label className="campo">
+            Taxa por bairro (opcional)
+            <textarea
+              name="bairros"
+              rows={4}
+              value={d.bairros}
+              onChange={(e) => setD((a) => ({ ...a, bairros: e.target.value }))}
+              placeholder={'Centro = 5,00\nSanta Efigênia = 8,00'}
+            />
+            <small>
+              Um bairro por linha, com o valor depois do sinal de igual. Se preencher, a loja entrega só
+              nesses bairros e a taxa única acima não é usada.
+            </small>
+          </label>
+        )}
         <fieldset className="opcoes">
           <legend>Formas de pagamento aceitas</legend>
           {FORMAS_PAGAMENTO.map((f) => (
@@ -178,6 +203,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
               fazEntrega: d.fazEntrega,
               aceitaRetirada: d.aceitaRetirada,
               taxaEntrega: d.taxaEntrega,
+              bairros: bairrosDaPrevia(d.bairros),
               pagamentos: d.pagamentos,
             }}
             categorias={categorias}

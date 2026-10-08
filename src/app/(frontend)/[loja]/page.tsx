@@ -91,6 +91,7 @@ export default async function PaginaDaLoja({ params }: Props) {
         fazEntrega: loja.fazEntrega,
         aceitaRetirada: loja.aceitaRetirada,
         taxaEntrega: loja.taxaEntrega,
+        bairros: loja.bairros,
         formasPagamento: loja.formasPagamento,
       }}
       categorias={secoes}

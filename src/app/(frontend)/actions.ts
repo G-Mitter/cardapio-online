@@ -20,6 +20,7 @@ import {
 import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
+import { taxaDoBairro } from '@/lib/entrega'
 import { whatsappUrl } from '@/lib/whatsapp'
 import config from '@/payload.config'
 
@@ -78,7 +79,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   const nome = cliente.nome
   const escolhido = cliente.enderecos?.find((e) => e.id === dados.enderecoId)
   const endereco = escolhido ? enderecoCompleto(escolhido) : ''
-  if (modo === 'entrega' && !endereco) return { ok: false, erro: 'Escolha o endereço de entrega.' }
+  if (modo === 'entrega' && !escolhido) return { ok: false, erro: 'Escolha o endereço de entrega.' }
 
   const { docs } = await payload.find({
     collection: 'lojas',
@@ -122,7 +123,14 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     limit: 100,
     depth: 0,
   })
-  const resultado = montarPedido(produtos.docs, itens, loja.taxaEntrega ?? 0, modo)
+  const taxaEntrega =
+    modo === 'entrega' && escolhido
+      ? taxaDoBairro(loja.bairros, escolhido.bairro, loja.taxaEntrega ?? 0)
+      : 0
+  if (taxaEntrega === null) {
+    return { ok: false, erro: 'A loja não entrega no bairro deste endereço. Escolha outro ou retire na loja.' }
+  }
+  const resultado = montarPedido(produtos.docs, itens, taxaEntrega, modo)
   if (!resultado.ok) return resultado
   const { pedido } = resultado
 

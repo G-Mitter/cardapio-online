@@ -21,6 +21,7 @@ export type LojaDados = Pick<
   | 'fazEntrega'
   | 'aceitaRetirada'
   | 'taxaEntrega'
+  | 'bairros'
   | 'formasPagamento'
 >
 
@@ -54,6 +55,7 @@ export function LojaAoVivo({ loja, categorias }: { loja: LojaDados; categorias: 
           fazEntrega: data.fazEntrega !== false,
           aceitaRetirada: data.aceitaRetirada !== false,
           taxaEntrega: data.taxaEntrega ?? 0,
+          bairros: (data.bairros ?? []).map((b) => ({ nome: b.nome, taxa: b.taxa })),
           pagamentos: data.formasPagamento ?? [],
         }}
         categorias={categorias}
