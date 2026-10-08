@@ -3,6 +3,7 @@
 import { useLivePreview } from '@payloadcms/live-preview-react'
 
 import { Cardapio, type CategoriaView } from '@/components/Cardapio'
+import { lerMesas } from '@/lib/mesas'
 import { temaDaLoja } from '@/lib/tema'
 import type { Loja, Media } from '@/payload-types'
 
@@ -23,6 +24,7 @@ export type LojaDados = Pick<
   | 'aceitaAgendamento'
   | 'taxaEntrega'
   | 'bairros'
+  | 'mesas'
   | 'formasPagamento'
 >
 
@@ -58,6 +60,10 @@ export function LojaAoVivo({ loja, categorias }: { loja: LojaDados; categorias: 
           aceitaAgendamento: data.aceitaAgendamento === true,
           taxaEntrega: data.taxaEntrega ?? 0,
           bairros: (data.bairros ?? []).map((b) => ({ nome: b.nome, taxa: b.taxa })),
+          mesas: (() => {
+            const m = lerMesas(data.mesas ?? '')
+            return m.ok ? m.mesas : []
+          })(),
           pagamentos: data.formasPagamento ?? [],
         }}
         categorias={categorias}

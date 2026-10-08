@@ -28,6 +28,7 @@ export default async function Pedidos() {
       telefone: p.telefone ?? '',
       modo: p.modo,
       balcao: Boolean(p.balcao),
+      mesa: p.mesa ?? '',
       endereco: p.endereco ?? '',
       observacoes: p.observacoes ?? '',
       agendadoPara: p.agendadoPara ?? null,

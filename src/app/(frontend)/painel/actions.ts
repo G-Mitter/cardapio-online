@@ -12,6 +12,7 @@ import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
+import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
@@ -216,6 +217,22 @@ export async function criarPedidoPainel(
     return { ok: false, erro: 'Não foi possível salvar. Tente de novo.' }
   }
   return { ok: true, numero }
+}
+
+/** Fecha a conta da mesa: os pedidos dela saem da lista de contas abertas. */
+export async function fecharConta(mesa: string): Promise<{ ok: boolean }> {
+  const { payload, loja, comoUsuario } = await sessao()
+  try {
+    await payload.update({
+      collection: 'pedidos',
+      where: { loja: { equals: loja.id }, mesa: { equals: mesa }, contaFechada: { not_equals: true } },
+      data: { contaFechada: true },
+      ...comoUsuario,
+    })
+    return { ok: true }
+  } catch {
+    return { ok: false }
+  }
 }
 
 // ---------- Rota de entrega ----------
@@ -549,6 +566,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   if (taxa === null) return { erro: 'Taxa de entrega inválida. Use, por exemplo, 6,00.' }
   const bairros = lerBairros(texto(form, 'bairros'))
   if (!bairros.ok) return { erro: bairros.erro }
+  const mesas = lerMesas(texto(form, 'mesas'))
+  if (!mesas.ok) return { erro: mesas.erro }
   const pixelMeta = lerPixelMeta(texto(form, 'pixelMeta'))
   if (!pixelMeta.ok) return { erro: pixelMeta.erro }
   const tagGoogle = lerTagGoogle(texto(form, 'tagGoogle'))
@@ -571,6 +590,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         fazEntrega: marcado(form, 'fazEntrega'),
         taxaEntrega: taxa,
         bairros: bairros.bairros,
+        mesas: texto(form, 'mesas'),
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
         aceitaAgendamento: marcado(form, 'aceitaAgendamento'),
         formasPagamento,

@@ -164,6 +164,8 @@ export interface Pedido {
   cupom?: string | null;
   total: number;
   modo: 'entrega' | 'retirada';
+  mesa?: string | null;
+  contaFechada?: boolean | null;
   balcao?: boolean | null;
   nome: string;
   telefone?: string | null;
@@ -217,6 +219,10 @@ export interface Loja {
    * O cliente pode escolher dia e hora (de 1 hora até 7 dias à frente).
    */
   aceitaAgendamento?: boolean | null;
+  /**
+   * Quantidade ("10" vira as mesas 1 a 10) ou nomes separados por vírgula. Cada mesa tem um QR Code no painel.
+   */
+  mesas?: string | null;
   /**
    * Se tiver algum bairro aqui, a loja entrega só nestes, cada um com a sua taxa.
    */
@@ -551,6 +557,8 @@ export interface PedidosSelect<T extends boolean = true> {
   cupom?: T;
   total?: T;
   modo?: T;
+  mesa?: T;
+  contaFechada?: T;
   balcao?: T;
   nome?: T;
   telefone?: T;
@@ -627,6 +635,7 @@ export interface LojasSelect<T extends boolean = true> {
   taxaEntrega?: T;
   aceitaRetirada?: T;
   aceitaAgendamento?: T;
+  mesas?: T;
   bairros?:
     | T
     | {

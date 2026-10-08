@@ -25,6 +25,8 @@ export type DadosLoja = {
   taxaEntrega: number
   /** Um bairro por linha, "Centro = 5,00". */
   bairros: string
+  /** Quantidade ou nomes das mesas, como o dono digitou. */
+  mesas: string
   pagamentos: FormaPagamento[]
   chavePix: string
   pixelMeta: string
@@ -164,6 +166,14 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Aceita retirada
           </label>
         </div>
+        <label className="campo">
+          Mesas (opcional)
+          <input name="mesas" value={d.mesas} onChange={muda('mesas')} placeholder="10 ou Varanda 1, Varanda 2" maxLength={600} />
+          <small>
+            Quantidade (10 vira as mesas 1 a 10) ou nomes separados por vírgula. Depois de salvar, imprima os QR Codes em
+            Mesas.
+          </small>
+        </label>
         <label className="marcar">
           <input
             type="checkbox"
@@ -272,6 +282,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
               aceitaAgendamento: d.aceitaAgendamento,
               taxaEntrega: d.taxaEntrega,
               bairros: bairrosDaPrevia(d.bairros),
+              mesas: [],
               pagamentos: d.pagamentos,
             }}
             categorias={categorias}

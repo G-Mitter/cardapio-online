@@ -2,13 +2,15 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 
 import {
   aplicarCupom,
   criarPedido,
+  criarPedidoMesa,
   guardarCarrinho,
   repetirUltimoPedido,
+  type ResultadoMesa,
   type ResultadoPedido,
 } from '@/app/(frontend)/actions'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
@@ -66,6 +68,8 @@ type LojaView = {
   taxaEntrega: number
   /** Se houver, a loja entrega só nestes bairros (cada um com a sua taxa). */
   bairros: Bairro[]
+  /** Mesas com QR Code; vazio = loja sem pedido pela mesa. */
+  mesas: string[]
   pagamentos: FormaPagamento[]
 }
 
@@ -79,6 +83,16 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const dialogoOpcoes = useRef<HTMLDialogElement>(null)
   const [modo, setModo] = useState<Modo>(loja.fazEntrega ? 'entrega' : 'retirada')
   const [resultado, setResultado] = useState<ResultadoPedido | null>(null)
+  // Mesa vem do QR Code (?mesa=3); só vale se a loja tiver essa mesa cadastrada.
+  // Lida no navegador (a página do cardápio é guardada em cache e não pode depender da URL no servidor).
+  const consulta = useSyncExternalStore(
+    () => () => {},
+    () => window.location.search,
+    () => '',
+  )
+  const mesaDaUrl = new URLSearchParams(consulta).get('mesa')
+  const mesa = mesaDaUrl && loja.mesas.includes(mesaDaUrl) ? mesaDaUrl : null
+  const [resultadoMesa, setResultadoMesa] = useState<ResultadoMesa | null>(null)
   const [cliente, setCliente] = useState<ClienteEscolhido | null>(null)
   const [pagamento, setPagamento] = useState<FormaPagamento | undefined>(loja.pagamentos[0])
   const [cpfNaNota, setCpfNaNota] = useState(false)
@@ -125,7 +139,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   )
   const noPedido = (id: number) =>
     itens.filter((i) => i.produto === id).reduce((s, i) => s + i.quantidade, 0)
-  const entrega = modo === 'entrega'
+  const entrega = !mesa && modo === 'entrega'
   // Com bairros, a taxa depende do endereço escolhido (calculada no servidor, junto do cadastro).
   const semEntrega = entrega && cliente?.taxa === null
   const taxa = !entrega ? 0 : loja.bairros.length ? (cliente?.taxa ?? 0) : loja.taxaEntrega
@@ -271,6 +285,25 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     })
   }
 
+  function enviarMesa(form: FormData) {
+    if (!mesa) return
+    startTransition(async () => {
+      const r = await criarPedidoMesa({
+        loja: loja.slug,
+        mesa,
+        itens: itens.map((i) => ({ produto: i.produto, quantidade: i.quantidade, escolhas: i.escolhas })),
+        nome: String(form.get('nome') ?? ''),
+        telefone: String(form.get('telefone') ?? ''),
+        observacoes: String(form.get('observacoes') ?? ''),
+      })
+      setResultadoMesa(r)
+      if (r.ok) {
+        registrarCompra(r.total)
+        setLinhas([])
+      }
+    })
+  }
+
   return (
     <>
       <div className="wrap">
@@ -293,6 +326,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
             <span className={`status ${loja.aberta ? '' : 'fechada'}`}>
               {loja.aberta ? 'Recebendo pedidos' : 'Pedidos pausados'}
             </span>
+            {mesa && <span className="status">Mesa {mesa}</span>}
             {loja.horario && <span>{loja.horario}</span>}
             {loja.fazEntrega && <span>{textoEntrega(loja)}</span>}
             {loja.endereco && <span>{loja.endereco}</span>}
@@ -473,7 +507,17 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         </button>
         <h2 id="titulo-pedido">Seu pedido</h2>
 
-        {resultado?.ok ? (
+        {resultadoMesa?.ok ? (
+          <div className="enviado">
+            <p>
+              <strong>Pedido nº {resultadoMesa.numero} enviado para a cozinha!</strong> Quando terminar, é só pagar no
+              caixa.
+            </p>
+            <button type="button" className="enviar" onClick={() => setResultadoMesa(null)}>
+              Fazer outro pedido
+            </button>
+          </div>
+        ) : resultado?.ok ? (
           <div className="enviado">
             <p>
               <strong>Pedido nº {resultado.numero} recebido!</strong> A loja já está vendo o seu
@@ -537,6 +581,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                   <span>Total</span>
                   <span>{brl(subtotal + taxa - promocao - desconto)}</span>
                 </div>
+                {!mesa && (
                 <div className="cupom">
                   {cupom ? (
                     <p>
@@ -580,6 +625,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     </p>
                   )}
                 </div>
+                )}
               </>
             )}
             {itens.length > 0 && sugestoes.length > 0 && (
@@ -594,7 +640,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               </div>
             )}
 
-            {loja.fazEntrega && loja.aceitaRetirada && (
+            {!mesa && loja.fazEntrega && loja.aceitaRetirada && (
               <fieldset className="modo">
                 <legend>Como quer receber?</legend>
                 <label>
@@ -617,8 +663,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 </label>
               </fieldset>
             )}
-            <Identificacao loja={loja.slug} modo={modo} aoMudar={setCliente} />
-            {cliente && itens.length === 0 && (
+            {!mesa && <Identificacao loja={loja.slug} modo={modo} aoMudar={setCliente} />}
+            {!mesa && cliente && itens.length === 0 && (
               <>
                 <button type="button" className="secundario" disabled={repetindo} onClick={repetir}>
                   {repetindo ? 'Procurando…' : 'Repetir meu último pedido'}
@@ -631,8 +677,39 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               </>
             )}
 
+            {mesa && itens.length > 0 && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  enviarMesa(new FormData(e.currentTarget))
+                }}
+              >
+                <label>
+                  Seu nome (opcional)
+                  <input name="nome" maxLength={100} autoComplete="given-name" />
+                </label>
+                <label>
+                  Telefone (opcional)
+                  <input name="telefone" type="tel" maxLength={20} autoComplete="tel" />
+                </label>
+                <label>
+                  Observações
+                  <textarea name="observacoes" rows={2} maxLength={300} />
+                </label>
+                <p className="aviso-dados">O pagamento é feito no caixa, quando você terminar.</p>
+                {resultadoMesa && !resultadoMesa.ok && (
+                  <p className="erro" role="alert">
+                    {resultadoMesa.erro}
+                  </p>
+                )}
+                <button className="enviar" disabled={enviando}>
+                  {enviando ? 'Enviando…' : 'Enviar para a cozinha'}
+                </button>
+              </form>
+            )}
+
             {/* onSubmit em vez de action: assim o React não limpa os campos quando o servidor devolve um erro. */}
-            {itens.length > 0 && (
+            {!mesa && itens.length > 0 && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault()

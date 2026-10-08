@@ -86,6 +86,10 @@ export const Pedidos: CollectionConfig = {
           ],
         },
         // Lançado pela loja no balcão (modo é retirada, sem código): aparece marcado "Balcão" no painel.
+        // Pedido feito pelo QR Code da mesa: sem endereço, sem taxa, pago no caixa (modo é retirada).
+        { name: 'mesa', label: 'Mesa', type: 'text' },
+        // Quando a loja fecha a conta da mesa, os pedidos saem da lista de contas abertas.
+        { name: 'contaFechada', label: 'Conta fechada', type: 'checkbox', defaultValue: false },
         { name: 'balcao', label: 'Balcão', type: 'checkbox', defaultValue: false },
         { name: 'nome', label: 'Cliente', type: 'text', required: true },
         { name: 'telefone', label: 'Telefone', type: 'text' },
