@@ -14,6 +14,7 @@ export type PedidoView = {
   status: Status
   createdAt: string
   nome: string
+  telefone: string
   modo: 'entrega' | 'retirada'
   endereco: string
   observacoes: string
@@ -74,7 +75,14 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
               <span className="pedido__status">{ROTULO[p.status]}</span>
             </header>
             <div>
-              <b>{p.nome}</b> · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : 'Retirada'}
+              <b>{p.nome}</b>
+              {p.telefone && (
+                <>
+                  {' '}
+                  · <a href={`tel:${p.telefone}`}>{p.telefone}</a>
+                </>
+              )}{' '}
+              · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : 'Retirada'}
             </div>
             <ul>
               {p.itens.map((i, n) => (
@@ -88,11 +96,7 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
               <b>{brl(p.total)}</b>
               <div className="pedido__acoes">
                 {proximo && (
-                  <button
-                    type="button"
-                    className="botao"
-                    onClick={() => mudar(p.id, proximo)}
-                  >
+                  <button type="button" className="botao" onClick={() => mudar(p.id, proximo)}>
                     {ROTULO[proximo]}
                   </button>
                 )}

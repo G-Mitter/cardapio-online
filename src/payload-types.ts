@@ -73,6 +73,7 @@ export interface Config {
     lojas: Loja;
     media: Media;
     users: User;
+    clientes: Cliente;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +87,7 @@ export interface Config {
     lojas: LojasSelect<false> | LojasSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    clientes: ClientesSelect<false> | ClientesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -145,6 +147,7 @@ export interface Pedido {
   total: number;
   modo: 'entrega' | 'retirada';
   nome: string;
+  telefone?: string | null;
   endereco?: string | null;
   observacoes?: string | null;
   updatedAt: string;
@@ -289,6 +292,28 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clientes".
+ */
+export interface Cliente {
+  id: number;
+  /**
+   * Só DDD + número, sem 55. Ex.: 31999990000
+   */
+  telefone: string;
+  nome: string;
+  enderecos?:
+    | {
+        rua: string;
+        complemento?: string | null;
+        bairro: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -334,6 +359,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'clientes';
+        value: number | Cliente;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -398,6 +427,7 @@ export interface PedidosSelect<T extends boolean = true> {
   total?: T;
   modo?: T;
   nome?: T;
+  telefone?: T;
   endereco?: T;
   observacoes?: T;
   updatedAt?: T;
@@ -502,6 +532,24 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clientes_select".
+ */
+export interface ClientesSelect<T extends boolean = true> {
+  telefone?: T;
+  nome?: T;
+  enderecos?:
+    | T
+    | {
+        rua?: T;
+        complemento?: T;
+        bairro?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

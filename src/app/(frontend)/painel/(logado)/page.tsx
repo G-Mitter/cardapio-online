@@ -24,6 +24,7 @@ export default async function Pedidos() {
       status: p.status,
       createdAt: p.createdAt,
       nome: p.nome,
+      telefone: p.telefone ?? '',
       modo: p.modo,
       endereco: p.endereco ?? '',
       observacoes: p.observacoes ?? '',

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRef, useState, useTransition } from 'react'
 
 import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
+import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import { normalizar } from '@/lib/planilha'
 
@@ -42,6 +43,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [carrinho, setCarrinho] = useState<Record<number, number>>({})
   const [modo, setModo] = useState<Modo>(loja.fazEntrega ? 'entrega' : 'retirada')
   const [resultado, setResultado] = useState<ResultadoPedido | null>(null)
+  const [cliente, setCliente] = useState<ClienteEscolhido | null>(null)
   const [enviando, startTransition] = useTransition()
   const dialogo = useRef<HTMLDialogElement>(null)
   const [busca, setBusca] = useState('')
@@ -81,8 +83,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         loja: loja.slug,
         itens: itens.map((p) => ({ produto: p.id, quantidade: carrinho[p.id] })),
         modo,
-        nome: String(form.get('nome') ?? ''),
-        endereco: String(form.get('endereco') ?? ''),
+        telefone: cliente?.telefone ?? '',
+        enderecoId: cliente?.enderecoId,
         observacoes: String(form.get('observacoes') ?? ''),
       })
       setResultado(r)
@@ -253,6 +255,31 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               <span>{brl(subtotal + taxa)}</span>
             </div>
 
+            {loja.fazEntrega && loja.aceitaRetirada && (
+              <fieldset className="modo">
+                <legend>Como quer receber?</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="modo"
+                    checked={modo === 'entrega'}
+                    onChange={() => setModo('entrega')}
+                  />
+                  Entrega
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="modo"
+                    checked={modo === 'retirada'}
+                    onChange={() => setModo('retirada')}
+                  />
+                  Retirar na loja
+                </label>
+              </fieldset>
+            )}
+            <Identificacao modo={modo} aoMudar={setCliente} />
+
             {/* onSubmit em vez de action: assim o React não limpa os campos quando o servidor devolve um erro. */}
             <form
               onSubmit={(e) => {
@@ -260,45 +287,13 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 enviar(new FormData(e.currentTarget))
               }}
             >
-              {loja.fazEntrega && loja.aceitaRetirada && (
-                <fieldset className="modo">
-                  <legend>Como quer receber?</legend>
-                  <label>
-                    <input
-                      type="radio"
-                      name="modo"
-                      checked={modo === 'entrega'}
-                      onChange={() => setModo('entrega')}
-                    />
-                    Entrega
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="modo"
-                      checked={modo === 'retirada'}
-                      onChange={() => setModo('retirada')}
-                    />
-                    Retirar na loja
-                  </label>
-                </fieldset>
-              )}
-              <label>
-                Seu nome
-                <input name="nome" required maxLength={80} autoComplete="name" />
-              </label>
-              {modo === 'entrega' && (
-                <label>
-                  Endereço de entrega
-                  <input name="endereco" required maxLength={200} autoComplete="street-address" />
-                </label>
-              )}
               <label>
                 Observações
                 <textarea name="observacoes" rows={2} maxLength={300} />
               </label>
               <p className="aviso-dados">
-                Seu nome e endereço vão só para {loja.nome}.{' '}
+                Seu cadastro fica guardado para os próximos pedidos. Nome e endereço vão só para a
+                loja que recebe o pedido.{' '}
                 <a href="/privacidade" target="_blank">
                   Privacidade
                 </a>
@@ -308,7 +303,10 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                   {resultado.erro}
                 </p>
               )}
-              <button className="enviar" disabled={enviando}>
+              <button
+                className="enviar"
+                disabled={enviando || !cliente || (modo === 'entrega' && !cliente.enderecoId)}
+              >
                 {enviando ? 'Enviando…' : 'Enviar pedido no WhatsApp'}
               </button>
             </form>
