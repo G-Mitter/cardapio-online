@@ -14,7 +14,8 @@ import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
-import { CATEGORIAS, lerData, proximoVencimento, type Tipo, TIPOS } from '@/lib/financeiro'
+import { CATEGORIAS, lerData, proximoVencimento, somarDias, type Tipo, TIPOS } from '@/lib/financeiro'
+import { conferir, lerRelatorio, type PagamentoLoja, recebimentosPorData, TOLERANCIA_MIN } from '@/lib/maquininha'
 import { fecharPagamento, lerTaxaServico, type Recebido, totalDaConta } from '@/lib/conta'
 import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
@@ -1030,4 +1031,96 @@ export async function trocarSenhaGarcom(id: number, _: Estado, form: FormData): 
   if (senha.length < 6) return { erro: 'A senha precisa de pelo menos 6 caracteres.' }
   await mudarGarcom(id, { password: senha })
   redirect('/painel/garcons')
+}
+
+/**
+ * Compara o relatório da maquininha (texto CSV) com os pagamentos em cartão da loja nos mesmos dias.
+ * O arquivo não é guardado. Com `lancar`, o líquido de cada data prevista vira uma conta a receber
+ * (uma por data; repetir a conferência do mesmo relatório não duplica).
+ */
+export async function conferirMaquininha(texto: string, lancar: boolean) {
+  const { payload, loja, comoUsuario } = await sessao()
+  if (texto.length > 1_000_000) return { erro: 'Arquivo grande demais. Envie o relatório de um período menor.' }
+  const leitura = lerRelatorio(texto)
+  if (!leitura.vendas.length) return { erro: leitura.erros[0]?.motivo ?? 'Não achei vendas no relatório.' }
+
+  const dias = leitura.vendas.map((v) => v.dia).sort()
+  const primeiro = dias[0]
+  const ultimo = dias[dias.length - 1]
+  const folga = TOLERANCIA_MIN * 60_000
+  const inicio = new Date(`${primeiro}T00:00:00-03:00`).getTime() - folga
+  const fim = new Date(`${somarDias(ultimo, 1)}T00:00:00-03:00`).getTime() + folga
+  const busca = { limit: 0, depth: 0, ...comoUsuario } as const
+  // Pedidos feitos até um dia antes podem ter sido finalizados dentro do período.
+  const desde = new Date(`${somarDias(primeiro, -1)}T00:00:00-03:00`).toISOString()
+  const [pedidos, fechamentos] = await Promise.all([
+    payload.find({
+      collection: 'pedidos',
+      where: {
+        loja: { equals: loja.id },
+        status: { equals: 'entregue' },
+        pagamento: { equals: 'cartao' },
+        mesa: { exists: false },
+        createdAt: { greater_than_equal: desde, less_than: new Date(fim).toISOString() },
+      },
+      ...busca,
+    }),
+    payload.find({
+      collection: 'fechamentos',
+      where: { loja: { equals: loja.id }, createdAt: { greater_than_equal: new Date(inicio).toISOString(), less_than: new Date(fim).toISOString() } },
+      ...busca,
+    }),
+  ])
+  const pagamentos: PagamentoLoja[] = [
+    // ponytail: updatedAt é a finalização (ou o acerto do entregador, que só alarga a janela); precisa de campo próprio se a janela ficar larga demais.
+    ...pedidos.docs.map((p) => ({
+      id: `p${p.id}`,
+      rotulo: `Pedido nº ${p.numero} · ${p.nome}`,
+      valor: p.total,
+      de: new Date(p.createdAt).getTime(),
+      ate: new Date(p.updatedAt).getTime(),
+    })),
+    ...fechamentos.docs.flatMap((f) =>
+      (f.pagamentos ?? [])
+        .filter((x) => x.forma === 'cartao')
+        .map((x, i) => ({
+          id: `f${f.id}-${i}`,
+          rotulo: `Mesa ${f.mesa}`,
+          valor: x.valor,
+          de: new Date(f.createdAt).getTime(),
+          ate: new Date(f.createdAt).getTime(),
+        })),
+    ),
+  ].filter((x) => x.ate >= inicio && x.de <= fim)
+
+  const resultado = conferir(leitura.vendas, pagamentos)
+
+  let lancados = 0
+  if (lancar) {
+    for (const { data, valor } of recebimentosPorData(leitura.vendas)) {
+      const descricao = `Maquininha · recebimento de ${data.split('-').reverse().join('/')}`
+      const { totalDocs } = await payload.count({
+        collection: 'lancamentos',
+        where: { loja: { equals: loja.id }, tipo: { equals: 'receber' }, descricao: { equals: descricao } },
+        ...comoUsuario,
+      })
+      if (totalDocs) continue
+      await payload.create({
+        collection: 'lancamentos',
+        data: { loja: loja.id, tipo: 'receber', descricao, valor, vencimento: data, categoria: 'Outros', repetir: false },
+        ...comoUsuario,
+      })
+      lancados++
+    }
+  }
+
+  return {
+    erro: null,
+    resultado,
+    erros: leitura.erros,
+    ignoradas: leitura.ignoradas,
+    temTaxa: leitura.temTaxa,
+    semPrevisao: lancar && !recebimentosPorData(leitura.vendas).length,
+    lancados,
+  }
 }
