@@ -1,0 +1,42 @@
+# Backup diário do banco (Neon).
+# Todo dia às 3h (horário de Brasília) o GitHub copia o banco inteiro, criptografa
+# com a senha BACKUP_SENHA e guarda o arquivo aqui no GitHub por 30 dias,
+# fora do Neon. Como restaurar: docs/backup.md.
+#
+# Precisa de dois "secrets" em Settings → Secrets and variables → Actions:
+#   DATABASE_URL  endereço do banco SEM pooler (na Vercel: DATABASE_URL_UNPOOLED)
+#   BACKUP_SENHA  uma senha longa só para os backups (guarde num lugar seguro)
+name: Backup do banco
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # 6h UTC = 3h em Brasília
+  workflow_dispatch: # botão "Run workflow" para rodar na hora
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copiar e criptografar o banco
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DATABASE_URL" ] || [ -z "$BACKUP_SENHA" ]; then
+            echo "::error::Faltam os secrets DATABASE_URL e BACKUP_SENHA (veja docs/backup.md)."
+            exit 1
+          fi
+          # O pg_dump precisa ser da mesma versão do banco ou mais nova; a imagem 18 lê bancos até a versão 18.
+          docker run --rm -e DATABASE_URL postgres:18 sh -c 'pg_dump --no-owner --no-acl "$DATABASE_URL"' \
+            | gzip \
+            | gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 --passphrase "$BACKUP_SENHA" \
+              -o "banco-$(date -u +%F).sql.gz.gpg"
+          ls -lh banco-*.gpg
+
+      # O repositório é público: o arquivo só sai daqui criptografado.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: banco-${{ github.run_id }}
+          path: banco-*.sql.gz.gpg
+          retention-days: 30
