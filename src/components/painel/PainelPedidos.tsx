@@ -7,7 +7,7 @@ import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
 import { avisoDeStatus, PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
 import { whatsappUrl } from '@/lib/whatsapp'
 
-import { mudarStatus } from '@/app/(frontend)/painel/actions'
+import { montarRota, mudarStatus, type Rota } from '@/app/(frontend)/painel/actions'
 
 export type PedidoView = {
   id: number
@@ -41,6 +41,7 @@ const hora = (iso: string) =>
 export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const [naRota, setNaRota] = useState<number[]>([])
   // A troca de status aparece na hora; se o servidor recusar, a próxima atualização desfaz.
   const [lista, trocar] = useOptimistic(
     pedidos,
@@ -78,6 +79,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
       <p>
         {abertos} em aberto · {lista.length} hoje. A lista se atualiza sozinha.
       </p>
+      <MontarRota escolhidos={naRota} aoLimpar={() => setNaRota([])} />
       {lista.map((p) => {
         const proximo = PROXIMO[p.status]
         const avisoAtual = p.status !== 'novo' && aviso(p, p.status)
@@ -98,6 +100,20 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
               )}{' '}
               · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : 'Retirada'}
             </div>
+            {p.modo === 'entrega' && p.endereco && PROXIMO[p.status] && (
+              <label className="marcar">
+                <input
+                  type="checkbox"
+                  checked={naRota.includes(p.id)}
+                  onChange={(e) =>
+                    setNaRota((ids) =>
+                      e.target.checked ? [...ids, p.id] : ids.filter((id) => id !== p.id),
+                    )
+                  }
+                />
+                Vai na rota do entregador
+              </label>
+            )}
             <ul>
               {p.itens.map((i, n) => (
                 <li key={n}>
@@ -149,6 +165,62 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
         )
       })}
     </div>
+  )
+}
+
+/** Pedidos marcados viram uma rota no Google Maps para mandar ao entregador pelo WhatsApp. */
+function MontarRota({ escolhidos, aoLimpar }: { escolhidos: number[]; aoLimpar: () => void }) {
+  const [rota, setRota] = useState<Rota | null>(null)
+  const [montando, startTransition] = useTransition()
+
+  if (rota?.ok) {
+    const texto = `Rota de entrega: pedidos ${rota.numeros.map((n) => `nº ${n}`).join(', ')}\n${rota.link}`
+    return (
+      <section className="rota">
+        <p>
+          <b>Ordem das entregas:</b> {rota.numeros.map((n) => `nº ${n}`).join(' → ')}
+          {!rota.otimizada && ' (na ordem dos pedidos; o Google não ordenou desta vez)'}
+        </p>
+        <div className="pedido__acoes">
+          <a
+            className="botao"
+            href={`https://wa.me/?text=${encodeURIComponent(texto)}`}
+            target="_blank"
+            rel="noopener"
+          >
+            Mandar para o entregador
+          </a>
+          <a className="botao secundario" href={rota.link} target="_blank" rel="noopener">
+            Ver no Maps
+          </a>
+          <button
+            type="button"
+            className="botao secundario"
+            onClick={() => {
+              setRota(null)
+              aoLimpar()
+            }}
+          >
+            Nova rota
+          </button>
+        </div>
+      </section>
+    )
+  }
+
+  if (!escolhidos.length) return null
+  return (
+    <section className="rota rota--fixa">
+      <button
+        type="button"
+        className="botao"
+        disabled={montando}
+        onClick={() => startTransition(async () => setRota(await montarRota(escolhidos)))}
+      >
+        {montando ? 'Montando a rota…' : `Montar rota (${escolhidos.length})`}
+      </button>
+      {rota && !rota.ok && <p className="erro">{rota.erro}</p>}
+    </section>
   )
 }
 
