@@ -77,6 +77,7 @@ export interface Config {
     cupons: Cupon;
     carrinhos: Carrinho;
     entregadores: Entregadore;
+    fechamentos: Fechamento;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -94,6 +95,7 @@ export interface Config {
     cupons: CuponsSelect<false> | CuponsSelect<true>;
     carrinhos: CarrinhosSelect<false> | CarrinhosSelect<true>;
     entregadores: EntregadoresSelect<false> | EntregadoresSelect<true>;
+    fechamentos: FechamentosSelect<false> | FechamentosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -241,6 +243,10 @@ export interface Loja {
    */
   mesas?: string | null;
   atendimentoMesas?: ('ambos' | 'garcom' | 'cliente') | null;
+  /**
+   * Sugerida ao fechar a conta da mesa; o cliente pode dispensar. Vazio ou 0 = não cobra.
+   */
+  taxaServico?: number | null;
   instrucoesMesa?: string | null;
   /**
    * Se tiver algum bairro aqui, a loja entrega só nestes, cada um com a sua taxa.
@@ -467,6 +473,31 @@ export interface Carrinho {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fechamentos".
+ */
+export interface Fechamento {
+  id: number;
+  loja?: (number | null) | Loja;
+  mesa: string;
+  pedidos?: (number | Pedido)[] | null;
+  subtotal: number;
+  taxaServico?: number | null;
+  total: number;
+  pagamentos?:
+    | {
+        forma: 'pix' | 'cartao' | 'dinheiro';
+        valor: number;
+        id?: string | null;
+      }[]
+    | null;
+  troco?: number | null;
+  garcom?: (number | null) | User;
+  fechadoPor?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -528,6 +559,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'entregadores';
         value: number | Entregadore;
+      } | null)
+    | ({
+        relationTo: 'fechamentos';
+        value: number | Fechamento;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -680,6 +715,7 @@ export interface LojasSelect<T extends boolean = true> {
   aceitaAgendamento?: T;
   mesas?: T;
   atendimentoMesas?: T;
+  taxaServico?: T;
   instrucoesMesa?: T;
   bairros?:
     | T
@@ -809,6 +845,30 @@ export interface EntregadoresSelect<T extends boolean = true> {
   nome?: T;
   whatsapp?: T;
   ativo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fechamentos_select".
+ */
+export interface FechamentosSelect<T extends boolean = true> {
+  loja?: T;
+  mesa?: T;
+  pedidos?: T;
+  subtotal?: T;
+  taxaServico?: T;
+  total?: T;
+  pagamentos?:
+    | T
+    | {
+        forma?: T;
+        valor?: T;
+        id?: T;
+      };
+  troco?: T;
+  garcom?: T;
+  fechadoPor?: T;
   updatedAt?: T;
   createdAt?: T;
 }

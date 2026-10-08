@@ -1,15 +1,19 @@
 import type { Metadata } from 'next'
 
 import { Formulario } from '@/components/painel/Formulario'
+import { resumoPorGarcom } from '@/lib/conta'
+import { intervaloDoDia } from '@/lib/entregadores'
 import { sessao } from '@/lib/painel'
+import { brl } from '@/lib/pedido'
 
 import { ligarGarcom, salvarGarcom, trocarSenhaGarcom } from '../../actions'
 
 export const metadata: Metadata = { title: 'Garçons' }
 
 /** Garçons da loja: cadastro, liga/desliga e troca de senha. Eles entram no mesmo /painel/entrar. */
-export default async function Garcons() {
-  const { payload, loja } = await sessao()
+export default async function Garcons({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
+  const { payload, loja, comoUsuario } = await sessao()
+  const { dia, de, ate } = intervaloDoDia((await searchParams).dia)
   // Os garçons não têm acesso próprio; o servidor lista só os desta loja, depois de conferir o dono.
   const { docs } = await payload.find({
     collection: 'users',
@@ -18,6 +22,21 @@ export default async function Garcons() {
     limit: 0,
     depth: 0,
   })
+  const { docs: contas } = await payload.find({
+    collection: 'fechamentos',
+    where: { loja: { equals: loja.id }, createdAt: { greater_than_equal: de, less_than: ate } },
+    limit: 0,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const nomes = new Map(docs.map((g) => [g.id, g.nome ?? g.username ?? 'Garçom']))
+  const resumo = resumoPorGarcom(
+    contas.map((c) => ({
+      garcom: nomes.get(typeof c.garcom === 'number' ? c.garcom : -1) ?? 'Sem garçom',
+      subtotal: c.subtotal,
+      taxaServico: c.taxaServico ?? 0,
+    })),
+  )
 
   return (
     <>
@@ -71,6 +90,35 @@ export default async function Garcons() {
         </div>
         <button className="botao">Cadastrar</button>
       </Formulario>
+      <h2>Mesas fechadas no dia</h2>
+      <form className="linha" method="get">
+        <label className="campo curto">
+          Dia
+          <input name="dia" type="date" defaultValue={dia} />
+        </label>
+        <button className="botao secundario">Ver</button>
+      </form>
+      {!resumo.length ? (
+        <p className="vazio">Nenhuma conta de mesa fechada neste dia.</p>
+      ) : (
+        <ul className="lista">
+          {resumo.map((r) => (
+            <li key={r.garcom}>
+              <div className="lista__nome">
+                <b>{r.garcom}</b>
+                <span>
+                  {r.mesas} {r.mesas === 1 ? 'mesa' : 'mesas'} · vendido {brl(r.vendido)} · taxa de serviço {brl(r.taxaServico)}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p>
+        <small>
+          A taxa de serviço é gorjeta dos funcionários; o repasse é com o seu contador. Conta pelo dia em que a conta foi fechada.
+        </small>
+      </p>
       <p>
         <small>
           O login do garçom fica &quot;usuário.{loja.slug}&quot;. Garçom desligado não entra mais, mas continua no

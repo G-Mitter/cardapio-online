@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ContasMesas } from '@/components/painel/ContasMesas'
 import { agruparMesas } from '@/lib/mesas'
 import { sessao } from '@/lib/painel'
+import { FORMAS_PAGAMENTO } from '@/lib/pedido'
 
 export const metadata: Metadata = { title: 'Mesas' }
 
@@ -46,7 +47,11 @@ export default async function Mesas() {
           Imprimir QR Codes
         </Link>
       </div>
-      <ContasMesas contas={contas} />
+      <ContasMesas
+        contas={contas}
+        taxaPct={loja.taxaServico ?? 0}
+        formas={FORMAS_PAGAMENTO.filter((f) => loja.formasPagamento?.includes(f.value))}
+      />
     </>
   )
 }

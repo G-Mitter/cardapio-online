@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { FecharConta } from '@/components/painel/FecharConta'
 import { NovoPedido } from '@/components/painel/NovoPedido'
 import { gruposDoProduto } from '@/lib/opcoes'
 import { lerMesas } from '@/lib/mesas'
 import { sessaoGarcom } from '@/lib/painel'
-import { brl } from '@/lib/pedido'
+import { brl, FORMAS_PAGAMENTO } from '@/lib/pedido'
 
 export const metadata: Metadata = { title: 'Mesa' }
 
@@ -65,6 +66,12 @@ export default async function MesaDoGarcom({ params }: { params: Promise<{ mesa:
           <p>
             <b>Conta até agora: {brl(total)}</b>
           </p>
+          <FecharConta
+            mesa={mesa}
+            subtotal={total}
+            taxaPct={loja.taxaServico ?? 0}
+            formas={FORMAS_PAGAMENTO.filter((f) => loja.formasPagamento?.includes(f.value))}
+          />
         </>
       )}
       <NovoPedido
