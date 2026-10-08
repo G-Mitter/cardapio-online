@@ -16,6 +16,7 @@ type PedidoCozinha = {
   nome: string
   modo: 'entrega' | 'retirada'
   balcao: boolean
+  mesa: string
   agendadoPara: string | null
   observacoes: string
   itens: { nome: string; quantidade: number; opcoes: string }[]
@@ -127,7 +128,7 @@ export function TelaCozinha({ pedidos }: { pedidos: PedidoCozinha[] }) {
                     <header>
                       <b>Nº {p.numero}</b>
                       <span>
-                        {hora(p.createdAt)} · {rotuloTipo(p.modo, p.balcao)}
+                        {hora(p.createdAt)} · {rotuloTipo(p.modo, p.balcao, p.mesa)}
                       </span>
                     </header>
                     <ul>

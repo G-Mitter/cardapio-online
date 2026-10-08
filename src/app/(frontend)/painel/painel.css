@@ -507,3 +507,30 @@ details.perigo form {
   font-size: 1rem;
   opacity: 0.7;
 }
+
+/* QR Codes das mesas: uma grade que também sai bem na impressora. */
+.qrs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+.qr {
+  margin: 0;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  text-align: center;
+  break-inside: avoid;
+}
+.qr svg {
+  width: 100%;
+  height: auto;
+}
+.qr figcaption {
+  display: grid;
+}
+@media print {
+  .topo,
+  .nao-imprimir {
+    display: none;
+  }
+}

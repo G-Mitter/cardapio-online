@@ -6,6 +6,7 @@ import { sair, trocarLoja } from '../actions'
 const MENU = [
   ['/painel', 'Pedidos'],
   ['/painel/cozinha', 'Cozinha'],
+  ['/painel/mesas', 'Mesas'],
   ['/painel/produtos', 'Produtos'],
   ['/painel/categorias', 'Categorias'],
   ['/painel/cupons', 'Cupons'],

@@ -34,6 +34,7 @@ export default async function Cozinha() {
       nome: p.nome,
       modo: p.modo,
       balcao: Boolean(p.balcao),
+      mesa: p.mesa ?? '',
       agendadoPara: p.agendadoPara ?? null,
       observacoes: p.observacoes ?? '',
       itens: (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade, opcoes: i.opcoes ?? '' })),

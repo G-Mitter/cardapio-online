@@ -19,6 +19,8 @@ export type PedidoView = {
   telefone: string
   modo: 'entrega' | 'retirada'
   balcao: boolean
+  /** Pedido do QR Code da mesa; vazio nos demais. */
+  mesa: string
   endereco: string
   observacoes: string
   /** ISO; só em pedido agendado. */
@@ -59,7 +61,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
   }, [router])
 
   const aviso = (p: PedidoView, status: Status) =>
-    p.telefone ? whatsappUrl(p.telefone, avisoDeStatus({ ...p, status, loja }) ?? undefined) : null
+    p.telefone && !p.mesa ? whatsappUrl(p.telefone, avisoDeStatus({ ...p, status, loja }) ?? undefined) : null
 
   function mudar(p: PedidoView, status: Status) {
     const id = p.id
@@ -102,7 +104,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
                   · <a href={`tel:${p.telefone}`}>{p.telefone}</a>
                 </>
               )}{' '}
-              · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : rotuloTipo(p.modo, p.balcao)}
+              · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : rotuloTipo(p.modo, p.balcao, p.mesa)}
             </div>
             {p.modo === 'entrega' && p.endereco && PROXIMO[p.status] && (
               <label className="marcar">
@@ -137,6 +139,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
               <b>
                 {brl(p.total)}
                 {p.pagamento && ` · ${rotuloPagamento(p.pagamento)}`}
+                {p.mesa && ' · Pagar no caixa'}
                 {p.trocoPara ? ` (troco para ${brl(p.trocoPara)})` : ''}
               </b>
               <div className="pedido__acoes">

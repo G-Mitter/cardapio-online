@@ -114,6 +114,12 @@ export const Lojas: CollectionConfig = {
       admin: { description: 'O cliente pode escolher dia e hora (de 1 hora até 7 dias à frente).' },
     },
     {
+      name: 'mesas',
+      label: 'Mesas',
+      type: 'text',
+      admin: { description: 'Quantidade ("10" vira as mesas 1 a 10) ou nomes separados por vírgula. Cada mesa tem um QR Code no painel.' },
+    },
+    {
       name: 'bairros',
       label: 'Taxa por bairro',
       type: 'array',

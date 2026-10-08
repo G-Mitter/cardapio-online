@@ -20,6 +20,7 @@ import {
 import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
+import { lerMesas } from '@/lib/mesas'
 import { lerAgendamento, rotuloAgendamento } from '@/lib/agendamento'
 import { resumoDosItens } from '@/lib/carrinho'
 import { type Cupom, normalizarCodigo } from '@/lib/cupom'
@@ -264,6 +265,90 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     pix,
     codigoRetirada,
   }
+}
+
+export type ResultadoMesa = { ok: true; numero: number; total: number } | { ok: false; erro: string }
+
+/**
+ * Pedido feito pelo QR Code da mesa: sem cadastro, sem endereço, sem taxa e sem pagamento no site
+ * (paga no caixa). Nome e telefone são opcionais. Preço e total saem do banco, como em `criarPedido`.
+ */
+export async function criarPedidoMesa(dados: {
+  loja: string
+  mesa: string
+  itens: ItemEscolhido[]
+  nome: string
+  telefone: string
+  observacoes: string
+}): Promise<ResultadoMesa> {
+  const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 100) : []
+  const telefoneDigitado = texto(dados.telefone, 20)
+  const telefone = normalizarTelefone(telefoneDigitado)
+  if (telefoneDigitado && !telefone) return { ok: false, erro: 'Telefone incompleto. Use DDD e número, ou deixe em branco.' }
+
+  const payload = await getPayload({ config })
+  const { docs } = await payload.find({
+    collection: 'lojas',
+    where: { slug: { equals: texto(dados.loja, 100) } },
+    limit: 1,
+    depth: 0,
+  })
+  const loja = docs[0]
+  if (!loja) return { ok: false, erro: 'Loja não encontrada.' }
+  if (loja.aberta === false) return { ok: false, erro: 'A loja não está recebendo pedidos agora.' }
+  const mesas = lerMesas(loja.mesas ?? '')
+  const mesa = texto(dados.mesa, 30)
+  if (!mesas.ok || !mesas.mesas.includes(mesa)) return { ok: false, erro: 'Mesa não encontrada. Leia o QR Code da mesa de novo.' }
+
+  const umaHoraAtras = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const recentes = await payload.count({
+    collection: 'pedidos',
+    where: { loja: { equals: loja.id }, createdAt: { greater_than: umaHoraAtras } },
+    overrideAccess: true,
+  })
+  if (recentes.totalDocs >= MAX_POR_HORA) return { ok: false, erro: 'Muitos pedidos agora. Chame alguém da casa.' }
+
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: { loja: { equals: loja.id }, id: { in: itens.map((i) => i.produto) } },
+    limit: 100,
+    depth: 0,
+  })
+  const r = montarPedido(produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })), itens, 0, 'retirada')
+  if (!r.ok) return r
+  const { pedido } = r
+
+  // ponytail: mesmo número do criarPedido (total de pedidos + 1), com a mesma chance de repetir em pedidos no mesmo instante.
+  const total = await payload.count({ collection: 'pedidos', where: { loja: { equals: loja.id } }, overrideAccess: true })
+  const numero = total.totalDocs + 1
+  await payload.create({
+    collection: 'pedidos',
+    overrideAccess: true,
+    data: {
+      loja: loja.id,
+      numero,
+      status: 'novo',
+      itens: pedido.itens.map(({ produto, nome, quantidade, precoUnitario, opcoes, escolhas }) => ({
+        produto: Number(produto),
+        nome,
+        quantidade,
+        precoUnitario,
+        opcoes,
+        escolhas,
+      })),
+      subtotal: pedido.subtotal,
+      taxa: 0,
+      promocao: pedido.promocao,
+      desconto: 0,
+      total: pedido.total,
+      modo: 'retirada',
+      mesa,
+      nome: texto(dados.nome, 100) || `Mesa ${mesa}`,
+      telefone,
+      observacoes: texto(dados.observacoes, 300),
+    },
+  })
+  return { ok: true, numero, total: pedido.total }
 }
 
 export type ResultadoRepetir =

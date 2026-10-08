@@ -17,6 +17,7 @@ import * as migration_20261008_185816_agendamento_pedidos from './20261008_18581
 import * as migration_20261008_190223_carrinhos_abandonados from './20261008_190223_carrinhos_abandonados';
 import * as migration_20261008_190612_pixels_anuncios from './20261008_190612_pixels_anuncios';
 import * as migration_20261008_192057_pedido_balcao from './20261008_192057_pedido_balcao';
+import * as migration_20261008_192626_mesas_qrcode from './20261008_192626_mesas_qrcode';
 
 export const migrations = [
   {
@@ -112,6 +113,11 @@ export const migrations = [
   {
     up: migration_20261008_192057_pedido_balcao.up,
     down: migration_20261008_192057_pedido_balcao.down,
-    name: '20261008_192057_pedido_balcao'
+    name: '20261008_192057_pedido_balcao',
+  },
+  {
+    up: migration_20261008_192626_mesas_qrcode.up,
+    down: migration_20261008_192626_mesas_qrcode.down,
+    name: '20261008_192626_mesas_qrcode'
   },
 ];
