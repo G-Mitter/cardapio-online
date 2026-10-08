@@ -14,6 +14,7 @@ import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
+import { CATEGORIAS, lerData, proximoVencimento, type Tipo, TIPOS } from '@/lib/financeiro'
 import { fecharPagamento, lerTaxaServico, type Recebido, totalDaConta } from '@/lib/conta'
 import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
@@ -899,6 +900,87 @@ export async function salvarInstrucoesMesa(_: Estado, form: FormData): Promise<E
     return { erro: mensagem(e) }
   }
   redirect('/painel/mesas/qr')
+}
+
+// ---------- Financeiro ----------
+
+export async function salvarLancamento(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao()
+  const tipo = TIPOS.find((t) => t.value === texto(form, 'tipo'))?.value
+  const descricao = texto(form, 'descricao').slice(0, 120)
+  const valor = lerPreco(texto(form, 'valor'))
+  const vencimento = lerData(texto(form, 'vencimento'))
+  const categoria = CATEGORIAS.find((c) => c === texto(form, 'categoria'))
+  if (!tipo) return { erro: 'Escolha se é a pagar ou a receber.' }
+  if (!descricao) return { erro: 'Coloque a descrição da conta.' }
+  if (valor === null || valor <= 0) return { erro: 'Valor inválido. Use, por exemplo, 1500,00.' }
+  if (!vencimento) return { erro: 'Escolha a data de vencimento.' }
+  try {
+    await payload.create({
+      collection: 'lancamentos',
+      data: {
+        loja: loja.id,
+        tipo,
+        descricao,
+        valor,
+        vencimento,
+        categoria,
+        observacao: texto(form, 'observacao').slice(0, 300),
+        repetir: marcado(form, 'repetir'),
+        diaDoMes: Number(vencimento.slice(8)),
+      },
+      ...comoUsuario,
+    })
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect(`/painel/financeiro?aba=${tipo}`)
+}
+
+/** Dá baixa: data e valor pagos (podem ter juros ou desconto). Conta fixa gera a do mês seguinte. */
+export async function baixarLancamento(id: number, form: FormData) {
+  const { payload, loja, comoUsuario } = await sessao()
+  const { docs } = await payload.find({
+    collection: 'lancamentos',
+    where: { id: { equals: id }, loja: { equals: loja.id }, pagoEm: { exists: false } },
+    limit: 1,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const conta = docs[0]
+  const pagoEm = lerData(texto(form, 'pagoEm'))
+  const valorPago = lerPreco(texto(form, 'valorPago') || String(conta?.valor ?? ''))
+  if (conta && pagoEm && valorPago !== null) {
+    await payload.update({ collection: 'lancamentos', id, data: { pagoEm, valorPago }, ...comoUsuario })
+    if (conta.repetir) {
+      await payload.create({
+        collection: 'lancamentos',
+        data: {
+          loja: loja.id,
+          tipo: conta.tipo,
+          descricao: conta.descricao,
+          valor: conta.valor,
+          vencimento: proximoVencimento(conta.vencimento, conta.diaDoMes ?? undefined),
+          categoria: conta.categoria,
+          observacao: conta.observacao,
+          repetir: true,
+          diaDoMes: conta.diaDoMes,
+        },
+        ...comoUsuario,
+      })
+    }
+  }
+  redirect(`/painel/financeiro?aba=${(conta?.tipo as Tipo | undefined) ?? 'pagar'}`)
+}
+
+export async function apagarLancamento(id: number) {
+  const { payload, loja, comoUsuario } = await sessao()
+  await payload.delete({
+    collection: 'lancamentos',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    ...comoUsuario,
+  })
+  redirect('/painel/financeiro')
 }
 
 // ---------- Garçons ----------
