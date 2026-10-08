@@ -191,6 +191,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       })),
       subtotal: pedido.subtotal,
       taxa: pedido.taxa,
+      promocao: pedido.promocao,
       desconto: pedido.desconto,
       cupom: pedido.cupom,
       total: pedido.total,

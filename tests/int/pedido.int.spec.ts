@@ -156,3 +156,25 @@ describe('cupom no pedido', () => {
     expect(r.ok).toBe(false)
   })
 })
+
+describe('leve 3, pague 2 no pedido', () => {
+  const lanche = { id: 1, nome: 'Lanche', preco: 20, leve: 3, pague: 2 }
+
+  it('a unidade grátis sai do total, e o cupom vale sobre o que sobra', () => {
+    const r = montarPedido([lanche], [{ produto: 1, quantidade: 3 }], 5, 'entrega', {
+      codigo: 'DEZ',
+      tipo: 'porcentagem',
+      valor: 10,
+    })
+    if (!r.ok) throw new Error(r.erro)
+    // 60 de produtos, 20 de promoção, cupom de 10% sobre 40 = 4, mais 5 de entrega.
+    expect(r.pedido).toMatchObject({ subtotal: 60, promocao: 20, desconto: 4, total: 41 })
+    const msg = mensagemPedido({ loja: 'L', numero: 1, pedido: r.pedido, modo: 'entrega', nome: 'Ana' })
+    expect(msg).toContain('• Promoção leve e pague menos: -R$')
+  })
+
+  it('sem quantidade suficiente não há promoção', () => {
+    const r = montarPedido([lanche], [{ produto: 1, quantidade: 2 }], 0, 'retirada')
+    expect(r.ok && r.pedido.promocao).toBe(0)
+  })
+})

@@ -13,6 +13,7 @@ import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros } from '@/lib/entrega'
 import { lerOpcoes } from '@/lib/opcoes'
+import { promocaoDoProduto } from '@/lib/promocao'
 import { lerSelos } from '@/lib/selos'
 import { FORMAS_PAGAMENTO } from '@/lib/pedido'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
@@ -239,6 +240,11 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
   const preco = lerPreco(texto(form, 'preco'))
   if (!nome) return { erro: 'Coloque o nome do produto.' }
   if (preco === null) return { erro: 'Preço inválido. Use, por exemplo, 32,90.' }
+  const leve = texto(form, 'leve') ? Number(texto(form, 'leve')) : null
+  const pague = texto(form, 'pague') ? Number(texto(form, 'pague')) : null
+  if ((leve || pague) && !promocaoDoProduto({ leve, pague })) {
+    return { erro: 'Na promoção, preencha "leve" (2 ou mais) e "pague" (um número menor que o "leve"), ou deixe os dois vazios.' }
+  }
   const opcoes = lerOpcoes(texto(form, 'opcoes'))
   if (!opcoes.ok) return { erro: opcoes.erro }
 
@@ -260,6 +266,8 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       esgotado: marcado(form, 'esgotado'),
       ordem: Number(form.get('ordem')) || 0,
       opcoes: opcoes.grupos,
+      leve,
+      pague,
       selos: lerSelos(form.getAll('selos')),
       ...(foto !== undefined && { foto }),
     }

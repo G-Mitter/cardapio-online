@@ -7,6 +7,7 @@
  */
 
 import { type Cupom, descontoDoCupom } from './cupom'
+import { descontoDePromocoes, type Promocao, promocaoDoProduto } from './promocao'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from './opcoes'
 
 export type Modo = 'entrega' | 'retirada'
@@ -45,6 +46,9 @@ export type ProdutoParaPedido = {
   preco: number
   esgotado?: boolean | null
   opcoes?: GrupoOpcao[]
+  /** "Leve 3, pague 2" (src/lib/promocao.ts). */
+  leve?: number | null
+  pague?: number | null
 }
 
 export type ItemEscolhido = { produto: number | string; quantidade: number; escolhas?: Escolhas }
@@ -64,6 +68,8 @@ export type Pedido = {
   itens: ItemPedido[]
   subtotal: number
   taxa: number
+  /** Abatido pelas promoções de quantidade (leve 3, pague 2). */
+  promocao: number
   /** Abatido pelo cupom, se houver. */
   desconto: number
   cupom?: string
@@ -106,9 +112,12 @@ export function montarPedido(
 
   const subtotal = itens.reduce((s, i) => s + centavos(i.precoUnitario) * i.quantidade, 0)
   const taxa = modo === 'entrega' ? centavos(taxaEntrega) : 0
+  const regras = new Map<string, Promocao | null>(produtos.map((p) => [String(p.id), promocaoDoProduto(p)]))
+  const promocao = centavos(descontoDePromocoes(itens, (id) => regras.get(String(id)) ?? null))
+  // O cupom vale sobre o que sobra depois das promoções.
   let desconto = 0
   if (cupom) {
-    const d = descontoDoCupom(cupom, subtotal / 100)
+    const d = descontoDoCupom(cupom, (subtotal - promocao) / 100)
     if (!d.ok) return { ok: false, erro: d.erro }
     desconto = centavos(d.desconto)
   }
@@ -118,9 +127,10 @@ export function montarPedido(
       itens,
       subtotal: subtotal / 100,
       taxa: taxa / 100,
+      promocao: promocao / 100,
       desconto: desconto / 100,
       cupom: cupom?.codigo,
-      total: (subtotal + taxa - desconto) / 100,
+      total: (subtotal + taxa - promocao - desconto) / 100,
     },
   }
 }
@@ -163,6 +173,7 @@ export function mensagemPedido(args: {
       (i) =>
         `• ${i.quantidade}x ${i.nome}${i.opcoes ? ` (${i.opcoes})` : ''}: ${brl(i.precoUnitario * i.quantidade)}`,
     ),
+    ...(pedido.promocao > 0 ? [`• Promoção leve e pague menos: -${brl(pedido.promocao)}`] : []),
     ...(pedido.desconto > 0 ? [`• Cupom ${pedido.cupom}: -${brl(pedido.desconto)}`] : []),
     modo === 'entrega' ? `• Entrega: ${brl(pedido.taxa)}` : '• Retirada no local',
     `*Total: ${brl(pedido.total)}*`,

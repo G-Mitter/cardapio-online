@@ -16,6 +16,7 @@ import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/ped
 import type { Bairro } from '@/lib/entrega'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
 import { normalizar } from '@/lib/planilha'
+import { descontoDePromocoes, type Promocao, rotuloPromocao } from '@/lib/promocao'
 import { sugerir } from '@/lib/sugestoes'
 
 /** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
@@ -28,6 +29,8 @@ export type ProdutoView = {
   preco: number
   esgotado: boolean
   foto: Foto
+  /** "Leve 3, pague 2"; o carrinho mostra a conta, o servidor refaz. */
+  promocao: Promocao | null
   /** Etiquetas ("Novo", "Promoção"...) já em texto. */
   selos: string[]
   /** Tamanho, borda, extras... Vazio = produto sem opções. */
@@ -111,6 +114,10 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const quantidade = itens.reduce((s, i) => s + i.quantidade, 0)
   // Só para mostrar na tela; o valor que vale é o que o servidor recalcula.
   const subtotal = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
+  const promocao = descontoDePromocoes(
+    itens.map((i) => ({ produto: i.produto, precoUnitario: i.preco, quantidade: i.quantidade })),
+    (id) => produtos.find((p) => p.id === Number(id))?.promocao ?? null,
+  )
   const noPedido = (id: number) =>
     itens.filter((i) => i.produto === id).reduce((s, i) => s + i.quantidade, 0)
   const entrega = modo === 'entrega'
@@ -314,13 +321,15 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 <article key={p.id} className={`item ${p.esgotado ? 'esgotado' : ''}`}>
                   <div>
                     <h3>{p.nome}</h3>
-                    {p.selos.length > 0 && (
+                    {(p.selos.length > 0 || p.promocao) && (
                       <div className="selos">
-                        {p.selos.map((s) => (
-                          <span key={s} className="selo">
-                            {s}
-                          </span>
-                        ))}
+                        {[...p.selos, ...(p.promocao ? [rotuloPromocao(p.promocao)] : [])].map(
+                          (s) => (
+                            <span key={s} className="selo">
+                              {s}
+                            </span>
+                          ),
+                        )}
                       </div>
                     )}
                     {p.descricao && <p>{p.descricao}</p>}
@@ -484,6 +493,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     <span>{brl(taxa)}</span>
                   </div>
                 )}
+                {promocao > 0 && (
+                  <div className="linha">
+                    <span>Promoção leve e pague menos</span>
+                    <span>- {brl(promocao)}</span>
+                  </div>
+                )}
                 {desconto > 0 && (
                   <div className="linha">
                     <span>Cupom {cupom}</span>
@@ -492,7 +507,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 )}
                 <div className="linha total">
                   <span>Total</span>
-                  <span>{brl(subtotal + taxa - desconto)}</span>
+                  <span>{brl(subtotal + taxa - promocao - desconto)}</span>
                 </div>
                 <div className="cupom">
                   {cupom ? (

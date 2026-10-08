@@ -6,6 +6,7 @@ import { bairrosComoTexto } from '@/lib/entrega'
 import { gruposDoProduto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
 import { COR_PADRAO } from '@/lib/tema'
+import { promocaoDoProduto } from '@/lib/promocao'
 import { rotulosDosSelos } from '@/lib/selos'
 import type { Media } from '@/payload-types'
 
@@ -40,6 +41,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
             foto: url(p.foto),
             opcoes: gruposDoProduto(p.opcoes),
             selos: rotulosDosSelos(p.selos),
+            promocao: promocaoDoProduto(p),
           })),
         },
       ]

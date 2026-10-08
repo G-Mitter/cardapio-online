@@ -91,6 +91,20 @@ export default async function Produto({ params }: { params: Promise<{ id: string
           </label>
         </div>
         <fieldset className="opcoes">
+          <legend>Promoção por quantidade (opcional)</legend>
+          <div className="linha">
+            <label className="campo curto">
+              Leve
+              <input name="leve" type="number" min={2} defaultValue={produto?.leve ?? ''} placeholder="3" />
+            </label>
+            <label className="campo curto">
+              Pague
+              <input name="pague" type="number" min={1} defaultValue={produto?.pague ?? ''} placeholder="2" />
+            </label>
+          </div>
+          <small>Ex.: leve 3 e pague 2. A cada 3 unidades, a mais barata sai de graça.</small>
+        </fieldset>
+        <fieldset className="opcoes">
           <legend>Selos (aparecem junto do nome no cardápio)</legend>
           {SELOS.map((s) => (
             <label key={s.value} className="marcar">
