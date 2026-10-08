@@ -38,7 +38,15 @@ export type DadosPedido = {
 }
 
 export type ResultadoPedido =
-  { ok: true; numero: number; mensagem: string; link: string } | { ok: false; erro: string }
+  | {
+      ok: true
+      numero: number
+      mensagem: string
+      link: string
+      /** Só quando o cliente escolheu Pix e a loja tem chave: para ele copiar e pagar. */
+      pix?: { chave: string; valor: number }
+    }
+  | { ok: false; erro: string }
 
 /** Teto de pedidos por hora em cada loja, para um robô não encher o banco. */
 const MAX_POR_HORA = 60
@@ -166,5 +174,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     trocoPara,
     cpf,
   })
-  return { ok: true, numero, mensagem, link: whatsappUrl(loja.whatsapp, mensagem)! }
+  const pix =
+    pagamento === 'pix' && loja.chavePix ? { chave: loja.chavePix, valor: pedido.total } : undefined
+  return { ok: true, numero, mensagem, link: whatsappUrl(loja.whatsapp, mensagem)!, pix }
 }

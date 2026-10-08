@@ -63,6 +63,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
           fazEntrega: loja.fazEntrega !== false,
           taxaEntrega: loja.taxaEntrega ?? 0,
           pagamentos: loja.formasPagamento ?? [],
+          chavePix: loja.chavePix ?? '',
           aceitaRetirada: loja.aceitaRetirada !== false,
           logo: url(loja.logo),
           capa: url(loja.capa),
