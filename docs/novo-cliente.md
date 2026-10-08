@@ -48,7 +48,7 @@ Sem planilha, cadastre em **Categorias** e depois em **Produtos**, no mesmo pain
 
 1. Abra `seu-endereco/endereco-do-cardapio` no celular.
 2. Confira nome, cores, logo, horário, preços e categorias.
-3. Faça um pedido de teste com o seu nome. Confira se a mensagem chega no WhatsApp da loja.
+3. Faça um pedido de teste com o seu nome. Confira se ele aparece em **Pedidos** no painel e se o botão "Acompanhar pelo WhatsApp" abre a conversa com a loja.
 4. No painel (`/painel`), abra **Pedidos** e marque o pedido de teste como **Cancelado**.
 
 ## 5. Entregar ao cliente
