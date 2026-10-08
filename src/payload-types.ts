@@ -193,7 +193,10 @@ export interface Loja {
 export interface Media {
   id: number;
   loja?: (number | null) | Loja;
-  alt: string;
+  /**
+   * Opcional. Em branco, usamos o nome do arquivo.
+   */
+  alt?: string | null;
   prefix?: string | null;
   _objectKey?: string | null;
   updatedAt: string;

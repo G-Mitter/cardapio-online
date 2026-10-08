@@ -64,7 +64,7 @@ export default async function PaginaDaLoja({ params }: Props) {
             descricao: p.descricao ?? '',
             preco: p.preco,
             esgotado: Boolean(p.esgotado),
-            foto: foto?.url ? { url: foto.url, alt: foto.alt } : null,
+            foto: foto?.url ?? null,
           }
         }),
     }))
@@ -78,7 +78,7 @@ export default async function PaginaDaLoja({ params }: Props) {
         loja={{
           slug: loja.slug,
           nome: loja.nome,
-          logo: logo?.url ? { url: logo.url, alt: logo.alt } : null,
+          logo: logo?.url ?? null,
           horario: loja.horario ?? '',
           endereco: loja.endereco ?? '',
           aberta: loja.aberta !== false,

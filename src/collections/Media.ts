@@ -2,6 +2,14 @@ import type { CollectionConfig } from 'payload'
 
 import { todos } from '../access/roles'
 
+export const textoDoArquivo = (arquivo?: string | null) => {
+  const t = (arquivo ?? '')
+    .replace(/\.[^.]+$/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim()
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
 export const Media: CollectionConfig = {
   slug: 'media',
   labels: { singular: 'Imagem', plural: 'Imagens' },
@@ -11,7 +19,14 @@ export const Media: CollectionConfig = {
       name: 'alt',
       label: 'Texto alternativo (descreve a imagem para leitores de tela)',
       type: 'text',
-      required: true,
+      admin: { description: 'Opcional. Em branco, usamos o nome do arquivo.' },
+      hooks: {
+        // "vaca-atolada.jpg" vira "Vaca atolada".
+        beforeChange: [
+          ({ value, data, req }) =>
+            value?.trim() || textoDoArquivo(req.file?.name ?? data?.filename),
+        ],
+      },
     },
   ],
   upload: {
