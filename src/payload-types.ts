@@ -149,6 +149,9 @@ export interface Pedido {
   nome: string;
   telefone?: string | null;
   endereco?: string | null;
+  pagamento?: ('pix' | 'cartao' | 'dinheiro') | null;
+  trocoPara?: number | null;
+  cpf?: string | null;
   observacoes?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -429,6 +432,9 @@ export interface PedidosSelect<T extends boolean = true> {
   nome?: T;
   telefone?: T;
   endereco?: T;
+  pagamento?: T;
+  trocoPara?: T;
+  cpf?: T;
   observacoes?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -3,6 +3,7 @@ import * as migration_20261008_110821_alt_opcional from './20261008_110821_alt_o
 import * as migration_20261008_112229_capa_da_loja from './20261008_112229_capa_da_loja';
 import * as migration_20261008_123138_formas_pagamento from './20261008_123138_formas_pagamento';
 import * as migration_20261008_123734_clientes from './20261008_123734_clientes';
+import * as migration_20261008_124359_pagamento_pedido from './20261008_124359_pagamento_pedido';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20261008_123734_clientes.up,
     down: migration_20261008_123734_clientes.down,
-    name: '20261008_123734_clientes'
+    name: '20261008_123734_clientes',
+  },
+  {
+    up: migration_20261008_124359_pagamento_pedido.up,
+    down: migration_20261008_124359_pagamento_pedido.down,
+    name: '20261008_124359_pagamento_pedido'
   },
 ];

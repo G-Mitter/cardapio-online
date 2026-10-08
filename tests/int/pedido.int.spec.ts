@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { mensagemPedido, montarPedido } from '@/lib/pedido'
+import { lerCpf, mensagemPedido, montarPedido } from '@/lib/pedido'
 
 const produtos = [
   { id: 1, nome: 'Feijão tropeiro', preco: 32.9 },
@@ -63,5 +63,37 @@ describe('mensagemPedido', () => {
         'Obs.: Sem cebola',
       ].join('\n'),
     )
+  })
+})
+
+describe('pagamento, troco e CPF na nota', () => {
+  it('aceita CPF com ou sem pontos e recusa dígito errado', () => {
+    expect(lerCpf('529.982.247-25')).toBe('52998224725')
+    expect(lerCpf('52998224725')).toBe('52998224725')
+    expect(lerCpf('529.982.247-24')).toBeNull()
+    expect(lerCpf('111.111.111-11')).toBeNull()
+    expect(lerCpf('123')).toBeNull()
+  })
+
+  it('a loja recebe a forma de pagamento, o troco e o CPF', () => {
+    const r = montarPedido(
+      [{ id: 1, nome: 'X', preco: 30 }],
+      [{ produto: 1, quantidade: 1 }],
+      0,
+      'retirada',
+    )
+    if (!r.ok) throw new Error(r.erro)
+    const msg = mensagemPedido({
+      loja: 'L',
+      numero: 1,
+      pedido: r.pedido,
+      modo: 'retirada',
+      nome: 'Ana',
+      pagamento: 'dinheiro',
+      trocoPara: 50,
+      cpf: '52998224725',
+    })
+    expect(msg).toContain('Pagamento: Dinheiro, troco para R$')
+    expect(msg).toContain('CPF na nota: 529.982.247-25')
   })
 })
