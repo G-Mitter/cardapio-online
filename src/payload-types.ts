@@ -257,6 +257,10 @@ export interface Produto {
   categoria: number | Categoria;
   foto?: (number | null) | Media;
   /**
+   * Etiquetas que aparecem junto do nome no cardápio.
+   */
+  selos?: ('mais-pedido' | 'novo' | 'promocao' | 'vegano' | 'picante')[] | null;
+  /**
    * Ex.: Tamanho (escolha 1), Borda, Extras (até 3). O painel da loja edita isto em texto.
    */
   opcoes?:
@@ -488,6 +492,7 @@ export interface ProdutosSelect<T extends boolean = true> {
   preco?: T;
   categoria?: T;
   foto?: T;
+  selos?: T;
   opcoes?:
     | T
     | {

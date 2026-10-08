@@ -634,3 +634,18 @@ label.marcar {
 .opcoes-grupo {
   flex-direction: column;
 }
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.selo {
+  font: 600 11px var(--body);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-radius: 6px;
+  padding: 2px 6px;
+}

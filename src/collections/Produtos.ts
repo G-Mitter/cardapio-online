@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { todos } from '../access/roles'
 import { hooksDeCardapio } from '../lib/revalidar'
+import { SELOS } from '../lib/selos'
 
 export const Produtos: CollectionConfig = {
   slug: 'produtos',
@@ -30,6 +31,14 @@ export const Produtos: CollectionConfig = {
       ],
     },
     { name: 'foto', label: 'Foto', type: 'upload', relationTo: 'media' },
+    {
+      name: 'selos',
+      label: 'Selos',
+      type: 'select',
+      hasMany: true,
+      options: [...SELOS],
+      admin: { description: 'Etiquetas que aparecem junto do nome no cardápio.' },
+    },
     {
       name: 'opcoes',
       label: 'Opções e adicionais',

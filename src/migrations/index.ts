@@ -9,6 +9,7 @@ import * as migration_20261008_132134_chave_pix from './20261008_132134_chave_pi
 import * as migration_20261008_134615_codigo_retirada from './20261008_134615_codigo_retirada';
 import * as migration_20261008_171019_bairros_entrega from './20261008_171019_bairros_entrega';
 import * as migration_20261008_171738_opcoes_produto from './20261008_171738_opcoes_produto';
+import * as migration_20261008_182549_selos_produto from './20261008_182549_selos_produto';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20261008_171738_opcoes_produto.up,
     down: migration_20261008_171738_opcoes_produto.down,
-    name: '20261008_171738_opcoes_produto'
+    name: '20261008_171738_opcoes_produto',
+  },
+  {
+    up: migration_20261008_182549_selos_produto.up,
+    down: migration_20261008_182549_selos_produto.down,
+    name: '20261008_182549_selos_produto'
   },
 ];

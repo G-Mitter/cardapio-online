@@ -21,6 +21,8 @@ export type ProdutoView = {
   preco: number
   esgotado: boolean
   foto: Foto
+  /** Etiquetas ("Novo", "Promoção"...) já em texto. */
+  selos: string[]
   /** Tamanho, borda, extras... Vazio = produto sem opções. */
   opcoes: GrupoOpcao[]
 }
@@ -219,6 +221,15 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 <article key={p.id} className={`item ${p.esgotado ? 'esgotado' : ''}`}>
                   <div>
                     <h3>{p.nome}</h3>
+                    {p.selos.length > 0 && (
+                      <div className="selos">
+                        {p.selos.map((s) => (
+                          <span key={s} className="selo">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     {p.descricao && <p>{p.descricao}</p>}
                     <div className="preco">{brl(p.preco)}</div>
                     {p.esgotado ? (

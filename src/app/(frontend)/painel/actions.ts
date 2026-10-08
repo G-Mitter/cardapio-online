@@ -12,6 +12,7 @@ import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { lerBairros } from '@/lib/entrega'
 import { lerOpcoes } from '@/lib/opcoes'
+import { lerSelos } from '@/lib/selos'
 import { FORMAS_PAGAMENTO } from '@/lib/pedido'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
@@ -258,6 +259,7 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       esgotado: marcado(form, 'esgotado'),
       ordem: Number(form.get('ordem')) || 0,
       opcoes: opcoes.grupos,
+      selos: lerSelos(form.getAll('selos')),
       ...(foto !== undefined && { foto }),
     }
     if (id === null) {
