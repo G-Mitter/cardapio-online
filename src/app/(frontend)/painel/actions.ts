@@ -10,6 +10,7 @@ import { getPayload, type Payload } from 'payload'
 
 import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
+import { lerBairros } from '@/lib/entrega'
 import { FORMAS_PAGAMENTO } from '@/lib/pedido'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
@@ -348,6 +349,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
     return { erro: 'Coloque a chave Pix ou desmarque Pix nas formas de pagamento.' }
   }
   if (taxa === null) return { erro: 'Taxa de entrega inválida. Use, por exemplo, 6,00.' }
+  const bairros = lerBairros(texto(form, 'bairros'))
+  if (!bairros.ok) return { erro: bairros.erro }
 
   try {
     const logo = await imagem(form, 'logo', `Logo da ${nome}`)
@@ -365,6 +368,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         aberta: marcado(form, 'aberta'),
         fazEntrega: marcado(form, 'fazEntrega'),
         taxaEntrega: taxa,
+        bairros: bairros.bairros,
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
         formasPagamento,
         chavePix,

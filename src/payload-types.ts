@@ -188,8 +188,21 @@ export interface Loja {
   horario?: string | null;
   endereco?: string | null;
   fazEntrega?: boolean | null;
+  /**
+   * Vale quando não há bairros cadastrados abaixo.
+   */
   taxaEntrega?: number | null;
   aceitaRetirada?: boolean | null;
+  /**
+   * Se tiver algum bairro aqui, a loja entrega só nestes, cada um com a sua taxa.
+   */
+  bairros?:
+    | {
+        nome: string;
+        taxa: number;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * O cliente escolhe uma destas ao fazer o pedido.
    */
@@ -490,6 +503,13 @@ export interface LojasSelect<T extends boolean = true> {
   fazEntrega?: T;
   taxaEntrega?: T;
   aceitaRetirada?: T;
+  bairros?:
+    | T
+    | {
+        nome?: T;
+        taxa?: T;
+        id?: T;
+      };
   formasPagamento?: T;
   chavePix?: T;
   aberta?: T;

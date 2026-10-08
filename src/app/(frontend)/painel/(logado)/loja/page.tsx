@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import type { CategoriaView } from '@/components/Cardapio'
 import { FormLoja } from '@/components/painel/FormLoja'
+import { bairrosComoTexto } from '@/lib/entrega'
 import { sessao } from '@/lib/painel'
 import { COR_PADRAO } from '@/lib/tema'
 import type { Media } from '@/payload-types'
@@ -62,6 +63,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
           aberta: loja.aberta !== false,
           fazEntrega: loja.fazEntrega !== false,
           taxaEntrega: loja.taxaEntrega ?? 0,
+          bairros: bairrosComoTexto(loja.bairros ?? []),
           pagamentos: loja.formasPagamento ?? [],
           chavePix: loja.chavePix ?? '',
           aceitaRetirada: loja.aceitaRetirada !== false,

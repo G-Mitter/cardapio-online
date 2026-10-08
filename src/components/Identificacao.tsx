@@ -11,7 +11,8 @@ import {
 } from '@/app/(frontend)/cliente-actions'
 import type { Modo } from '@/lib/pedido'
 
-export type ClienteEscolhido = { telefone: string; enderecoId?: string }
+/** `taxa`: entrega no endereço escolhido; null = a loja não entrega naquele bairro. */
+export type ClienteEscolhido = { telefone: string; enderecoId?: string; taxa?: number | null }
 
 const GUARDADO = 'cardapio-telefone'
 
@@ -54,9 +55,12 @@ function CamposEndereco() {
  * Quem já está identificado avisa o carrinho por `aoMudar`.
  */
 export function Identificacao({
+  loja,
   modo,
   aoMudar,
 }: {
+  /** Endereço (slug) da loja, para calcular a taxa de cada endereço. */
+  loja: string
   modo: Modo
   aoMudar: (c: ClienteEscolhido | null) => void
 }) {
@@ -75,9 +79,9 @@ export function Identificacao({
       campoTelefone.current.value = lembrado()
   }, [fase])
 
-  function escolher(id: string | undefined, tel = telefone) {
+  function escolher(id: string | undefined, tel = telefone, lista = enderecos) {
     setEscolhido(id)
-    aoMudar({ telefone: tel, enderecoId: id })
+    aoMudar({ telefone: tel, enderecoId: id, taxa: lista.find((e) => e.id === id)?.taxa })
   }
 
   // `tel` vem junto porque o estado `telefone` só muda no próximo render.
@@ -93,7 +97,7 @@ export function Identificacao({
     setEnderecos(r.enderecos)
     setNovoEndereco(false)
     // O mais recente fica marcado: é o que acabou de ser adicionado ou o último usado.
-    escolher(r.enderecos.at(-1)?.id, tel)
+    escolher(r.enderecos.at(-1)?.id, tel, r.enderecos)
   }
 
   const enviar =
@@ -120,7 +124,7 @@ export function Identificacao({
 
   if (fase === 'telefone') {
     return (
-      <form className="identificacao" onSubmit={enviar((_, tel) => identificarCliente(tel))}>
+      <form className="identificacao" onSubmit={enviar((_, tel) => identificarCliente(tel, loja))}>
         <label>
           Seu telefone (WhatsApp)
           <input
@@ -148,6 +152,7 @@ export function Identificacao({
         onSubmit={enviar((f) =>
           cadastrarCliente({
             telefone,
+            loja,
             nome: String(f.get('nome') ?? ''),
             endereco: modo === 'entrega' ? endereco(f) : undefined,
             aceite: f.get('aceite') === 'on',
@@ -214,7 +219,7 @@ export function Identificacao({
             </fieldset>
           )}
           {novoEndereco || enderecos.length === 0 ? (
-            <form onSubmit={enviar((f) => adicionarEndereco(telefone, endereco(f)))}>
+            <form onSubmit={enviar((f) => adicionarEndereco(telefone, endereco(f), loja))}>
               <CamposEndereco />
               {mensagemErro}
               <button className="secundario" disabled={enviando}>

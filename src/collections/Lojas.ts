@@ -98,9 +98,31 @@ export const Lojas: CollectionConfig = {
           type: 'number',
           min: 0,
           defaultValue: 0,
-          admin: { condition: (data) => Boolean(data?.fazEntrega) },
+          admin: {
+            description: 'Vale quando não há bairros cadastrados abaixo.',
+            condition: (data) => Boolean(data?.fazEntrega),
+          },
         },
         { name: 'aceitaRetirada', label: 'Aceita retirada', type: 'checkbox', defaultValue: true },
+      ],
+    },
+    {
+      name: 'bairros',
+      label: 'Taxa por bairro',
+      type: 'array',
+      labels: { singular: 'Bairro', plural: 'Bairros' },
+      admin: {
+        description: 'Se tiver algum bairro aqui, a loja entrega só nestes, cada um com a sua taxa.',
+        condition: (data) => Boolean(data?.fazEntrega),
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'nome', label: 'Bairro', type: 'text', required: true },
+            { name: 'taxa', label: 'Taxa (R$)', type: 'number', min: 0, required: true },
+          ],
+        },
       ],
     },
     {

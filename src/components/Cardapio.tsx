@@ -7,6 +7,7 @@ import { useRef, useState, useTransition } from 'react'
 import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
+import type { Bairro } from '@/lib/entrega'
 import { normalizar } from '@/lib/planilha'
 
 /** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
@@ -34,6 +35,8 @@ type LojaView = {
   fazEntrega: boolean
   aceitaRetirada: boolean
   taxaEntrega: number
+  /** Se houver, a loja entrega só nestes bairros (cada um com a sua taxa). */
+  bairros: Bairro[]
   pagamentos: FormaPagamento[]
 }
 
@@ -68,7 +71,10 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const quantidade = itens.reduce((s, p) => s + carrinho[p.id], 0)
   // Só para mostrar na tela; o valor que vale é o que o servidor recalcula.
   const subtotal = itens.reduce((s, p) => s + p.preco * carrinho[p.id], 0)
-  const taxa = modo === 'entrega' ? loja.taxaEntrega : 0
+  const entrega = modo === 'entrega'
+  // Com bairros, a taxa depende do endereço escolhido (calculada no servidor, junto do cadastro).
+  const semEntrega = entrega && cliente?.taxa === null
+  const taxa = !entrega ? 0 : loja.bairros.length ? (cliente?.taxa ?? 0) : loja.taxaEntrega
 
   const mudar = (id: number, delta: number) =>
     setCarrinho((c) => {
@@ -120,7 +126,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               {loja.aberta ? 'Recebendo pedidos' : 'Pedidos pausados'}
             </span>
             {loja.horario && <span>{loja.horario}</span>}
-            {loja.fazEntrega && <span>Entrega {brl(loja.taxaEntrega)}</span>}
+            {loja.fazEntrega && <span>{textoEntrega(loja)}</span>}
             {loja.endereco && <span>{loja.endereco}</span>}
             {loja.pagamentos.length > 0 && (
               <span>
@@ -288,7 +294,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 </label>
               </fieldset>
             )}
-            <Identificacao modo={modo} aoMudar={setCliente} />
+            <Identificacao loja={loja.slug} modo={modo} aoMudar={setCliente} />
 
             {/* onSubmit em vez de action: assim o React não limpa os campos quando o servidor devolve um erro. */}
             <form
@@ -353,6 +359,11 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                   Privacidade
                 </a>
               </p>
+              {semEntrega && (
+                <p className="erro" role="alert">
+                  A loja não entrega no bairro deste endereço. Escolha outro endereço ou retire na loja.
+                </p>
+              )}
               {resultado && !resultado.ok && (
                 <p className="erro" role="alert">
                   {resultado.erro}
@@ -361,7 +372,10 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               <button
                 className="enviar"
                 disabled={
-                  enviando || !cliente || !pagamento || (modo === 'entrega' && !cliente.enderecoId)
+                  enviando ||
+                  !cliente ||
+                  !pagamento ||
+                  (entrega && (!cliente.enderecoId || semEntrega))
                 }
               >
                 {enviando ? 'Enviando…' : 'Finalizar pedido'}
@@ -372,6 +386,14 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
       </dialog>
     </>
   )
+}
+
+/** "Entrega R$ 6,00", ou a faixa quando há taxa por bairro. */
+function textoEntrega(loja: LojaView) {
+  const taxas = loja.bairros.map((b) => b.taxa)
+  if (!taxas.length) return `Entrega ${brl(loja.taxaEntrega)}`
+  const [min, max] = [Math.min(...taxas), Math.max(...taxas)]
+  return min === max ? `Entrega ${brl(min)}` : `Entrega de ${brl(min)} a ${brl(max)}`
 }
 
 /** Chave Pix da loja para copiar. O cliente paga no app do banco e manda o comprovante no WhatsApp. */
