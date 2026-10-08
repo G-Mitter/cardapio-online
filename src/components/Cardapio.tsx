@@ -342,8 +342,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 <textarea name="observacoes" rows={2} maxLength={300} />
               </label>
               <p className="aviso-dados">
-                Seu cadastro fica guardado para os próximos pedidos. Nome, endereço e CPF vão só para a
-                loja que recebe o pedido; o CPF não fica no cadastro.{' '}
+                Seu cadastro fica guardado para os próximos pedidos. Nome, endereço e CPF vão só
+                para a loja que recebe o pedido; o CPF não fica no cadastro.{' '}
                 <a href="/privacidade" target="_blank">
                   Privacidade
                 </a>
