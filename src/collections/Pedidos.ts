@@ -79,6 +79,8 @@ export const Pedidos: CollectionConfig = {
         },
         { name: 'nome', label: 'Cliente', type: 'text', required: true },
         { name: 'telefone', label: 'Telefone', type: 'text' },
+        // Só na retirada: o cliente mostra o código e a loja digita para marcar Entregue.
+        { name: 'codigoRetirada', label: 'Código de retirada', type: 'text' },
       ],
     },
     { name: 'endereco', label: 'Endereço', type: 'text', admin: { readOnly: true } },

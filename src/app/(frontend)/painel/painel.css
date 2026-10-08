@@ -354,6 +354,20 @@ details.perigo form {
   flex-wrap: wrap;
   gap: 8px;
 }
+.conferir-codigo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.conferir-codigo input {
+  flex: 0 0 9ch;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2em;
+}
+.conferir-codigo .erro {
+  flex-basis: 100%;
+  margin: 0;
+}
 .pedido__obs {
   color: var(--muted);
 }

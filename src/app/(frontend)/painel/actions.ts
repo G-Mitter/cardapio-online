@@ -73,10 +73,28 @@ export async function trocarLoja(form: FormData) {
 
 // ---------- Pedidos ----------
 
-export async function mudarStatus(id: number, status: Status): Promise<{ ok: boolean }> {
+export async function mudarStatus(
+  id: number,
+  status: Status,
+  /** Retirada com código: só vira Entregue se a loja digitar o código que o cliente mostrou. */
+  codigo?: string,
+): Promise<{ ok: boolean; erro?: string }> {
   if (!STATUS.includes(status)) return { ok: false }
   const { payload, loja, comoUsuario } = await sessao()
   try {
+    if (status === 'entregue') {
+      const { docs } = await payload.find({
+        collection: 'pedidos',
+        where: { id: { equals: id }, loja: { equals: loja.id } },
+        limit: 1,
+        depth: 0,
+        ...comoUsuario,
+      })
+      const p = docs[0]
+      if (p?.modo === 'retirada' && p.codigoRetirada && p.codigoRetirada !== codigo?.trim()) {
+        return { ok: false, erro: 'Código não confere. Peça para o cliente mostrar de novo.' }
+      }
+    }
     // where com a loja: mesmo o administrador só mexe nos pedidos da loja aberta no painel.
     const r = await payload.update({
       collection: 'pedidos',
