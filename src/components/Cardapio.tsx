@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import {
   aplicarCupom,
   criarPedido,
+  guardarCarrinho,
   repetirUltimoPedido,
   type ResultadoPedido,
 } from '@/app/(frontend)/actions'
@@ -212,6 +213,27 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     // linhas muda junto com chaveCarrinho; depender só da chave evita refazer a conta sem necessidade.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chaveCarrinho, cupom, loja.slug])
+
+  // Quem já se identificou tem o carrinho guardado, para a loja poder chamar se o pedido não sair.
+  // ponytail: sem trava contra a corrida entre este salvamento e o envio do pedido; no pior caso sobra um carrinho que a loja apaga.
+  const telefoneCliente = cliente?.telefone
+  useEffect(() => {
+    if (!telefoneCliente) return
+    const espera = setTimeout(() => {
+      guardarCarrinho({
+        loja: loja.slug,
+        telefone: telefoneCliente,
+        itens: linhas.map((l) => ({
+          produto: l.produto,
+          quantidade: l.quantidade,
+          escolhas: l.escolhas,
+        })),
+      }).catch(() => {})
+    }, 2000)
+    return () => clearTimeout(espera)
+    // linhas muda junto com chaveCarrinho.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveCarrinho, telefoneCliente, loja.slug])
 
   const sugestoes = sugerir(
     categorias,
@@ -689,7 +711,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 </label>
                 <p className="aviso-dados">
                   Seu cadastro fica guardado para os próximos pedidos. Nome, endereço e CPF vão só
-                  para a loja que recebe o pedido; o CPF não fica no cadastro.{' '}
+                  para a loja que recebe o pedido; o CPF não fica no cadastro. Se você não
+                  finalizar, a loja pode ver seu carrinho e chamar no WhatsApp.{' '}
                   <a href="/privacidade" target="_blank">
                     Privacidade
                   </a>

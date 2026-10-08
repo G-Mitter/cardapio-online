@@ -8,7 +8,7 @@ export default function Privacidade() {
   return (
     <main className="wrap texto">
       <h1>Política de privacidade</h1>
-      <p className="vazio">Atualizada em 8 de outubro de 2026.</p>
+      <p className="vazio">Atualizada em 8 de outubro de 2026 (carrinhos abandonados).</p>
 
       <h2>Quem cuida dos seus dados</h2>
       <p>
@@ -25,6 +25,11 @@ export default function Privacidade() {
         <li>Endereços de entrega que você cadastrar.</li>
         <li>
           Em cada pedido: itens, valores, forma de pagamento, troco, observações, data e hora.
+        </li>
+        <li>
+          O carrinho, enquanto você não finaliza: depois que você informa o telefone, guardamos
+          nome, telefone e itens do carrinho para a loja poder te chamar no WhatsApp. Ele é apagado
+          quando o pedido é feito e, em todo caso, em 7 dias.
         </li>
         <li>
           CPF, só se você marcar &quot;CPF na nota&quot;. Ele fica apenas naquele pedido, para a
@@ -45,10 +50,11 @@ export default function Privacidade() {
 
       <h2>Para que usamos</h2>
       <p>
-        Só para preparar e entregar os seus pedidos e preencher o cadastro nas próximas compras. Os
-        dados não são vendidos, não são usados para propaganda e não são passados para outras
-        empresas, a não ser os serviços que mantêm o sistema no ar (hospedagem e banco de dados). A
-        base legal é a execução do pedido que você fez e o seu consentimento ao criar o cadastro.
+        Para preparar e entregar os seus pedidos, preencher o cadastro nas próximas compras e
+        permitir que a loja te chame se você deixar o carrinho sem finalizar. Os dados não são
+        vendidos, não são usados para propaganda e não são passados para outras empresas, a não ser
+        os serviços que mantêm o sistema no ar (hospedagem e banco de dados). A base legal é a
+        execução do pedido que você fez e o seu consentimento ao criar o cadastro.
       </p>
 
       <h2>Por quanto tempo</h2>

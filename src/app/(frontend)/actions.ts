@@ -21,6 +21,7 @@ import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
 import { lerAgendamento, rotuloAgendamento } from '@/lib/agendamento'
+import { resumoDosItens } from '@/lib/carrinho'
 import { type Cupom, normalizarCodigo } from '@/lib/cupom'
 import { taxaDoBairro } from '@/lib/entrega'
 import { type Escolhas, gruposDoProduto, resolverEscolhas } from '@/lib/opcoes'
@@ -220,6 +221,12 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     },
   })
 
+  await payload.delete({
+    collection: 'carrinhos',
+    where: { loja: { equals: loja.id }, telefone: { equals: telefone } },
+    overrideAccess: true,
+  })
+
   if (cupom) {
     // ponytail: soma sem trava; dois pedidos no mesmo instante podem passar do limite de usos em 1.
     await payload.update({
@@ -346,4 +353,75 @@ export async function aplicarCupom(dados: {
     cupom,
   )
   return r.ok ? { ok: true, codigo: cupom.codigo, desconto: r.pedido.desconto } : r
+}
+
+/**
+ * Guarda o carrinho de quem já se identificou, para a loja chamar se o pedido não sair.
+ * Carrinho vazio apaga o que estava guardado. Erros aqui não atrapalham o cliente: não devolve nada.
+ */
+export async function guardarCarrinho(dados: {
+  loja: string
+  telefone: string
+  itens: ItemEscolhido[]
+}): Promise<void> {
+  const telefone = normalizarTelefone(dados.telefone)
+  if (!telefone) return
+  const payload = await getPayload({ config })
+  const cliente = await buscarCliente(payload, telefone)
+  if (!cliente) return
+  const lojas = await payload.find({
+    collection: 'lojas',
+    where: { slug: { equals: texto(dados.loja, 100) } },
+    limit: 1,
+    depth: 0,
+  })
+  const loja = lojas.docs[0]
+  if (!loja) return
+
+  const onde = { loja: { equals: loja.id }, telefone: { equals: telefone } }
+  const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 100) : []
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: { loja: { equals: loja.id }, id: { in: itens.map((i) => i.produto) } },
+    limit: 100,
+    depth: 0,
+  })
+  const r = montarPedido(
+    produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })),
+    itens,
+    0,
+    'retirada',
+  )
+  if (!r.ok) {
+    if (!itens.length) {
+      await payload.delete({ collection: 'carrinhos', where: onde, overrideAccess: true })
+    }
+    return
+  }
+  const data = {
+    nome: cliente.nome,
+    resumo: resumoDosItens(r.pedido.itens),
+    total: r.pedido.subtotal - r.pedido.promocao,
+  }
+  const existente = await payload.find({
+    collection: 'carrinhos',
+    where: onde,
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  if (existente.docs[0]) {
+    await payload.update({
+      collection: 'carrinhos',
+      id: existente.docs[0].id,
+      data,
+      overrideAccess: true,
+    })
+  } else {
+    await payload.create({
+      collection: 'carrinhos',
+      data: { ...data, loja: loja.id, telefone },
+      overrideAccess: true,
+    })
+  }
 }
