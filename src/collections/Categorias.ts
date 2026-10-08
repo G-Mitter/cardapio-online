@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { todos } from '../access/roles'
+import { hooksDeCardapio } from '../lib/revalidar'
 
 export const Categorias: CollectionConfig = {
   slug: 'categorias',
@@ -9,6 +10,7 @@ export const Categorias: CollectionConfig = {
   // Leitura pública (o cardápio). Criar e editar: o plugin libera para quem é da loja.
   access: { read: todos },
   defaultSort: 'ordem',
+  hooks: hooksDeCardapio,
   fields: [
     { name: 'nome', label: 'Nome', type: 'text', required: true },
     {
