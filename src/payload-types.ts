@@ -79,6 +79,7 @@ export interface Config {
     entregadores: Entregadore;
     fechamentos: Fechamento;
     acertos: Acerto;
+    lancamentos: Lancamento;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -98,6 +99,7 @@ export interface Config {
     entregadores: EntregadoresSelect<false> | EntregadoresSelect<true>;
     fechamentos: FechamentosSelect<false> | FechamentosSelect<true>;
     acertos: AcertosSelect<false> | AcertosSelect<true>;
+    lancamentos: LancamentosSelect<false> | LancamentosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -523,6 +525,36 @@ export interface Acerto {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lancamentos".
+ */
+export interface Lancamento {
+  id: number;
+  loja?: (number | null) | Loja;
+  tipo: 'pagar' | 'receber';
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  categoria?:
+    | (
+        | 'Fornecedores'
+        | 'Aluguel'
+        | 'Funcionários'
+        | 'Impostos'
+        | 'Água/luz/gás/internet'
+        | 'Taxas de cartão'
+        | 'Outros'
+      )
+    | null;
+  observacao?: string | null;
+  repetir?: boolean | null;
+  diaDoMes?: number | null;
+  pagoEm?: string | null;
+  valorPago?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -592,6 +624,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'acertos';
         value: number | Acerto;
+      } | null)
+    | ({
+        relationTo: 'lancamentos';
+        value: number | Lancamento;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -920,6 +956,25 @@ export interface AcertosSelect<T extends boolean = true> {
   entregue?: T;
   diferenca?: T;
   conferidoPor?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lancamentos_select".
+ */
+export interface LancamentosSelect<T extends boolean = true> {
+  loja?: T;
+  tipo?: T;
+  descricao?: T;
+  valor?: T;
+  vencimento?: T;
+  categoria?: T;
+  observacao?: T;
+  repetir?: T;
+  diaDoMes?: T;
+  pagoEm?: T;
+  valorPago?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -13,6 +13,7 @@ const MENU = [
   ['/painel/categorias', 'Categorias'],
   ['/painel/cupons', 'Cupons'],
   ['/painel/carrinhos', 'Carrinhos'],
+  ['/painel/financeiro', 'Financeiro'],
   ['/painel/loja', 'Minha loja'],
   ['/painel/importar', 'Importar planilha'],
 ] as const
