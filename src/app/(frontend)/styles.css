@@ -357,6 +357,16 @@ textarea {
   cursor: pointer;
 }
 /* Telefone e cadastro do cliente, no carrinho */
+.pagamento {
+  flex-wrap: wrap;
+  margin: 0;
+}
+label.marcar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--fg);
+}
 .identificacao p {
   margin: 12px 0 0;
 }

@@ -16,6 +16,26 @@ export const FORMAS_PAGAMENTO = [
 ] as const
 export type FormaPagamento = (typeof FORMAS_PAGAMENTO)[number]['value']
 
+export const rotuloPagamento = (f: string | null | undefined) =>
+  FORMAS_PAGAMENTO.find((x) => x.value === f)?.label ?? ''
+
+/**
+ * CPF só com os 11 dígitos, se os dígitos verificadores batem; senão null.
+ * Serve para o cliente não mandar um número errado para a nota da loja.
+ */
+export function lerCpf(valor: string | null | undefined): string | null {
+  const d = (valor ?? '').replace(/\D/g, '')
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return null
+  const digito = (n: number) => {
+    const soma = [...d.slice(0, n)].reduce((s, c, i) => s + Number(c) * (n + 1 - i), 0)
+    return ((soma * 10) % 11) % 10
+  }
+  return digito(9) === Number(d[9]) && digito(10) === Number(d[10]) ? d : null
+}
+
+export const formatarCpf = (cpf: string) =>
+  cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+
 export type ProdutoParaPedido = {
   id: number | string
   nome: string
@@ -25,7 +45,12 @@ export type ProdutoParaPedido = {
 
 export type ItemEscolhido = { produto: number | string; quantidade: number }
 
-export type ItemPedido = { produto: number | string; nome: string; quantidade: number; precoUnitario: number }
+export type ItemPedido = {
+  produto: number | string
+  nome: string
+  quantidade: number
+  precoUnitario: number
+}
 
 export type Pedido = { itens: ItemPedido[]; subtotal: number; taxa: number; total: number }
 
@@ -61,8 +86,7 @@ export function montarPedido(
   }
 }
 
-export const brl = (v: number) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+export const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 /** Texto que chega no WhatsApp da loja. Os asteriscos deixam a linha em negrito no WhatsApp. */
 export function mensagemPedido(args: {
@@ -73,18 +97,30 @@ export function mensagemPedido(args: {
   nome: string
   endereco?: string
   observacoes?: string
+  pagamento?: FormaPagamento
+  /** Só no dinheiro: o cliente paga com quanto, para a loja levar o troco. */
+  trocoPara?: number | null
+  cpf?: string | null
 }): string {
-  const { loja, numero, pedido, modo, nome, endereco, observacoes } = args
+  const { loja, numero, pedido, modo, nome, endereco, observacoes, pagamento, trocoPara, cpf } =
+    args
   const linhas = [
     `*Pedido nº ${numero} · ${loja}*`,
     '',
-    ...pedido.itens.map((i) => `• ${i.quantidade}x ${i.nome}: ${brl(i.precoUnitario * i.quantidade)}`),
+    ...pedido.itens.map(
+      (i) => `• ${i.quantidade}x ${i.nome}: ${brl(i.precoUnitario * i.quantidade)}`,
+    ),
     modo === 'entrega' ? `• Entrega: ${brl(pedido.taxa)}` : '• Retirada no local',
     `*Total: ${brl(pedido.total)}*`,
     '',
     `Nome: ${nome}`,
   ]
   if (modo === 'entrega' && endereco) linhas.push(`Endereço: ${endereco}`)
+  if (pagamento) {
+    const troco = trocoPara ? `, troco para ${brl(trocoPara)}` : ''
+    linhas.push(`Pagamento: ${rotuloPagamento(pagamento)}${troco}`)
+  }
+  if (cpf) linhas.push(`CPF na nota: ${formatarCpf(cpf)}`)
   if (observacoes) linhas.push(`Obs.: ${observacoes}`)
   return linhas.join('\n')
 }

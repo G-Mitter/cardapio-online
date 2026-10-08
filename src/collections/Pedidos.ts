@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { logado } from '../access/roles'
+import { FORMAS_PAGAMENTO } from '../lib/pedido'
 
 /**
  * Pedidos feitos pelo cardápio. Quem cria é o servidor (actions.ts), que
@@ -81,6 +82,16 @@ export const Pedidos: CollectionConfig = {
       ],
     },
     { name: 'endereco', label: 'Endereço', type: 'text', admin: { readOnly: true } },
+    {
+      type: 'row',
+      admin: { readOnly: true },
+      fields: [
+        { name: 'pagamento', label: 'Pagamento', type: 'select', options: [...FORMAS_PAGAMENTO] },
+        { name: 'trocoPara', label: 'Troco para (R$)', type: 'number' },
+        // Só neste pedido e só para esta loja: o CPF não fica no cadastro do cliente.
+        { name: 'cpf', label: 'CPF na nota', type: 'text' },
+      ],
+    },
     { name: 'observacoes', label: 'Observações', type: 'textarea', admin: { readOnly: true } },
   ],
 }

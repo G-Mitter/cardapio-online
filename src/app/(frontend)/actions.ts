@@ -7,7 +7,15 @@
  */
 import { getPayload } from 'payload'
 
-import { type ItemEscolhido, type Modo, mensagemPedido, montarPedido } from '@/lib/pedido'
+import {
+  type FormaPagamento,
+  type ItemEscolhido,
+  lerCpf,
+  type Modo,
+  mensagemPedido,
+  montarPedido,
+} from '@/lib/pedido'
+import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
 import { whatsappUrl } from '@/lib/whatsapp'
@@ -22,16 +30,23 @@ export type DadosPedido = {
   /** Id de um dos endereços do cadastro; só na entrega. */
   enderecoId?: string
   observacoes: string
+  pagamento: FormaPagamento
+  /** Só no dinheiro, e opcional: "troco para R$ 50". Vazio = não precisa de troco. */
+  trocoPara?: string
+  /** Só se o cliente marcou "CPF na nota". */
+  cpf?: string
 }
 
 export type ResultadoPedido =
-  | { ok: true; numero: number; mensagem: string; link: string }
-  | { ok: false; erro: string }
+  { ok: true; numero: number; mensagem: string; link: string } | { ok: false; erro: string }
 
 /** Teto de pedidos por hora em cada loja, para um robô não encher o banco. */
 const MAX_POR_HORA = 60
 
-const texto = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max)
+const texto = (v: unknown, max: number) =>
+  String(v ?? '')
+    .trim()
+    .slice(0, max)
 
 export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> {
   const telefone = normalizarTelefone(dados.telefone)
@@ -40,6 +55,9 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 100) : []
 
   if (!telefone) return { ok: false, erro: 'Coloque seu telefone.' }
+  const cpfDigitado = texto(dados.cpf, 20)
+  const cpf = cpfDigitado ? lerCpf(cpfDigitado) : null
+  if (cpfDigitado && !cpf) return { ok: false, erro: 'CPF inválido. Confira os números.' }
 
   const payload = await getPayload({ config })
   // Nome e endereço vêm do cadastro, no servidor: o navegador só escolhe qual endereço.
@@ -66,7 +84,12 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     return { ok: false, erro: 'Esta loja não aceita retirada. Escolha entrega.' }
   }
 
-  if (!whatsappUrl(loja.whatsapp)) return { ok: false, erro: 'O WhatsApp da loja está incompleto no cadastro.' }
+  const pagamento = dados.pagamento
+  if (!loja.formasPagamento?.includes(pagamento))
+    return { ok: false, erro: 'Escolha a forma de pagamento.' }
+
+  if (!whatsappUrl(loja.whatsapp))
+    return { ok: false, erro: 'O WhatsApp da loja está incompleto no cadastro.' }
 
   const umaHoraAtras = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const recentes = await payload.count({
@@ -90,6 +113,12 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   const resultado = montarPedido(produtos.docs, itens, loja.taxaEntrega ?? 0, modo)
   if (!resultado.ok) return resultado
   const { pedido } = resultado
+
+  const trocoDigitado = pagamento === 'dinheiro' ? texto(dados.trocoPara, 20) : ''
+  const trocoPara = trocoDigitado ? lerPreco(trocoDigitado) : null
+  if (trocoDigitado && (trocoPara === null || trocoPara < pedido.total)) {
+    return { ok: false, erro: 'O troco precisa ser para um valor maior que o total.' }
+  }
 
   // ponytail: número = total de pedidos da loja + 1; dois pedidos no mesmo instante podem repetir o número. Trocar por uma sequência no banco se virar problema.
   const total = await payload.count({
@@ -119,9 +148,23 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       telefone,
       endereco: modo === 'entrega' ? endereco : '',
       observacoes,
+      pagamento,
+      trocoPara,
+      cpf,
     },
   })
 
-  const mensagem = mensagemPedido({ loja: loja.nome, numero, pedido, modo, nome, endereco, observacoes })
+  const mensagem = mensagemPedido({
+    loja: loja.nome,
+    numero,
+    pedido,
+    modo,
+    nome,
+    endereco,
+    observacoes,
+    pagamento,
+    trocoPara,
+    cpf,
+  })
   return { ok: true, numero, mensagem, link: whatsappUrl(loja.whatsapp, mensagem)! }
 }

@@ -44,6 +44,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [modo, setModo] = useState<Modo>(loja.fazEntrega ? 'entrega' : 'retirada')
   const [resultado, setResultado] = useState<ResultadoPedido | null>(null)
   const [cliente, setCliente] = useState<ClienteEscolhido | null>(null)
+  const [pagamento, setPagamento] = useState<FormaPagamento | undefined>(loja.pagamentos[0])
+  const [cpfNaNota, setCpfNaNota] = useState(false)
   const [enviando, startTransition] = useTransition()
   const dialogo = useRef<HTMLDialogElement>(null)
   const [busca, setBusca] = useState('')
@@ -86,6 +88,9 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         telefone: cliente?.telefone ?? '',
         enderecoId: cliente?.enderecoId,
         observacoes: String(form.get('observacoes') ?? ''),
+        pagamento: pagamento!,
+        trocoPara: String(form.get('trocoPara') ?? ''),
+        cpf: cpfNaNota ? String(form.get('cpf') ?? '') : '',
       })
       setResultado(r)
       if (r.ok) {
@@ -287,13 +292,58 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 enviar(new FormData(e.currentTarget))
               }}
             >
+              <fieldset className="modo pagamento">
+                <legend>Pagamento na {modo === 'entrega' ? 'entrega' : 'retirada'}</legend>
+                {FORMAS_PAGAMENTO.filter((f) => loja.pagamentos.includes(f.value)).map((f) => (
+                  <label key={f.value}>
+                    <input
+                      type="radio"
+                      name="pagamento"
+                      checked={pagamento === f.value}
+                      onChange={() => setPagamento(f.value)}
+                    />
+                    {f.label}
+                  </label>
+                ))}
+              </fieldset>
+              {pagamento === 'dinheiro' && (
+                <label>
+                  Troco para quanto? (deixe vazio se não precisa)
+                  <input
+                    name="trocoPara"
+                    inputMode="decimal"
+                    placeholder="Ex.: 50"
+                    maxLength={10}
+                  />
+                </label>
+              )}
+              <label className="marcar">
+                <input
+                  type="checkbox"
+                  checked={cpfNaNota}
+                  onChange={(e) => setCpfNaNota(e.target.checked)}
+                />
+                CPF na nota
+              </label>
+              {cpfNaNota && (
+                <label>
+                  CPF
+                  <input
+                    name="cpf"
+                    inputMode="numeric"
+                    required
+                    maxLength={14}
+                    placeholder="000.000.000-00"
+                  />
+                </label>
+              )}
               <label>
                 Observações
                 <textarea name="observacoes" rows={2} maxLength={300} />
               </label>
               <p className="aviso-dados">
-                Seu cadastro fica guardado para os próximos pedidos. Nome e endereço vão só para a
-                loja que recebe o pedido.{' '}
+                Seu cadastro fica guardado para os próximos pedidos. Nome, endereço e CPF vão só para a
+                loja que recebe o pedido; o CPF não fica no cadastro.{' '}
                 <a href="/privacidade" target="_blank">
                   Privacidade
                 </a>
@@ -305,7 +355,9 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               )}
               <button
                 className="enviar"
-                disabled={enviando || !cliente || (modo === 'entrega' && !cliente.enderecoId)}
+                disabled={
+                  enviando || !cliente || !pagamento || (modo === 'entrega' && !cliente.enderecoId)
+                }
               >
                 {enviando ? 'Enviando…' : 'Enviar pedido no WhatsApp'}
               </button>

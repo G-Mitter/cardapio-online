@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useOptimistic, useTransition } from 'react'
 
-import { brl } from '@/lib/pedido'
+import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
 import { PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
 
 import { mudarStatus } from '@/app/(frontend)/painel/actions'
@@ -18,6 +18,9 @@ export type PedidoView = {
   modo: 'entrega' | 'retirada'
   endereco: string
   observacoes: string
+  pagamento: string
+  trocoPara: number | null
+  cpf: string
   total: number
   itens: { nome: string; quantidade: number }[]
 }
@@ -92,8 +95,13 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
               ))}
             </ul>
             {p.observacoes && <div className="pedido__obs">Obs.: {p.observacoes}</div>}
+            {p.cpf && <div>CPF na nota: {formatarCpf(p.cpf)}</div>}
             <footer>
-              <b>{brl(p.total)}</b>
+              <b>
+                {brl(p.total)}
+                {p.pagamento && ` · ${rotuloPagamento(p.pagamento)}`}
+                {p.trocoPara ? ` (troco para ${brl(p.trocoPara)})` : ''}
+              </b>
               <div className="pedido__acoes">
                 {proximo && (
                   <button type="button" className="botao" onClick={() => mudar(p.id, proximo)}>
