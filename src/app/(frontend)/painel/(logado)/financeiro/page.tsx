@@ -94,6 +94,9 @@ export default async function Financeiro({ searchParams }: { searchParams: Promi
             {t.label}
           </Link>
         ))}
+        <Link href="/painel/financeiro/maquininha" className="botao secundario">
+          Conferir a maquininha
+        </Link>
       </div>
 
       {!doTipo(aba.value).length && <p className="vazio">Nenhuma conta {aba.label.toLowerCase()} em aberto.</p>}
