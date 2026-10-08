@@ -31,6 +31,34 @@ export const Produtos: CollectionConfig = {
     },
     { name: 'foto', label: 'Foto', type: 'upload', relationTo: 'media' },
     {
+      name: 'opcoes',
+      label: 'Opções e adicionais',
+      type: 'array',
+      labels: { singular: 'Grupo', plural: 'Grupos' },
+      admin: { description: 'Ex.: Tamanho (escolha 1), Borda, Extras (até 3). O painel da loja edita isto em texto.' },
+      fields: [
+        { name: 'nome', label: 'Grupo', type: 'text', required: true },
+        {
+          type: 'row',
+          fields: [
+            { name: 'min', label: 'Mínimo de escolhas', type: 'number', min: 0, defaultValue: 0 },
+            { name: 'max', label: 'Máximo de escolhas', type: 'number', min: 1, defaultValue: 1 },
+          ],
+        },
+        {
+          name: 'itens',
+          label: 'Itens',
+          type: 'array',
+          required: true,
+          minRows: 1,
+          fields: [
+            { name: 'nome', label: 'Item', type: 'text', required: true },
+            { name: 'preco', label: 'Adicional (R$)', type: 'number', min: 0, defaultValue: 0 },
+          ],
+        },
+      ],
+    },
+    {
       type: 'row',
       fields: [
         {

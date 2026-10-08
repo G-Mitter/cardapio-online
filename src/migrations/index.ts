@@ -8,6 +8,7 @@ import * as migration_20261008_125107_aceite_cliente from './20261008_125107_ace
 import * as migration_20261008_132134_chave_pix from './20261008_132134_chave_pix';
 import * as migration_20261008_134615_codigo_retirada from './20261008_134615_codigo_retirada';
 import * as migration_20261008_171019_bairros_entrega from './20261008_171019_bairros_entrega';
+import * as migration_20261008_171738_opcoes_produto from './20261008_171738_opcoes_produto';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20261008_171019_bairros_entrega.up,
     down: migration_20261008_171019_bairros_entrega.down,
-    name: '20261008_171019_bairros_entrega'
+    name: '20261008_171019_bairros_entrega',
+  },
+  {
+    up: migration_20261008_171738_opcoes_produto.up,
+    down: migration_20261008_171738_opcoes_produto.down,
+    name: '20261008_171738_opcoes_produto'
   },
 ];

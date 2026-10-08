@@ -34,7 +34,7 @@ export default async function Pedidos() {
       // O código em si não vai para a tela: quem mostra é o cliente.
       pedeCodigo: p.modo === 'retirada' && Boolean(p.codigoRetirada),
       total: p.total,
-      itens: (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade })),
+      itens: (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade, opcoes: i.opcoes ?? '' })),
     })),
   )
 

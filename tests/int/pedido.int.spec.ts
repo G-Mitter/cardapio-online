@@ -112,3 +112,27 @@ describe('código de retirada', () => {
     expect(mensagemPedido({ ...base, modo: 'entrega' })).not.toContain('Código')
   })
 })
+
+describe('opções do produto', () => {
+  const pizza = {
+    id: 1,
+    nome: 'Pizza',
+    preco: 40,
+    opcoes: [
+      { id: 'g', nome: 'Borda', min: 0, max: 1, itens: [{ id: 'c', nome: 'Borda catupiry', preco: 6 }] },
+    ],
+  }
+
+  it('soma o adicional no preço de cada unidade e põe a escolha na mensagem', () => {
+    const r = montarPedido([pizza], [{ produto: 1, quantidade: 2, escolhas: { g: ['c'] } }], 0, 'retirada')
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.pedido.total).toBe(92)
+    expect(r.pedido.itens[0].opcoes).toBe('Borda catupiry')
+    const msg = mensagemPedido({ loja: 'L', numero: 1, pedido: r.pedido, modo: 'retirada', nome: 'Ana' })
+    expect(msg).toContain('• 2x Pizza (Borda catupiry): R$')
+  })
+
+  it('o servidor recusa opção que não existe no produto', () => {
+    expect(montarPedido([pizza], [{ produto: 1, quantidade: 1, escolhas: { g: ['x'] } }], 0, 'retirada').ok).toBe(false)
+  })
+})

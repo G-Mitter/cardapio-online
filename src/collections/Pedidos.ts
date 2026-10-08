@@ -50,6 +50,8 @@ export const Pedidos: CollectionConfig = {
       admin: { readOnly: true },
       fields: [
         { name: 'nome', label: 'Produto', type: 'text', required: true },
+        // Opções escolhidas ("Grande, Borda catupiry"); o preço unitário já inclui os adicionais.
+        { name: 'opcoes', label: 'Opções', type: 'text' },
         { name: 'quantidade', label: 'Qtd.', type: 'number', required: true },
         { name: 'precoUnitario', label: 'Preço unitário (R$)', type: 'number', required: true },
       ],

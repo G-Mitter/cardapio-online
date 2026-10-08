@@ -11,6 +11,7 @@ import { getPayload, type Payload } from 'payload'
 import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { lerBairros } from '@/lib/entrega'
+import { lerOpcoes } from '@/lib/opcoes'
 import { FORMAS_PAGAMENTO } from '@/lib/pedido'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
@@ -236,6 +237,8 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
   const preco = lerPreco(texto(form, 'preco'))
   if (!nome) return { erro: 'Coloque o nome do produto.' }
   if (preco === null) return { erro: 'Preço inválido. Use, por exemplo, 32,90.' }
+  const opcoes = lerOpcoes(texto(form, 'opcoes'))
+  if (!opcoes.ok) return { erro: opcoes.erro }
 
   // A categoria precisa ser desta loja.
   const categoria = Number(form.get('categoria'))
@@ -254,6 +257,7 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       categoria,
       esgotado: marcado(form, 'esgotado'),
       ordem: Number(form.get('ordem')) || 0,
+      opcoes: opcoes.grupos,
       ...(foto !== undefined && { foto }),
     }
     if (id === null) {

@@ -138,6 +138,7 @@ export interface Pedido {
   status: 'novo' | 'preparando' | 'pronto' | 'entregue' | 'cancelado';
   itens: {
     nome: string;
+    opcoes?: string | null;
     quantidade: number;
     precoUnitario: number;
     id?: string | null;
@@ -255,6 +256,22 @@ export interface Produto {
   preco: number;
   categoria: number | Categoria;
   foto?: (number | null) | Media;
+  /**
+   * Ex.: Tamanho (escolha 1), Borda, Extras (até 3). O painel da loja edita isto em texto.
+   */
+  opcoes?:
+    | {
+        nome: string;
+        min?: number | null;
+        max?: number | null;
+        itens: {
+          nome: string;
+          preco?: number | null;
+          id?: string | null;
+        }[];
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Continua no cardápio, mas não dá para pedir.
    */
@@ -440,6 +457,7 @@ export interface PedidosSelect<T extends boolean = true> {
     | T
     | {
         nome?: T;
+        opcoes?: T;
         quantidade?: T;
         precoUnitario?: T;
         id?: T;
@@ -470,6 +488,21 @@ export interface ProdutosSelect<T extends boolean = true> {
   preco?: T;
   categoria?: T;
   foto?: T;
+  opcoes?:
+    | T
+    | {
+        nome?: T;
+        min?: T;
+        max?: T;
+        itens?:
+          | T
+          | {
+              nome?: T;
+              preco?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   esgotado?: T;
   ordem?: T;
   updatedAt?: T;

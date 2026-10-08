@@ -25,7 +25,7 @@ export type PedidoView = {
   /** Retirada com código: para marcar Entregue, a loja digita o código do cliente. */
   pedeCodigo: boolean
   total: number
-  itens: { nome: string; quantidade: number }[]
+  itens: { nome: string; quantidade: number; opcoes: string }[]
 }
 
 /** Busca pedidos novos sozinha a cada 20 segundos, sem recarregar a página. */
@@ -118,6 +118,7 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
               {p.itens.map((i, n) => (
                 <li key={n}>
                   {i.quantidade}× {i.nome}
+                  {i.opcoes && <small> ({i.opcoes})</small>}
                 </li>
               ))}
             </ul>
