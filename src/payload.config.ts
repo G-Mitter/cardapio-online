@@ -103,7 +103,9 @@ export default buildConfig({
     vercelBlobStorage({
       enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
       token: process.env.BLOB_READ_WRITE_TOKEN,
-      collections: { media: true },
+      // As fotos abrem direto do endereço do Blob, sem passar pelo servidor do site.
+      // Pode porque toda imagem já é pública (Media.access.read).
+      collections: { media: { disablePayloadAccessControl: true } },
       // Cria as mesmas colunas no banco com o plugin ligado ou desligado.
       alwaysInsertFields: true,
       // O navegador envia a imagem direto para o Blob (sem o limite de 4,5 MB das funções da Vercel).
