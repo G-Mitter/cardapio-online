@@ -354,6 +354,23 @@ details.perigo form {
   flex-wrap: wrap;
   gap: 8px;
 }
+.rota {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 2px solid var(--brand);
+  border-radius: 14px;
+  background: var(--surface);
+}
+/* O botão "Montar rota" acompanha a rolagem: os pedidos marcados podem estar lá embaixo. */
+.rota--fixa {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 1;
+}
+.rota p {
+  margin: 0;
+}
 .pedido__obs {
   color: var(--muted);
 }

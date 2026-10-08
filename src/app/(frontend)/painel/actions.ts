@@ -11,6 +11,7 @@ import { getPayload, type Payload } from 'payload'
 import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { FORMAS_PAGAMENTO } from '@/lib/pedido'
+import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
@@ -87,6 +88,93 @@ export async function mudarStatus(id: number, status: Status): Promise<{ ok: boo
     return { ok: r.docs.length === 1 }
   } catch {
     return { ok: false }
+  }
+}
+
+// ---------- Rota de entrega ----------
+
+/**
+ * Chave do Google Maps usada por esta loja. Hoje todas usam a do sistema (variável
+ * GOOGLE_MAPS_KEY na Vercel); para uma loja usar a própria, basta devolver a dela aqui.
+ */
+function chaveGoogle(_loja: Loja): string | undefined {
+  return process.env.GOOGLE_MAPS_KEY || undefined
+}
+
+/**
+ * Pede ao Google a melhor ordem das paradas (Routes API, optimizeWaypointOrder).
+ * Devolve os índices das paradas na nova ordem, ou null se o Google não respondeu.
+ */
+async function ordemGoogle(chave: string, loja: string, paradas: string[]) {
+  try {
+    const r = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': chave,
+        'X-Goog-FieldMask': 'routes.optimizedIntermediateWaypointIndex',
+      },
+      body: JSON.stringify({
+        origin: { address: loja },
+        destination: { address: loja },
+        intermediates: paradas.map((address) => ({ address })),
+        travelMode: 'DRIVE',
+        optimizeWaypointOrder: true,
+      }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!r.ok) return null
+    const ordem: unknown = (await r.json())?.routes?.[0]?.optimizedIntermediateWaypointIndex
+    // Com uma parada só o Google não manda a ordem: não tem o que trocar.
+    if (paradas.length === 1) return [0]
+    return Array.isArray(ordem) && ordem.length === paradas.length ? (ordem as number[]) : null
+  } catch {
+    return null
+  }
+}
+
+export type Rota =
+  | { ok: true; link: string; numeros: number[]; otimizada: boolean }
+  | { ok: false; erro: string }
+
+/** Monta a rota do entregador com os pedidos de entrega escolhidos no painel. */
+export async function montarRota(ids: number[]): Promise<Rota> {
+  const { payload, loja, comoUsuario } = await sessao()
+  const enderecoLoja = loja.endereco?.trim()
+  if (!enderecoLoja)
+    return { ok: false, erro: 'Coloque o endereço da loja em "Dados da loja" para montar a rota.' }
+  if (!ids.length) return { ok: false, erro: 'Escolha os pedidos que vão na rota.' }
+  if (ids.length > MAX_PARADAS) {
+    return {
+      ok: false,
+      erro: `O Google Maps aceita até ${MAX_PARADAS} paradas por rota. Divida em duas rotas.`,
+    }
+  }
+
+  const { docs } = await payload.find({
+    collection: 'pedidos',
+    where: { id: { in: ids }, loja: { equals: loja.id }, modo: { equals: 'entrega' } },
+    depth: 0,
+    limit: MAX_PARADAS,
+    sort: 'numero',
+    ...comoUsuario,
+  })
+  const pedidos = docs.filter((p) => p.endereco)
+  if (!pedidos.length) return { ok: false, erro: 'Nenhum dos pedidos escolhidos tem endereço.' }
+
+  const paradas = pedidos.map((p) => comCidade(p.endereco!, enderecoLoja))
+  const chave = chaveGoogle(loja)
+  const ordem = chave ? await ordemGoogle(chave, enderecoLoja, paradas) : null
+  // Sem chave ou sem resposta do Google, a rota segue a ordem dos pedidos.
+  const indices = ordem ?? paradas.map((_, i) => i)
+  return {
+    ok: true,
+    link: linkMaps(
+      enderecoLoja,
+      indices.map((i) => paradas[i]),
+    ),
+    numeros: indices.map((i) => pedidos[i].numero),
+    otimizada: Boolean(ordem),
   }
 }
 
