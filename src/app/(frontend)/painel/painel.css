@@ -473,19 +473,19 @@ details.perigo form {
   margin: 0 0 0.5rem;
 }
 .cozinha__cartao {
-  border: 2px solid #ccc;
+  border: 2px solid var(--line);
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
   font-size: 1.25rem;
-  background: #fff;
+  background: var(--surface);
 }
 .cozinha__cartao[role='button'] {
   cursor: pointer;
 }
 .cozinha__coluna--novo .cozinha__cartao {
   border-color: #d97706;
-  background: #fffbeb;
+  background: color-mix(in srgb, #d97706 14%, var(--surface));
 }
 .cozinha__coluna--pronto .cozinha__cartao {
   border-color: #16a34a;
@@ -518,6 +518,9 @@ details.perigo form {
   margin: 0;
   padding: 0.5rem;
   border: 1px solid #ccc;
+  /* Papel branco também no modo escuro: o QR Code só lê com fundo claro. */
+  background: #fff;
+  color: #1f1b17;
   text-align: center;
   break-inside: avoid;
 }
