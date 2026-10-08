@@ -93,6 +93,18 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const mesaDaUrl = new URLSearchParams(consulta).get('mesa')
   const mesa = mesaDaUrl && loja.mesas.includes(mesaDaUrl) ? mesaDaUrl : null
   const [resultadoMesa, setResultadoMesa] = useState<ResultadoMesa | null>(null)
+  // Garçom logado que lê o QR da mesa vai direto para o lançamento dela (o cliente continua aqui).
+  useEffect(() => {
+    if (!mesa) return
+    fetch('/api/users/me')
+      .then((r) => r.json())
+      .then(({ user }) => {
+        if (user?.roles?.includes('garcom') && user.ativo !== false) {
+          window.location.replace(`/painel/garcom/${encodeURIComponent(mesa)}`)
+        }
+      })
+      .catch(() => {})
+  }, [mesa])
   const [cliente, setCliente] = useState<ClienteEscolhido | null>(null)
   const [pagamento, setPagamento] = useState<FormaPagamento | undefined>(loja.pagamentos[0])
   const [cpfNaNota, setCpfNaNota] = useState(false)

@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { agruparMesas } from '@/lib/mesas'
+import { agruparMesas, lerMesas } from '@/lib/mesas'
 import { brl } from '@/lib/pedido'
 import { sessaoGarcom } from '@/lib/painel'
 
 export const metadata: Metadata = { title: 'Mesas' }
 
-/** Tela do garçom: as mesas com conta aberta. Lançar pedidos e fechar conta vêm nas próximas etapas. */
+/** Tela do garçom: todas as mesas, Livre ou com conta aberta. Toque na mesa para lançar pedidos. */
 export default async function TelaDoGarcom() {
   const { payload, loja, user, comoUsuario } = await sessaoGarcom()
   const { docs } = await payload.find({
@@ -17,29 +18,35 @@ export default async function TelaDoGarcom() {
       contaFechada: { not_equals: true },
       status: { not_equals: 'cancelado' },
     },
-    sort: 'createdAt',
     depth: 0,
     limit: 500,
     ...comoUsuario,
   })
-  const contas = agruparMesas(docs.map((p) => ({ id: p.id, numero: p.numero, mesa: p.mesa ?? '', total: p.total })))
+  const contas = new Map(
+    agruparMesas(docs.map((p) => ({ id: p.id, numero: p.numero, mesa: p.mesa ?? '', total: p.total }))).map((c) => [c.mesa, c]),
+  )
+  const mesas = lerMesas(loja.mesas ?? '')
 
   return (
     <>
       <h1>Olá, {user.nome ?? 'garçom'}</h1>
-      {!contas.length && <p className="vazio">Nenhuma mesa com conta aberta.</p>}
-      <ul className="lista">
-        {contas.map((c) => (
-          <li key={c.mesa}>
-            <div className="lista__nome">
-              <b>Mesa {c.mesa}</b>
-              <span>
-                {c.pedidos.length} {c.pedidos.length === 1 ? 'pedido' : 'pedidos'} · {brl(c.total)}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {!mesas.ok || !mesas.mesas.length ? (
+        <p className="vazio">A loja ainda não cadastrou as mesas.</p>
+      ) : (
+        <ul className="lista">
+          {mesas.mesas.map((m) => {
+            const c = contas.get(m)
+            return (
+              <li key={m}>
+                <Link className="lista__nome" href={`/painel/garcom/${encodeURIComponent(m)}`}>
+                  <b>Mesa {m}</b>
+                  <span>{c ? `Conta aberta · ${brl(c.total)}` : 'Livre'}</span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </>
   )
 }

@@ -8,7 +8,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getPayload, type Payload } from 'payload'
 
-import { COOKIE_LOJA, sessao } from '@/lib/painel'
+import { COOKIE_LOJA, sessao, sessaoGarcom } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
@@ -216,6 +216,68 @@ export async function criarPedidoPainel(
         observacoes: String(dados.observacoes ?? '').trim().slice(0, 300),
         pagamento: dados.pagamento,
         trocoPara,
+      },
+    })
+  } catch {
+    return { ok: false, erro: 'Não foi possível salvar. Tente de novo.' }
+  }
+  return { ok: true, numero }
+}
+
+/**
+ * Pedido da mesa lançado pelo garçom (ou pelo dono). Mesma conta do site: preço e total saem do banco.
+ * Sem taxa, sem cupom e pago no caixa, como o pedido que o cliente faz pelo QR Code.
+ */
+export async function criarPedidoDaMesa(
+  mesa: string,
+  itens: ItemEscolhido[],
+  observacoes: string,
+): Promise<{ ok: true; numero: number } | { ok: false; erro: string }> {
+  const { payload, loja, user, garcom, comoUsuario } = await sessaoGarcom()
+  const mesas = lerMesas(loja.mesas ?? '')
+  if (!mesas.ok || !mesas.mesas.includes(mesa)) return { ok: false, erro: 'Mesa não encontrada.' }
+  const lista = Array.isArray(itens) ? itens.slice(0, 100) : []
+
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: { loja: { equals: loja.id }, id: { in: lista.map((i) => i.produto) } },
+    limit: 100,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const r = montarPedido(produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })), lista, 0, 'retirada')
+  if (!r.ok) return r
+  const { pedido } = r
+
+  // ponytail: mesmo número do site (total de pedidos + 1), com a mesma chance de repetir em pedidos no mesmo instante.
+  const total = await payload.count({ collection: 'pedidos', where: { loja: { equals: loja.id } }, overrideAccess: true })
+  const numero = total.totalDocs + 1
+  try {
+    await payload.create({
+      collection: 'pedidos',
+      overrideAccess: true,
+      data: {
+        loja: loja.id,
+        numero,
+        status: 'novo',
+        itens: pedido.itens.map(({ produto, nome, quantidade, precoUnitario, opcoes, escolhas }) => ({
+          produto: Number(produto),
+          nome,
+          quantidade,
+          precoUnitario,
+          opcoes,
+          escolhas,
+        })),
+        subtotal: pedido.subtotal,
+        taxa: 0,
+        promocao: pedido.promocao,
+        desconto: 0,
+        total: pedido.total,
+        modo: 'retirada',
+        mesa,
+        nome: `Mesa ${mesa}`,
+        observacoes: String(observacoes ?? '').trim().slice(0, 300),
+        ...(garcom ? { garcom: user.id } : {}),
       },
     })
   } catch {

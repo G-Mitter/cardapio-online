@@ -179,6 +179,7 @@ export interface Pedido {
   total: number;
   modo: 'entrega' | 'retirada';
   mesa?: string | null;
+  garcom?: (number | null) | User;
   contaFechada?: boolean | null;
   balcao?: boolean | null;
   nome: string;
@@ -298,6 +299,43 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  roles: ('admin' | 'loja' | 'garcom')[];
+  lojaDoGarcom?: (number | null) | Loja;
+  nome?: string | null;
+  ativo?: boolean | null;
+  tenants?:
+    | {
+        tenant: number | Loja;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  email?: string | null;
+  username?: string | null;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "entregadores".
  */
 export interface Entregadore {
@@ -368,43 +406,6 @@ export interface Categoria {
   ordem?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  roles: ('admin' | 'loja' | 'garcom')[];
-  lojaDoGarcom?: (number | null) | Loja;
-  nome?: string | null;
-  ativo?: boolean | null;
-  tenants?:
-    | {
-        tenant: number | Loja;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-  email?: string | null;
-  username?: string | null;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -594,6 +595,7 @@ export interface PedidosSelect<T extends boolean = true> {
   total?: T;
   modo?: T;
   mesa?: T;
+  garcom?: T;
   contaFechada?: T;
   balcao?: T;
   nome?: T;
