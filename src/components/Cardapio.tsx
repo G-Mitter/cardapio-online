@@ -26,6 +26,7 @@ type LojaView = {
   slug: string
   nome: string
   logo: Foto
+  capa: Foto
   horario: string
   endereco: string
   aberta: boolean
@@ -95,6 +96,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     <>
       <div className="wrap">
         <header className="loja">
+          {loja.capa && (
+            <div className="capa">
+              {/* Decorativa: o nome da loja já vem logo abaixo. */}
+              <Image src={loja.capa} alt="" fill priority sizes="(max-width: 520px) 100vw, 480px" />
+            </div>
+          )}
           <div className="logo">
             {loja.logo ? (
               <Image src={loja.logo} alt={`Logo da ${loja.nome}`} fill sizes="56px" />

@@ -67,9 +67,21 @@ export const Lojas: CollectionConfig = {
     },
     { name: 'logo', label: 'Logo', type: 'upload', relationTo: 'media' },
     {
+      name: 'capa',
+      label: 'Foto de capa',
+      type: 'upload',
+      relationTo: 'media',
+      admin: { description: 'Opcional. Foto larga (deitada) que aparece no topo do cardápio.' },
+    },
+    {
       type: 'row',
       fields: [
-        { name: 'horario', label: 'Horário', type: 'text', admin: { description: 'Ex.: 11h às 15h' } },
+        {
+          name: 'horario',
+          label: 'Horário',
+          type: 'text',
+          admin: { description: 'Ex.: 11h às 15h' },
+        },
         { name: 'endereco', label: 'Endereço da loja', type: 'text' },
       ],
     },

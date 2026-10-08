@@ -71,6 +71,7 @@ export default async function PaginaDaLoja({ params }: Props) {
     .filter((c) => c.produtos.length > 0)
 
   const logo = typeof loja.logo === 'object' ? (loja.logo as Media | null) : null
+  const capa = typeof loja.capa === 'object' ? (loja.capa as Media | null) : null
 
   return (
     <div style={temaDaLoja(loja)}>
@@ -79,6 +80,7 @@ export default async function PaginaDaLoja({ params }: Props) {
           slug: loja.slug,
           nome: loja.nome,
           logo: logo?.url ?? null,
+          capa: capa?.url ?? null,
           horario: loja.horario ?? '',
           endereco: loja.endereco ?? '',
           aberta: loja.aberta !== false,

@@ -89,7 +89,10 @@ if (jaTem.totalDocs) {
   await payload.update({
     collection: 'lojas',
     id: loja.id,
-    data: { logo: await imagem('logo.png', 'Logo da Cantina Dona Lurdes', loja.id) },
+    data: {
+      logo: await imagem('logo.png', 'Logo da Cantina Dona Lurdes', loja.id),
+      capa: await imagem('capa.jpg', 'Família andando com sorvete na mão', loja.id),
+    },
   })
 
   let ordemCategoria = 0
