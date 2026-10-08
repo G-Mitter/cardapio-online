@@ -304,6 +304,7 @@ export interface Cliente {
    */
   telefone: string;
   nome: string;
+  aceitouEm?: string | null;
   enderecos?:
     | {
         rua: string;
@@ -546,6 +547,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface ClientesSelect<T extends boolean = true> {
   telefone?: T;
   nome?: T;
+  aceitouEm?: T;
   enderecos?:
     | T
     | {

@@ -34,6 +34,12 @@ export const Clientes: CollectionConfig = {
     },
     { name: 'nome', label: 'Nome', type: 'text', required: true },
     {
+      name: 'aceitouEm',
+      label: 'Aceitou termos e privacidade em',
+      type: 'date',
+      admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } },
+    },
+    {
       name: 'enderecos',
       label: 'Endereços',
       type: 'array',

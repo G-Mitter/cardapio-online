@@ -435,6 +435,7 @@ label.marcar {
 }
 .texto a,
 .aviso-dados a,
+.marcar a,
 .rodape a {
   color: inherit;
 }
