@@ -52,6 +52,9 @@ export const Pedidos: CollectionConfig = {
         { name: 'nome', label: 'Produto', type: 'text', required: true },
         // Opções escolhidas ("Grande, Borda catupiry"); o preço unitário já inclui os adicionais.
         { name: 'opcoes', label: 'Opções', type: 'text' },
+        // Para "Repetir pedido": qual produto e quais opções (ids do cardápio na hora do pedido).
+        { name: 'produto', label: 'Id do produto', type: 'number', admin: { hidden: true } },
+        { name: 'escolhas', label: 'Escolhas', type: 'json', admin: { hidden: true } },
         { name: 'quantidade', label: 'Qtd.', type: 'number', required: true },
         { name: 'precoUnitario', label: 'Preço unitário (R$)', type: 'number', required: true },
       ],

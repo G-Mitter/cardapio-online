@@ -56,6 +56,7 @@ export type ItemPedido = {
   precoUnitario: number
   /** Opções escolhidas, em texto; vazio se o produto não tem. */
   opcoes: string
+  escolhas: Escolhas
 }
 
 export type Pedido = { itens: ItemPedido[]; subtotal: number; taxa: number; total: number }
@@ -89,6 +90,7 @@ export function montarPedido(
       quantidade,
       precoUnitario: (centavos(p.preco) + centavos(o.adicional)) / 100,
       opcoes: o.descricao,
+      escolhas: escolhas ?? {},
     })
   }
 

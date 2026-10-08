@@ -139,6 +139,16 @@ export interface Pedido {
   itens: {
     nome: string;
     opcoes?: string | null;
+    produto?: number | null;
+    escolhas?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
     quantidade: number;
     precoUnitario: number;
     id?: string | null;
@@ -462,6 +472,8 @@ export interface PedidosSelect<T extends boolean = true> {
     | {
         nome?: T;
         opcoes?: T;
+        produto?: T;
+        escolhas?: T;
         quantidade?: T;
         precoUnitario?: T;
         id?: T;
