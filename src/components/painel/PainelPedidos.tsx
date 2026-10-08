@@ -6,14 +6,13 @@ import { useEffect, useOptimistic, useTransition } from 'react'
 import { brl } from '@/lib/pedido'
 import { PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
 
-import { mudarStatus } from './pedidos-actions'
+import { mudarStatus } from '@/app/(frontend)/painel/actions'
 
 export type PedidoView = {
   id: number
   numero: number
   status: Status
   createdAt: string
-  loja: string
   nome: string
   modo: 'entrega' | 'retirada'
   endereco: string
@@ -32,13 +31,7 @@ const hora = (iso: string) =>
     timeZone: 'America/Sao_Paulo',
   })
 
-export function PainelPedidos({
-  pedidos,
-  mostrarLoja,
-}: {
-  pedidos: PedidoView[]
-  mostrarLoja: boolean
-}) {
+export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   // A troca de status aparece na hora; se o servidor recusar, a próxima atualização desfaz.
@@ -82,7 +75,6 @@ export function PainelPedidos({
             </header>
             <div>
               <b>{p.nome}</b> · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : 'Retirada'}
-              {mostrarLoja && <> · {p.loja}</>}
             </div>
             <ul>
               {p.itens.map((i, n) => (
@@ -98,7 +90,7 @@ export function PainelPedidos({
                 {proximo && (
                   <button
                     type="button"
-                    className="btn btn--style-primary"
+                    className="botao"
                     onClick={() => mudar(p.id, proximo)}
                   >
                     {ROTULO[proximo]}
@@ -107,7 +99,7 @@ export function PainelPedidos({
                 {p.status !== 'cancelado' && p.status !== 'entregue' && (
                   <button
                     type="button"
-                    className="btn btn--style-secondary"
+                    className="botao secundario"
                     onClick={() => mudar(p.id, 'cancelado')}
                   >
                     Cancelar

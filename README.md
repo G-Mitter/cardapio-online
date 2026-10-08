@@ -12,9 +12,10 @@ Cardápio e catálogo online para restaurantes e comércios. O cliente final mon
 - **Visual por loja:** cor principal e fonte dos títulos escolhidas no painel.
 - **Cardápio público** com categorias, foto, preço e produto esgotado.
 - **Pedido pelo WhatsApp:** carrinho, entrega ou retirada, nome, endereço e observações. O pedido fica salvo no painel com número e status.
-- **Pedidos de hoje** (`/admin/pedidos-de-hoje`): os pedidos do dia em cartões, com pedido novo em destaque, troca de status em um toque (novo, preparando, pronto, entregue ou cancelado) e atualização sozinha a cada 20 segundos. Feita para usar no celular.
-- **Importar produtos por planilha** (`/admin/importar`): CSV ou Excel com nome, preço e categoria. Mostra uma prévia com o que vai ser criado ou atualizado e as linhas com erro antes de salvar.
-- **Painel em `/admin`:** você (administrador) vê todas as lojas; o dono de uma loja só vê e edita a dele.
+- **Painel da loja** (`/painel`): tela simples, feita para o celular, onde o dono cuida de produtos (com foto e "esgotado" num toque), categorias, dados da loja (com prévia do cardápio antes de salvar) e pedidos.
+- **Pedidos de hoje** (`/painel`): os pedidos do dia em cartões, com pedido novo em destaque, troca de status em um toque (novo, preparando, pronto, entregue ou cancelado) e atualização sozinha a cada 20 segundos. Feita para usar no celular.
+- **Importar produtos por planilha** (`/painel/importar`): CSV ou Excel com nome, preço e categoria. Mostra uma prévia com o que vai ser criado ou atualizado e as linhas com erro antes de salvar.
+- **`/admin` (Payload):** só para você, administrador: criar lojas e usuários. O dono de uma loja só vê e edita a dele, pelo `/painel`.
 
 ## Dois modelos de venda, o mesmo código
 
@@ -36,8 +37,10 @@ flowchart LR
   S -->|pedido| A[Server Action<br/>recalcula preços e total]
   A --> DB[(PostgreSQL<br/>lojas, produtos, pedidos)]
   A -->|link pronto| W[WhatsApp da loja]
-  D[Dono da loja] --> P[Painel /admin<br/>Payload CMS]
+  D[Dono da loja] --> P[Painel /painel<br/>Server Actions]
   P --> DB
+  V[Você] --> AD["/admin<br/>Payload CMS"]
+  AD --> DB
 ```
 
 - O navegador manda só "qual produto e quantos". Preço, taxa e total são recalculados no servidor com os dados do banco.
@@ -48,10 +51,10 @@ flowchart LR
 
 ```
 src/
-├── app/(frontend)/   # Cardápio público (/[loja]) e criação do pedido (actions.ts)
+├── app/(frontend)/   # Cardápio público (/[loja]), pedido (actions.ts) e painel da loja (/painel)
 ├── app/(payload)/    # Painel /admin e API, gerados pelo Payload
 ├── collections/      # Tabelas: lojas, categorias, produtos, pedidos, imagens, usuários
-├── components/       # Cardápio, carrinho e telas extras do /admin (importação)
+├── components/       # Cardápio e carrinho; components/painel: telas do painel da loja
 ├── lib/              # Regras pequenas e testadas: pedido, planilha, tema, WhatsApp
 └── seed/             # Loja de demonstração (Cantina Dona Lurdes)
 tests/int/            # Testes das regras do pedido e do WhatsApp

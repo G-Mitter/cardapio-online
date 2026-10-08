@@ -1,0 +1,407 @@
+/*
+ * Painel da loja (/painel). Usa as mesmas cores (tokens) do cardápio, em styles.css.
+ * Pensado para o celular primeiro: botões grandes, uma coluna, menu que quebra linha.
+ */
+.painel {
+  --painel-max: 960px;
+  max-width: var(--painel-max);
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+}
+.painel h1 {
+  font: 700 26px var(--display);
+  margin: 0;
+}
+.painel h2 {
+  font: 700 18px var(--display);
+  margin: 0;
+}
+.painel a {
+  color: inherit;
+}
+.painel .vazio {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Topo: loja, link do cardápio e menu */
+.topo {
+  display: grid;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+.topo__loja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.topo nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.topo nav a,
+.sair {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  text-decoration: none;
+  font: inherit;
+  font-size: 15px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.topo nav a[aria-current='page'] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+.topo nav form {
+  margin-left: auto;
+}
+.sair {
+  color: var(--muted);
+}
+.trocar {
+  display: flex;
+  gap: 8px;
+}
+.conteudo {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Botões (o .botao vem de styles.css) */
+.painel .botao {
+  border: 1px solid var(--brand);
+  color: var(--brand-ink);
+  text-align: center;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+.painel .botao.secundario {
+  background: var(--surface);
+  color: var(--fg);
+  border-color: var(--line);
+}
+.painel .botao.perigo {
+  border-color: var(--erro);
+  background: var(--erro);
+  color: #fff;
+}
+
+/* Formulários */
+.form,
+.form fieldset {
+  display: grid;
+  gap: 16px;
+  max-width: 560px;
+}
+.painel fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.campo {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 15px;
+}
+.painel input:not([type='checkbox']):not([type='file']):not([type='color']),
+.painel select,
+.painel textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  width: 100%;
+  min-width: 0;
+}
+.painel input[type='color'] {
+  width: 64px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.painel .curto {
+  max-width: 120px;
+}
+.linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+}
+.linha > .campo {
+  flex: 1 1 180px;
+}
+.linha > .campo.curto {
+  flex: 0 0 120px;
+}
+.marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.marcar input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--brand);
+}
+.miniatura {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+.painel .erro {
+  color: var(--erro);
+  margin: 0;
+}
+.painel .ok {
+  color: var(--ok);
+  font-weight: 600;
+  margin: 0;
+}
+details.perigo {
+  max-width: 560px;
+  color: var(--muted);
+}
+details.perigo summary {
+  cursor: pointer;
+}
+details.perigo form {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+/* Lista de produtos */
+.grupo {
+  display: grid;
+  gap: 8px;
+}
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.lista .miniatura {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--bg);
+  font: 700 20px var(--display);
+  color: var(--muted);
+}
+.lista .miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lista__nome {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  text-decoration: none;
+}
+.lista__nome span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.lista li.esgotado .miniatura {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+/* Categorias: uma linha editável por categoria */
+.categorias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.categorias li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 8px;
+}
+.form-linha fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.form-linha fieldset > input:first-child {
+  flex: 1 1 200px;
+  width: auto;
+}
+.form-linha .erro {
+  flex-basis: 100%;
+  font-size: 14px;
+  padding-top: 4px;
+}
+.categorias .form-linha {
+  flex: 1 1 320px;
+}
+
+/* Minha loja: formulário com a prévia do cardápio ao lado (abaixo, no celular) */
+.com-previa {
+  display: grid;
+  gap: 24px;
+}
+.previa {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.previa__tela {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px 12px;
+  background: var(--bg);
+  max-height: 720px;
+  overflow: auto;
+}
+@media (min-width: 900px) {
+  .com-previa {
+    grid-template-columns: minmax(0, 1fr) 400px;
+  }
+  .previa {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+/* Pedidos de hoje */
+.pedidos {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+.pedidos > p {
+  margin: 0;
+  color: var(--muted);
+}
+.pedido {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.pedido header,
+.pedido footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.pedido footer {
+  justify-content: space-between;
+}
+.pedido ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.pedido__status {
+  margin-left: auto;
+  font-weight: 600;
+}
+.pedido__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pedido__obs {
+  color: var(--muted);
+}
+/* Pedido novo em destaque */
+.pedido--novo {
+  border: 2px solid var(--ok);
+  background: color-mix(in srgb, var(--ok) 8%, var(--surface));
+}
+.pedido--entregue,
+.pedido--cancelado {
+  opacity: 0.6;
+}
+.pedidos-vazio {
+  color: var(--muted);
+}
+
+/* Importar planilha */
+.importador {
+  display: grid;
+  gap: 16px;
+}
+.importador p {
+  margin: 0;
+}
+.importador .tabela {
+  overflow-x: auto;
+}
+.importador table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.importador th,
+.importador td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Tela de entrar */
+.entrar {
+  max-width: 400px;
+  width: 100%;
+  margin: 10vh auto 0;
+  display: grid;
+  gap: 12px;
+}
+.entrar p {
+  margin: 0;
+  color: var(--muted);
+}

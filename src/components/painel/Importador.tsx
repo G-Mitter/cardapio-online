@@ -175,7 +175,7 @@ export function Importador({ lojas }: { lojas: Loja[] }) {
               </div>
               <button
                 type="button"
-                className="btn btn--style-primary"
+                className="botao"
                 onClick={confirmar}
                 disabled={ocupado}
               >

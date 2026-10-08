@@ -12,6 +12,8 @@ export const Users: CollectionConfig = {
   },
   auth: true,
   access: {
+    // O /admin é só seu. O dono da loja usa o painel próprio, em /painel.
+    admin: ({ req: { user } }) => ehAdmin(user),
     // Só você cria e apaga usuários. O plugin já limita a leitura e a edição
     // ao próprio usuário e às lojas dele.
     create: soAdmin,

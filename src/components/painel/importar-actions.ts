@@ -2,7 +2,7 @@
 
 /**
  * Importação de produtos por planilha. Roda no servidor, com o usuário logado
- * no /admin: o dono de uma loja só consegue importar para a loja dele.
+ * no painel: o dono de uma loja só consegue importar para a loja dele.
  *
  * O navegador lê o arquivo e manda só a tabela de textos. Tudo é validado
  * de novo aqui, na prévia e na confirmação.

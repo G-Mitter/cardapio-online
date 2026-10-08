@@ -33,29 +33,28 @@ Passo a passo para colocar o cardápio de uma loja nova no ar. Meta: menos de 30
 4. Em **Lojas**, clique em **Adicionar Loja** e escolha a loja criada no passo 1.
 5. Salve.
 
-O dono só vai ver e editar a loja dele. Ao entrar, ele cai direto em **Pedidos de hoje** e o menu mostra só Pedidos, Produtos, Categorias, Minha loja e o botão **Ver meu cardápio**. Ele pode trocar a senha depois, em **Conta**.
+O dono usa o painel próprio, em `seu-endereco/painel` (o `/admin` é só seu). Ele só vê e edita a loja dele: Pedidos, Produtos, Categorias, Minha loja, Importar planilha e o link **Ver meu cardápio**.
 
 ## 3. Importar os produtos (5 a 15 min)
 
-1. No menu lateral, abra **Importar planilha**.
-2. Se aparecer o campo **Loja**, escolha a loja nova.
-3. Envie a planilha (`.csv` ou `.xlsx`). Ela precisa de uma linha de títulos com `nome`, `preco` e `categoria`; `descricao` e `esgotado` são opcionais. O link **Baixar planilha modelo** na mesma tela traz um exemplo.
-4. Confira a prévia: produtos novos, categorias novas e linhas com erro. Corrija as linhas com erro na planilha e envie de novo, se quiser.
-5. Clique em **Importar**.
+1. Abra `seu-endereco/painel` (com o seu login de administrador dá para escolher a loja no topo) e vá em **Importar planilha**.
+2. Envie a planilha (`.csv` ou `.xlsx`). Ela precisa de uma linha de títulos com `nome`, `preco` e `categoria`; `descricao` e `esgotado` são opcionais. O link **Baixar planilha modelo** na mesma tela traz um exemplo.
+3. Confira a prévia: produtos novos, categorias novas e linhas com erro. Corrija as linhas com erro na planilha e envie de novo, se quiser.
+4. Clique em **Importar**.
 
-Sem planilha, cadastre em **Categorias** e depois em **Produtos**. Para mudar a ordem no cardápio, use o campo **Ordem** (menor aparece primeiro).
+Sem planilha, cadastre em **Categorias** e depois em **Produtos**, no mesmo painel. Para mudar a ordem no cardápio, use o campo **Ordem** (menor aparece primeiro).
 
 ## 4. Conferir o cardápio (5 min)
 
 1. Abra `seu-endereco/endereco-do-cardapio` no celular.
 2. Confira nome, cores, logo, horário, preços e categorias.
 3. Faça um pedido de teste com o seu nome. Confira se a mensagem chega no WhatsApp da loja.
-4. No painel, abra **Pedidos de hoje** e marque o pedido de teste como **Cancelado**.
+4. No painel (`/painel`), abra **Pedidos** e marque o pedido de teste como **Cancelado**.
 
 ## 5. Entregar ao cliente
 
 Mande ao dono:
 
 - o link do cardápio, para divulgar no Instagram, no WhatsApp Business e no Google;
-- o endereço do painel (`seu-endereco/admin`), o e-mail e a senha provisória;
-- como usar no dia a dia: **Pedidos de hoje** para acompanhar os pedidos, **Produtos** para marcar algo como esgotado ou mudar preço, **Importar planilha** para atualizar vários preços de uma vez.
+- o endereço do painel (`seu-endereco/painel`), o e-mail e a senha provisória;
+- como usar no dia a dia: **Pedidos** para acompanhar os pedidos, **Produtos** para marcar algo como esgotado ou mudar preço, **Importar planilha** para atualizar vários preços de uma vez.
