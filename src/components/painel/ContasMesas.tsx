@@ -10,6 +10,8 @@ import { fecharConta } from '@/app/(frontend)/painel/actions'
 type Conta = {
   mesa: string
   total: number
+  /** O cliente tocou em "Pedir a conta" no QR Code. */
+  pediuConta: boolean
   pedidos: { id: number; numero: number; itens: { nome: string; quantidade: number; opcoes: string }[] }[]
 }
 
@@ -24,6 +26,7 @@ export function ContasMesas({ contas }: { contas: Conta[] }) {
         <article key={c.mesa} className="pedido">
           <header>
             <b>Mesa {c.mesa}</b>
+            {c.pediuConta && <span className="selo">Pediu a conta</span>}
             <span>
               {c.pedidos.length} {c.pedidos.length === 1 ? 'pedido' : 'pedidos'}
             </span>

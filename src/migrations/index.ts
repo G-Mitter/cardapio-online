@@ -21,6 +21,7 @@ import * as migration_20261008_192626_mesas_qrcode from './20261008_192626_mesas
 import * as migration_20261008_193017_entregadores from './20261008_193017_entregadores';
 import * as migration_20261008_202042_garcons from './20261008_202042_garcons';
 import * as migration_20261008_202353_garcom_no_pedido from './20261008_202353_garcom_no_pedido';
+import * as migration_20261008_202743_mesa_sem_garcom from './20261008_202743_mesa_sem_garcom';
 
 export const migrations = [
   {
@@ -136,6 +137,11 @@ export const migrations = [
   {
     up: migration_20261008_202353_garcom_no_pedido.up,
     down: migration_20261008_202353_garcom_no_pedido.down,
-    name: '20261008_202353_garcom_no_pedido'
+    name: '20261008_202353_garcom_no_pedido',
+  },
+  {
+    up: migration_20261008_202743_mesa_sem_garcom.up,
+    down: migration_20261008_202743_mesa_sem_garcom.down,
+    name: '20261008_202743_mesa_sem_garcom'
   },
 ];

@@ -120,6 +120,20 @@ export const Lojas: CollectionConfig = {
       admin: { description: 'Quantidade ("10" vira as mesas 1 a 10) ou nomes separados por vírgula. Cada mesa tem um QR Code no painel.' },
     },
     {
+      name: 'atendimentoMesas',
+      label: 'Atendimento das mesas',
+      type: 'select',
+      defaultValue: 'ambos',
+      options: [
+        { label: 'Os dois: garçom e cliente pelo QR Code', value: 'ambos' },
+        { label: 'Só com garçom', value: 'garcom' },
+        { label: 'Sem garçom: o cliente pede pelo QR Code', value: 'cliente' },
+      ],
+      admin: { condition: (data) => Boolean(data?.mesas) },
+    },
+    // Texto impresso embaixo de cada QR Code; vazio usa o texto padrão (INSTRUCOES_PADRAO em lib/mesas.ts).
+    { name: 'instrucoesMesa', label: 'Instruções impressas no QR Code', type: 'textarea', maxLength: 400 },
+    {
       name: 'bairros',
       label: 'Taxa por bairro',
       type: 'array',

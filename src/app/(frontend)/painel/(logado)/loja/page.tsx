@@ -71,6 +71,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
           taxaEntrega: loja.taxaEntrega ?? 0,
           bairros: bairrosComoTexto(loja.bairros ?? []),
           mesas: loja.mesas ?? '',
+          atendimentoMesas: loja.atendimentoMesas ?? 'ambos',
           pagamentos: loja.formasPagamento ?? [],
           chavePix: loja.chavePix ?? '',
           pixelMeta: loja.pixelMeta ?? '',

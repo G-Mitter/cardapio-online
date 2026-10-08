@@ -180,6 +180,7 @@ export interface Pedido {
   modo: 'entrega' | 'retirada';
   mesa?: string | null;
   garcom?: (number | null) | User;
+  pediuConta?: boolean | null;
   contaFechada?: boolean | null;
   balcao?: boolean | null;
   nome: string;
@@ -239,6 +240,8 @@ export interface Loja {
    * Quantidade ("10" vira as mesas 1 a 10) ou nomes separados por vírgula. Cada mesa tem um QR Code no painel.
    */
   mesas?: string | null;
+  atendimentoMesas?: ('ambos' | 'garcom' | 'cliente') | null;
+  instrucoesMesa?: string | null;
   /**
    * Se tiver algum bairro aqui, a loja entrega só nestes, cada um com a sua taxa.
    */
@@ -596,6 +599,7 @@ export interface PedidosSelect<T extends boolean = true> {
   modo?: T;
   mesa?: T;
   garcom?: T;
+  pediuConta?: T;
   contaFechada?: T;
   balcao?: T;
   nome?: T;
@@ -675,6 +679,8 @@ export interface LojasSelect<T extends boolean = true> {
   aceitaRetirada?: T;
   aceitaAgendamento?: T;
   mesas?: T;
+  atendimentoMesas?: T;
+  instrucoesMesa?: T;
   bairros?:
     | T
     | {

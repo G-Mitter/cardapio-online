@@ -24,15 +24,19 @@ export default async function Mesas() {
     ...comoUsuario,
   })
 
+  // Quem pediu a conta vai para o começo da lista.
   const contas = agruparMesas(
     docs.map((p) => ({
       id: p.id,
       numero: p.numero,
       mesa: p.mesa ?? '',
       total: p.total,
+      pediuConta: p.pediuConta === true,
       itens: (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade, opcoes: i.opcoes ?? '' })),
     })),
   )
+    .map((c) => ({ ...c, pediuConta: c.pedidos.some((p) => p.pediuConta) }))
+    .sort((a, b) => Number(b.pediuConta) - Number(a.pediuConta))
 
   return (
     <>
