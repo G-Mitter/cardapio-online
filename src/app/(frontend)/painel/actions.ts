@@ -44,15 +44,18 @@ const tokenCookie = (payload: Payload) => `${payload.config.cookiePrefix}-token`
 
 export async function entrar(_: Estado, form: FormData): Promise<Estado> {
   const payload = await getPayload({ config })
+  const login = texto(form, 'login').toLowerCase()
   let resultado
   try {
     resultado = await payload.login({
       collection: 'users',
-      data: { email: texto(form, 'email'), password: String(form.get('senha') ?? '') },
+      // Com @ é e-mail (dono); sem @ é o usuário do garçom.
+      data: { ...(login.includes('@') ? { email: login } : { username: login }), password: String(form.get('senha') ?? '') },
     })
   } catch {
-    return { erro: 'E-mail ou senha incorretos.' }
+    return { erro: 'Usuário ou senha incorretos.' }
   }
+  if (resultado.user?.ativo === false) return { erro: 'Este acesso está desligado. Fale com a loja.' }
   // O mesmo cookie do /admin: quem entra aqui também está logado lá (e vice-versa).
   ;(await cookies()).set(tokenCookie(payload), resultado.token ?? '', {
     httpOnly: true,
@@ -670,4 +673,53 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
     return { erro: e instanceof Error && !('data' in e) ? e.message : mensagem(e) }
   }
   redirect('/painel/loja?salvo=1')
+}
+
+// ---------- Garçons ----------
+
+/** Usuário do garçom: letras minúsculas, números, _ e -. Vira "usuario.loja" para não repetir entre lojas. */
+const USUARIO = /^[a-z0-9_-]{3,20}$/
+
+export async function salvarGarcom(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja } = await sessao()
+  const nome = texto(form, 'nome').slice(0, 80)
+  const usuario = texto(form, 'usuario').toLowerCase()
+  const senha = String(form.get('senha') ?? '')
+  if (!nome) return { erro: 'Coloque o nome do garçom.' }
+  if (!USUARIO.test(usuario)) return { erro: 'Usuário com 3 a 20 letras, números, _ ou -, sem espaço nem acento.' }
+  if (senha.length < 6) return { erro: 'A senha precisa de pelo menos 6 caracteres.' }
+  try {
+    // O garçom não tem acesso próprio aos dados, então criamos como o servidor, depois de conferir o login do dono acima.
+    await payload.create({
+      collection: 'users',
+      data: { username: `${usuario}.${loja.slug}`, password: senha, nome, roles: ['garcom'], lojaDoGarcom: loja.id, ativo: true },
+    })
+  } catch (e) {
+    return { erro: /unique|already|username/i.test(String(e)) ? 'Já existe um garçom com esse usuário.' : mensagem(e) }
+  }
+  redirect('/painel/garcons')
+}
+
+/** Só mexe em garçom desta loja: confere antes de gravar. */
+async function mudarGarcom(id: number, data: { ativo: boolean } | { password: string }) {
+  const { payload, loja } = await sessao()
+  const { docs } = await payload.find({
+    collection: 'users',
+    where: { id: { equals: id }, lojaDoGarcom: { equals: loja.id }, roles: { contains: 'garcom' } },
+    limit: 1,
+    depth: 0,
+  })
+  if (docs[0]) await payload.update({ collection: 'users', id, data })
+}
+
+export async function ligarGarcom(id: number, ativo: boolean) {
+  await mudarGarcom(id, { ativo })
+  redirect('/painel/garcons')
+}
+
+export async function trocarSenhaGarcom(id: number, _: Estado, form: FormData): Promise<Estado> {
+  const senha = String(form.get('senha') ?? '')
+  if (senha.length < 6) return { erro: 'A senha precisa de pelo menos 6 caracteres.' }
+  await mudarGarcom(id, { password: senha })
+  redirect('/painel/garcons')
 }

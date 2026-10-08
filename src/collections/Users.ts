@@ -10,7 +10,9 @@ export const Users: CollectionConfig = {
     // O dono da loja não precisa ver a lista de usuários.
     hidden: ({ user }) => !ehAdmin(user),
   },
-  auth: true,
+  // O garçom entra com usuário e senha (sem e-mail); você e os donos continuam com e-mail.
+  // requireUsername: false para não exigir usuário de quem já existe.
+  auth: { loginWithUsername: { allowEmailLogin: true, requireEmail: false, requireUsername: false } },
   access: {
     // O /admin é só seu. O dono da loja usa o painel próprio, em /painel.
     admin: ({ req: { user } }) => ehAdmin(user),
@@ -37,6 +39,7 @@ export const Users: CollectionConfig = {
       options: [
         { label: 'Administrador geral', value: 'admin' },
         { label: 'Dono de loja', value: 'loja' },
+        { label: 'Garçom', value: 'garcom' },
       ],
       // Ninguém se promove a administrador: só um admin muda este campo.
       access: {
@@ -44,5 +47,17 @@ export const Users: CollectionConfig = {
         update: ({ req: { user } }) => ehAdmin(user),
       },
     },
+    // Garçom: a loja dele. Fica fora da lista "tenants" de propósito: sem ela o plugin de
+    // multi-cliente não dá a ele acesso a nenhum dado pela API; o painel lê pelo servidor.
+    {
+      name: 'lojaDoGarcom',
+      label: 'Loja do garçom',
+      type: 'relationship',
+      relationTo: 'lojas',
+      access: { create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
+    },
+    { name: 'nome', label: 'Nome', type: 'text' },
+    // Desligado não entra mais (nem com a sessão que já estava aberta). Não se apaga, para o relatório.
+    { name: 'ativo', label: 'Ativo', type: 'checkbox', defaultValue: true },
   ],
 }
