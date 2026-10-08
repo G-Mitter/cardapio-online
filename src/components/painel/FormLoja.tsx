@@ -27,6 +27,7 @@ export type DadosLoja = {
   bairros: string
   /** Quantidade ou nomes das mesas, como o dono digitou. */
   mesas: string
+  atendimentoMesas: string
   pagamentos: FormaPagamento[]
   chavePix: string
   pixelMeta: string
@@ -174,6 +175,15 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Mesas.
           </small>
         </label>
+        <label className="campo">
+          Atendimento das mesas
+          <select name="atendimentoMesas" value={d.atendimentoMesas} onChange={muda('atendimentoMesas')}>
+            <option value="ambos">Os dois: garçom e cliente pelo QR Code</option>
+            <option value="garcom">Só com garçom</option>
+            <option value="cliente">Sem garçom: o cliente pede pelo QR Code</option>
+          </select>
+          <small>Só com garçom: o QR Code mostra a conta, mas o cliente chama o garçom para pedir.</small>
+        </label>
         <label className="marcar">
           <input
             type="checkbox"
@@ -283,6 +293,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
               taxaEntrega: d.taxaEntrega,
               bairros: bairrosDaPrevia(d.bairros),
               mesas: [],
+              pedeNaMesa: true,
               pagamentos: d.pagamentos,
             }}
             categorias={categorias}

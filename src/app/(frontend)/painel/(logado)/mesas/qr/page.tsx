@@ -4,8 +4,11 @@ import Link from 'next/link'
 import QRCode from 'qrcode'
 
 import { Imprimir } from '@/components/painel/Imprimir'
-import { lerMesas } from '@/lib/mesas'
+import { Formulario } from '@/components/painel/Formulario'
+import { INSTRUCOES_PADRAO, lerMesas } from '@/lib/mesas'
 import { sessao } from '@/lib/painel'
+
+import { salvarInstrucoesMesa } from '../../../actions'
 
 export const metadata: Metadata = { title: 'QR Codes das mesas' }
 
@@ -25,6 +28,7 @@ export default async function QrDasMesas() {
     )
   }
 
+  const instrucoes = loja.instrucoesMesa?.trim() || INSTRUCOES_PADRAO
   const h = await headers()
   const host = h.get('x-forwarded-host') ?? h.get('host')
   const origem = `${h.get('x-forwarded-proto') ?? 'https'}://${host}`
@@ -44,13 +48,23 @@ export default async function QrDasMesas() {
         <h1>QR Codes das mesas</h1>
         <Imprimir />
       </div>
+      <div className="nao-imprimir">
+        <Formulario acao={salvarInstrucoesMesa}>
+          <label className="campo">
+            Instruções impressas embaixo de cada QR Code
+            <textarea name="instrucoes" rows={5} maxLength={400} defaultValue={instrucoes} />
+            <small>Apague tudo e salve para voltar ao texto sugerido.</small>
+          </label>
+          <button className="botao secundario">Salvar instruções</button>
+        </Formulario>
+      </div>
       <div className="qrs">
         {qrs.map((q) => (
           <figure key={q.mesa} className="qr">
             <div dangerouslySetInnerHTML={{ __html: q.svg }} />
             <figcaption>
               <b>Mesa {q.mesa}</b>
-              <small>Aponte a câmera e peça pelo celular</small>
+              <small className="instrucoes">{instrucoes}</small>
             </figcaption>
           </figure>
         ))}

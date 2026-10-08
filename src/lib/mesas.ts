@@ -4,6 +4,14 @@
 
 export const MAX_MESAS = 100
 
+/** Instruções impressas embaixo do QR Code quando a loja não escreveu as dela. */
+export const INSTRUCOES_PADRAO = [
+  '1. Leia o QR Code com a câmera do celular.',
+  '2. Escolha seus pedidos.',
+  '3. Para pedir mais, leia de novo.',
+  '4. Para pagar, toque em Pedir a conta ou chame no balcão.',
+].join('\n')
+
 /**
  * Texto do painel vira a lista de mesas: um número ("10" = mesas 1 a 10) ou nomes
  * separados por vírgula ou linha ("Varanda 1, Varanda 2"). Vazio = loja sem mesas.

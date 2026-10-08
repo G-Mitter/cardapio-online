@@ -25,6 +25,7 @@ export type LojaDados = Pick<
   | 'taxaEntrega'
   | 'bairros'
   | 'mesas'
+  | 'atendimentoMesas'
   | 'formasPagamento'
 >
 
@@ -64,6 +65,7 @@ export function LojaAoVivo({ loja, categorias }: { loja: LojaDados; categorias: 
             const m = lerMesas(data.mesas ?? '')
             return m.ok ? m.mesas : []
           })(),
+          pedeNaMesa: data.atendimentoMesas !== 'garcom',
           pagamentos: data.formasPagamento ?? [],
         }}
         categorias={categorias}

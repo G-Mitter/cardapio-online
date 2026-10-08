@@ -23,7 +23,7 @@ export default async function TelaDoGarcom() {
     ...comoUsuario,
   })
   const contas = new Map(
-    agruparMesas(docs.map((p) => ({ id: p.id, numero: p.numero, mesa: p.mesa ?? '', total: p.total }))).map((c) => [c.mesa, c]),
+    agruparMesas(docs.map((p) => ({ id: p.id, numero: p.numero, mesa: p.mesa ?? '', total: p.total, pediuConta: p.pediuConta === true }))).map((c) => [c.mesa, c]),
   )
   const mesas = lerMesas(loja.mesas ?? '')
 
@@ -40,7 +40,7 @@ export default async function TelaDoGarcom() {
               <li key={m}>
                 <Link className="lista__nome" href={`/painel/garcom/${encodeURIComponent(m)}`}>
                   <b>Mesa {m}</b>
-                  <span>{c ? `Conta aberta · ${brl(c.total)}` : 'Livre'}</span>
+                  <span>{c ? `${c.pedidos.some((p) => p.pediuConta) ? 'Pediu a conta' : 'Conta aberta'} · ${brl(c.total)}` : 'Livre'}</span>
                 </Link>
               </li>
             )

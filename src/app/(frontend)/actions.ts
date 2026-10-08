@@ -20,7 +20,7 @@ import {
 import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
-import { lerMesas } from '@/lib/mesas'
+import { agruparMesas, lerMesas } from '@/lib/mesas'
 import { lerAgendamento, rotuloAgendamento } from '@/lib/agendamento'
 import { resumoDosItens } from '@/lib/carrinho'
 import { type Cupom, normalizarCodigo } from '@/lib/cupom'
@@ -299,6 +299,7 @@ export async function criarPedidoMesa(dados: {
   const mesas = lerMesas(loja.mesas ?? '')
   const mesa = texto(dados.mesa, 30)
   if (!mesas.ok || !mesas.mesas.includes(mesa)) return { ok: false, erro: 'Mesa não encontrada. Leia o QR Code da mesa de novo.' }
+  if (loja.atendimentoMesas === 'garcom') return { ok: false, erro: 'Nesta loja os pedidos da mesa são feitos pelo garçom. Chame alguém da casa.' }
 
   const umaHoraAtras = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const recentes = await payload.count({
@@ -349,6 +350,70 @@ export async function criarPedidoMesa(dados: {
     },
   })
   return { ok: true, numero, total: pedido.total }
+}
+
+export type ContaDaMesa = {
+  itens: { nome: string; quantidade: number; opcoes: string }[]
+  total: number
+  pediuConta: boolean
+}
+
+/** A loja e a mesa do QR Code, se existirem. */
+async function lojaEMesa(slug: string, mesa: string) {
+  const payload = await getPayload({ config })
+  const { docs } = await payload.find({
+    collection: 'lojas',
+    where: { slug: { equals: texto(slug, 100) } },
+    limit: 1,
+    depth: 0,
+  })
+  const loja = docs[0]
+  const mesas = loja && lerMesas(loja.mesas ?? '')
+  if (!loja || !mesas?.ok || !mesas.mesas.includes(texto(mesa, 30))) return null
+  return { payload, loja, mesa: texto(mesa, 30) }
+}
+
+const contaAberta = (loja: number, mesa: string) => ({
+  loja: { equals: loja },
+  mesa: { equals: mesa },
+  contaFechada: { not_equals: true },
+  status: { not_equals: 'cancelado' },
+})
+
+/**
+ * O que a mesa já pediu e o total até agora (só itens e valores, sem nome nem telefone).
+ * Depois que a loja fecha a conta, a mesa volta a começar do zero.
+ */
+export async function contaDaMesa(slug: string, mesa: string): Promise<ContaDaMesa | null> {
+  const achou = await lojaEMesa(slug, mesa)
+  if (!achou) return null
+  const { docs } = await achou.payload.find({
+    collection: 'pedidos',
+    where: contaAberta(achou.loja.id, achou.mesa),
+    sort: 'createdAt',
+    depth: 0,
+    limit: 100,
+    overrideAccess: true,
+  })
+  const [conta] = agruparMesas(docs.map((p) => ({ id: p.id, numero: p.numero, mesa: achou.mesa, total: p.total })))
+  return {
+    itens: docs.flatMap((p) => (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade, opcoes: i.opcoes ?? '' }))),
+    total: conta?.total ?? 0,
+    pediuConta: docs.some((p) => p.pediuConta),
+  }
+}
+
+/** "Pedir a conta": só avisa a loja (a mesa aparece em destaque no painel). Quem fecha é a loja. */
+export async function pedirContaDaMesa(slug: string, mesa: string): Promise<{ ok: boolean }> {
+  const achou = await lojaEMesa(slug, mesa)
+  if (!achou) return { ok: false }
+  await achou.payload.update({
+    collection: 'pedidos',
+    where: contaAberta(achou.loja.id, achou.mesa),
+    data: { pediuConta: true },
+    overrideAccess: true,
+  })
+  return { ok: true }
 }
 
 export type ResultadoRepetir =

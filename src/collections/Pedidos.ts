@@ -91,6 +91,8 @@ export const Pedidos: CollectionConfig = {
         // Quando a loja fecha a conta da mesa, os pedidos saem da lista de contas abertas.
         // Garçom que lançou o pedido (vazio = o cliente pediu pelo QR Code ou a loja lançou no painel).
         { name: 'garcom', label: 'Garçom', type: 'relationship', relationTo: 'users', admin: { readOnly: true } },
+        // O cliente tocou em "Pedir a conta" no QR Code: a mesa aparece em destaque no painel.
+        { name: 'pediuConta', label: 'Pediu a conta', type: 'checkbox', defaultValue: false },
         { name: 'contaFechada', label: 'Conta fechada', type: 'checkbox', defaultValue: false },
         { name: 'balcao', label: 'Balcão', type: 'checkbox', defaultValue: false },
         { name: 'nome', label: 'Cliente', type: 'text', required: true },

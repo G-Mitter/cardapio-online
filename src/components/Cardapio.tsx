@@ -13,6 +13,7 @@ import {
   type ResultadoMesa,
   type ResultadoPedido,
 } from '@/app/(frontend)/actions'
+import { ContaDaMesa } from '@/components/ContaDaMesa'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { limitesDoCampo } from '@/lib/agendamento'
 import { normalizarCodigo } from '@/lib/cupom'
@@ -70,6 +71,8 @@ type LojaView = {
   bairros: Bairro[]
   /** Mesas com QR Code; vazio = loja sem pedido pela mesa. */
   mesas: string[]
+  /** Falso na loja que atende as mesas só com garçom: o cliente não envia pedido pelo QR Code. */
+  pedeNaMesa: boolean
   pagamentos: FormaPagamento[]
 }
 
@@ -352,6 +355,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
             )}
           </div>
         </header>
+
+        <ContaDaMesa loja={loja.slug} mesa={mesa} atualizar={resultadoMesa?.ok ? resultadoMesa.numero : 0} />
 
         {categorias.length > 0 && (
           <input
@@ -689,7 +694,10 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
               </>
             )}
 
-            {mesa && itens.length > 0 && (
+            {mesa && itens.length > 0 && !loja.pedeNaMesa && (
+              <p className="aviso-dados">Nesta loja os pedidos da mesa são feitos pelo garçom. Chame alguém da casa.</p>
+            )}
+            {mesa && itens.length > 0 && loja.pedeNaMesa && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault()

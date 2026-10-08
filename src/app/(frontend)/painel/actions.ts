@@ -720,6 +720,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         taxaEntrega: taxa,
         bairros: bairros.bairros,
         mesas: texto(form, 'mesas'),
+        atendimentoMesas: (['ambos', 'garcom', 'cliente'] as const).find((a) => a === texto(form, 'atendimentoMesas')) ?? 'ambos',
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
         aceitaAgendamento: marcado(form, 'aceitaAgendamento'),
         formasPagamento,
@@ -735,6 +736,22 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
     return { erro: e instanceof Error && !('data' in e) ? e.message : mensagem(e) }
   }
   redirect('/painel/loja?salvo=1')
+}
+
+/** Texto impresso embaixo dos QR Codes das mesas; vazio volta ao texto sugerido. */
+export async function salvarInstrucoesMesa(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao()
+  try {
+    await payload.update({
+      collection: 'lojas',
+      id: loja.id,
+      data: { instrucoesMesa: texto(form, 'instrucoes').slice(0, 400) },
+      ...comoUsuario,
+    })
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect('/painel/mesas/qr')
 }
 
 // ---------- Garçons ----------
