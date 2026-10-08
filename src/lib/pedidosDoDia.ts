@@ -21,6 +21,31 @@ export const PROXIMO: Partial<Record<Status, Status>> = {
 }
 
 /**
+ * Mensagem para o cliente quando a loja muda o status. O painel abre o WhatsApp
+ * da loja com ela pronta para o número do cliente; a loja só toca em enviar.
+ */
+export function avisoDeStatus(p: {
+  status: Status
+  numero: number
+  nome: string
+  loja: string
+  modo: 'entrega' | 'retirada'
+}): string | null {
+  const situacao: Partial<Record<Status, string>> = {
+    preparando: 'está sendo preparado',
+    pronto: p.modo === 'entrega' ? 'saiu para entrega' : 'está pronto para retirada',
+    entregue:
+      p.modo === 'entrega'
+        ? 'foi entregue. Obrigado pela preferência!'
+        : 'foi retirado. Obrigado pela preferência!',
+    cancelado: 'foi cancelado. Se tiver alguma dúvida, é só responder esta mensagem.',
+  }
+  const texto = situacao[p.status]
+  const nome = p.nome.trim().split(/\s+/)[0]
+  return texto ? `Olá, ${nome}! Seu pedido nº ${p.numero} na ${p.loja} ${texto}` : null
+}
+
+/**
  * Meia-noite de hoje no horário de Brasília, em ISO (UTC).
  * ponytail: fuso fixo -03:00 (o Brasil não tem horário de verão desde 2019); guardar o fuso na loja se surgir cliente fora dele.
  */
