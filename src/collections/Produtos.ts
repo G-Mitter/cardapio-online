@@ -32,6 +32,13 @@ export const Produtos: CollectionConfig = {
     },
     { name: 'foto', label: 'Foto', type: 'upload', relationTo: 'media' },
     {
+      type: 'row',
+      fields: [
+        { name: 'leve', label: 'Promoção: leve', type: 'number', min: 2, admin: { description: 'Ex.: leve 3 e pague 2.' } },
+        { name: 'pague', label: 'Promoção: pague', type: 'number', min: 1 },
+      ],
+    },
+    {
       name: 'selos',
       label: 'Selos',
       type: 'select',

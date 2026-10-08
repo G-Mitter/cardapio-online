@@ -65,7 +65,8 @@ export const Pedidos: CollectionConfig = {
       fields: [
         { name: 'subtotal', label: 'Subtotal (R$)', type: 'number', required: true },
         { name: 'taxa', label: 'Entrega (R$)', type: 'number', required: true },
-        { name: 'desconto', label: 'Desconto (R$)', type: 'number', defaultValue: 0 },
+        { name: 'promocao', label: 'Promoção (R$)', type: 'number', defaultValue: 0 },
+        { name: 'desconto', label: 'Cupom (R$)', type: 'number', defaultValue: 0 },
         { name: 'cupom', label: 'Cupom', type: 'text' },
         { name: 'total', label: 'Total (R$)', type: 'number', required: true },
       ],

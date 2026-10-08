@@ -157,6 +157,7 @@ export interface Pedido {
   }[];
   subtotal: number;
   taxa: number;
+  promocao?: number | null;
   desconto?: number | null;
   cupom?: string | null;
   total: number;
@@ -270,6 +271,11 @@ export interface Produto {
   preco: number;
   categoria: number | Categoria;
   foto?: (number | null) | Media;
+  /**
+   * Ex.: leve 3 e pague 2.
+   */
+  leve?: number | null;
+  pague?: number | null;
   /**
    * Etiquetas que aparecem junto do nome no cardápio.
    */
@@ -506,6 +512,7 @@ export interface PedidosSelect<T extends boolean = true> {
       };
   subtotal?: T;
   taxa?: T;
+  promocao?: T;
   desconto?: T;
   cupom?: T;
   total?: T;
@@ -532,6 +539,8 @@ export interface ProdutosSelect<T extends boolean = true> {
   preco?: T;
   categoria?: T;
   foto?: T;
+  leve?: T;
+  pague?: T;
   selos?: T;
   opcoes?:
     | T

@@ -6,6 +6,7 @@ import { cache } from 'react'
 import type { CategoriaView } from '@/components/Cardapio'
 import { LojaAoVivo } from '@/components/LojaAoVivo'
 import { gruposDoProduto } from '@/lib/opcoes'
+import { promocaoDoProduto } from '@/lib/promocao'
 import { rotulosDosSelos } from '@/lib/selos'
 import type { Media } from '@/payload-types'
 import config from '@/payload.config'
@@ -74,6 +75,7 @@ export default async function PaginaDaLoja({ params }: Props) {
             foto: foto?.url ?? null,
             opcoes: gruposDoProduto(p.opcoes),
             selos: rotulosDosSelos(p.selos),
+            promocao: promocaoDoProduto(p),
           }
         }),
     }))
