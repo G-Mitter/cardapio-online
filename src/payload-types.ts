@@ -184,6 +184,10 @@ export interface Loja {
   taxaEntrega?: number | null;
   aceitaRetirada?: boolean | null;
   /**
+   * O cliente escolhe uma destas ao fazer o pedido.
+   */
+  formasPagamento: ('pix' | 'cartao' | 'dinheiro')[];
+  /**
    * Desmarque para pausar os pedidos (o cardápio continua visível).
    */
   aberta?: boolean | null;
@@ -443,6 +447,7 @@ export interface LojasSelect<T extends boolean = true> {
   fazEntrega?: T;
   taxaEntrega?: T;
   aceitaRetirada?: T;
+  formasPagamento?: T;
   aberta?: T;
   updatedAt?: T;
   createdAt?: T;

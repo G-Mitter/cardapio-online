@@ -8,6 +8,14 @@
 
 export type Modo = 'entrega' | 'retirada'
 
+/** Formas de pagamento que uma loja pode aceitar. O pagamento é feito na entrega ou na retirada. */
+export const FORMAS_PAGAMENTO = [
+  { value: 'pix', label: 'Pix' },
+  { value: 'cartao', label: 'Cartão' },
+  { value: 'dinheiro', label: 'Dinheiro' },
+] as const
+export type FormaPagamento = (typeof FORMAS_PAGAMENTO)[number]['value']
+
 export type ProdutoParaPedido = {
   id: number | string
   nome: string

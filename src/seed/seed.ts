@@ -84,6 +84,7 @@ if (jaTem.totalDocs) {
       taxaEntrega: 6,
       aceitaRetirada: true,
       aberta: true,
+      formasPagamento: ['pix', 'cartao', 'dinheiro'],
     },
   })
   await payload.update({
