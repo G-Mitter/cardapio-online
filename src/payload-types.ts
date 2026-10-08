@@ -172,6 +172,10 @@ export interface Loja {
   fonte?: ('classica' | 'moderna' | 'tradicional' | 'leve') | null;
   logo?: (number | null) | Media;
   /**
+   * Opcional. Foto larga (deitada) que aparece no topo do cardápio.
+   */
+  capa?: (number | null) | Media;
+  /**
    * Ex.: 11h às 15h
    */
   horario?: string | null;
@@ -433,6 +437,7 @@ export interface LojasSelect<T extends boolean = true> {
   corPrincipal?: T;
   fonte?: T;
   logo?: T;
+  capa?: T;
   horario?: T;
   endereco?: T;
   fazEntrega?: T;
