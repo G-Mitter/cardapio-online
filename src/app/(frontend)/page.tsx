@@ -15,7 +15,7 @@ const contato = process.env.CONTATO_WHATSAPP
 const passos = [
   ['Você monta o cardápio', 'Cadastre produtos, fotos e preços no painel, ou importe a planilha que já usa.'],
   ['O cliente escolhe', 'Ele abre o link no celular, monta o pedido e escolhe entrega ou retirada.'],
-  ['O pedido chega no WhatsApp', 'Itens, total, taxa e endereço chegam numa mensagem pronta, no seu número.'],
+  ['O pedido chega pronto', 'Itens, total, pagamento e endereço aparecem no seu painel, e o cliente acompanha pelo WhatsApp.'],
 ]
 
 const recursos = [

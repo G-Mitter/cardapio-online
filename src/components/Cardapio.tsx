@@ -37,7 +37,7 @@ type LojaView = {
   pagamentos: FormaPagamento[]
 }
 
-/** Cardápio que o cliente final vê: escolhe produtos, monta o carrinho e envia no WhatsApp. */
+/** Cardápio que o cliente final vê: escolhe produtos, monta o carrinho e finaliza o pedido no site. */
 export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: CategoriaView[] }) {
   // Carrinho: id do produto → quantidade.
   const [carrinho, setCarrinho] = useState<Record<number, number>>({})
@@ -93,10 +93,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         cpf: cpfNaNota ? String(form.get('cpf') ?? '') : '',
       })
       setResultado(r)
-      if (r.ok) {
-        setCarrinho({})
-        window.location.href = r.link
-      }
+      if (r.ok) setCarrinho({})
     })
   }
 
@@ -232,11 +229,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         {resultado?.ok ? (
           <div className="enviado">
             <p>
-              Pedido nº {resultado.numero} registrado. Se o WhatsApp não abriu sozinho, toque abaixo
-              para enviar a mensagem para a loja.
+              <strong>Pedido nº {resultado.numero} recebido!</strong> A loja já está vendo o seu
+              pedido. Para acompanhar ou tirar dúvidas, fale com a loja pelo WhatsApp; a mensagem já
+              vai com o número e os itens do pedido.
             </p>
-            <a className="enviar" href={resultado.link}>
-              Abrir no WhatsApp
+            <a className="enviar" href={resultado.link} target="_blank" rel="noopener">
+              Acompanhar pelo WhatsApp
             </a>
           </div>
         ) : (
@@ -359,7 +357,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                   enviando || !cliente || !pagamento || (modo === 'entrega' && !cliente.enderecoId)
                 }
               >
-                {enviando ? 'Enviando…' : 'Enviar pedido no WhatsApp'}
+                {enviando ? 'Enviando…' : 'Finalizar pedido'}
               </button>
             </form>
           </>
