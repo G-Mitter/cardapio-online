@@ -10,6 +10,7 @@ import sharp from 'sharp'
 import { ehAdmin } from './access/roles'
 import { Categorias } from './collections/Categorias'
 import { Clientes } from './collections/Clientes'
+import { Cupons } from './collections/Cupons'
 import { Lojas } from './collections/Lojas'
 import { Media } from './collections/Media'
 import { Pedidos } from './collections/Pedidos'
@@ -37,7 +38,7 @@ export default buildConfig({
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
   },
-  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes],
+  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons],
   // Painel /admin em português
   i18n: {
     supportedLanguages: { pt },
@@ -70,6 +71,7 @@ export default buildConfig({
         produtos: {},
         categorias: {},
         pedidos: {},
+        cupons: {},
         media: {},
       },
       userHasAccessToAllTenants: (user) => ehAdmin(user),

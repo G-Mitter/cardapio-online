@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { CampoComExemplo } from '@/components/painel/CampoComExemplo'
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
 import { gruposDoProduto, opcoesComoTexto } from '@/lib/opcoes'
@@ -22,7 +23,14 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   const novo = id === 'novo'
 
   const [categorias, existentes] = await Promise.all([
-    payload.find({ collection: 'categorias', where: { loja: { equals: loja.id } }, sort: 'ordem', limit: 0, depth: 0, ...comoUsuario }),
+    payload.find({
+      collection: 'categorias',
+      where: { loja: { equals: loja.id } },
+      sort: 'ordem',
+      limit: 0,
+      depth: 0,
+      ...comoUsuario,
+    }),
     novo
       ? null
       : payload.find({
@@ -37,7 +45,8 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   if (!novo && !produto) notFound()
 
   const foto = typeof produto?.foto === 'object' ? (produto.foto as Media | null) : null
-  const categoriaAtual = typeof produto?.categoria === 'object' ? produto.categoria.id : produto?.categoria
+  const categoriaAtual =
+    typeof produto?.categoria === 'object' ? produto.categoria.id : produto?.categoria
 
   return (
     <>
@@ -52,7 +61,12 @@ export default async function Produto({ params }: { params: Promise<{ id: string
         </label>
         <label className="campo">
           Descrição
-          <textarea name="descricao" defaultValue={produto?.descricao ?? ''} rows={3} maxLength={500} />
+          <textarea
+            name="descricao"
+            defaultValue={produto?.descricao ?? ''}
+            rows={3}
+            maxLength={500}
+          />
         </label>
         <div className="linha">
           <label className="campo">
@@ -90,20 +104,19 @@ export default async function Produto({ params }: { params: Promise<{ id: string
             </label>
           ))}
         </fieldset>
-        <label className="campo">
-          Opções e adicionais (opcional)
-          <textarea
-            name="opcoes"
-            rows={7}
-            defaultValue={opcoesComoTexto(gruposDoProduto(produto?.opcoes))}
-            placeholder={'Tamanho: obrigatório\n- Média\n- Grande = 8,00\nExtras: até 3\n- Bacon = 4,00\n- Queijo = 3,50'}
-          />
-          <small>
-            Uma linha para o grupo (com <b>obrigatório</b> e/ou <b>até 3</b> depois dos dois-pontos; sem isso, é
-            opcional e de escolha única) e uma linha com <b>-</b> para cada item, com o valor a somar depois
-            do <b>=</b>.
-          </small>
-        </label>
+        <CampoComExemplo
+          name="opcoes"
+          rotulo="Opções e adicionais (opcional)"
+          rows={7}
+          defaultValue={opcoesComoTexto(gruposDoProduto(produto?.opcoes))}
+          exemplo={
+            'Tamanho: obrigatório\n- Média\n- Grande = 8,00\nExtras: até 3\n- Bacon = 4,00\n- Queijo = 3,50'
+          }
+        >
+          Uma linha para o grupo (com <b>obrigatório</b> e/ou <b>até 3</b> depois dos dois-pontos;
+          sem isso, é opcional e de escolha única) e uma linha com <b>-</b> para cada item, com o
+          valor a somar depois do <b>=</b>.
+        </CampoComExemplo>
         <CampoImagem nome="foto" rotulo="Foto" atual={foto?.url ?? null} />
         <div className="linha">
           <label className="marcar">
