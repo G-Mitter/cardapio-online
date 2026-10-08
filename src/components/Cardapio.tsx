@@ -7,7 +7,8 @@ import { useRef, useState, useTransition } from 'react'
 import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
 import { brl, type Modo } from '@/lib/pedido'
 
-type Foto = { url: string; alt: string } | null
+/** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
+type Foto = string | null
 
 export type ProdutoView = {
   id: number
@@ -81,7 +82,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         <header className="loja">
           <div className="logo">
             {loja.logo ? (
-              <Image src={loja.logo.url} alt={loja.logo.alt} fill sizes="56px" />
+              <Image src={loja.logo} alt={`Logo da ${loja.nome}`} fill sizes="56px" />
             ) : (
               loja.nome[0]
             )}
@@ -139,11 +140,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     )}
                   </div>
                   <div className="foto" aria-hidden={!p.foto}>
-                    {p.foto ? (
-                      <Image src={p.foto.url} alt={p.foto.alt} fill sizes="84px" />
-                    ) : (
-                      p.nome[0]
-                    )}
+                    {p.foto ? <Image src={p.foto} alt={p.nome} fill sizes="84px" /> : p.nome[0]}
                   </div>
                 </article>
               )
