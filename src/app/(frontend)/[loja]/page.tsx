@@ -3,9 +3,9 @@ import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import { cache } from 'react'
 
-import { Cardapio, type CategoriaView } from '@/components/Cardapio'
+import type { CategoriaView } from '@/components/Cardapio'
+import { LojaAoVivo } from '@/components/LojaAoVivo'
 import type { Media } from '@/payload-types'
-import { temaDaLoja } from '@/lib/tema'
 import config from '@/payload.config'
 
 type Props = { params: Promise<{ loja: string }> }
@@ -70,24 +70,23 @@ export default async function PaginaDaLoja({ params }: Props) {
     }))
     .filter((c) => c.produtos.length > 0)
 
-  const logo = typeof loja.logo === 'object' ? (loja.logo as Media | null) : null
-
   return (
-    <div style={temaDaLoja(loja)}>
-      <Cardapio
-        loja={{
-          slug: loja.slug,
-          nome: loja.nome,
-          logo: logo?.url ?? null,
-          horario: loja.horario ?? '',
-          endereco: loja.endereco ?? '',
-          aberta: loja.aberta !== false,
-          fazEntrega: loja.fazEntrega !== false,
-          aceitaRetirada: loja.aceitaRetirada !== false,
-          taxaEntrega: loja.taxaEntrega ?? 0,
-        }}
-        categorias={secoes}
-      />
-    </div>
+    <LojaAoVivo
+      loja={{
+        id: loja.id,
+        nome: loja.nome,
+        slug: loja.slug,
+        corPrincipal: loja.corPrincipal,
+        fonte: loja.fonte,
+        logo: loja.logo,
+        horario: loja.horario,
+        endereco: loja.endereco,
+        aberta: loja.aberta,
+        fazEntrega: loja.fazEntrega,
+        aceitaRetirada: loja.aceitaRetirada,
+        taxaEntrega: loja.taxaEntrega,
+      }}
+      categorias={secoes}
+    />
   )
 }
