@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useOptimistic, useTransition } from 'react'
 
 import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
-import { PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
+import { avisoDeStatus, PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
+import { whatsappUrl } from '@/lib/whatsapp'
 
 import { mudarStatus } from '@/app/(frontend)/painel/actions'
 
@@ -35,7 +36,7 @@ const hora = (iso: string) =>
     timeZone: 'America/Sao_Paulo',
   })
 
-export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
+export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   // A troca de status aparece na hora; se o servidor recusar, a próxima atualização desfaz.
@@ -50,7 +51,14 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
     return () => clearInterval(t)
   }, [router])
 
-  function mudar(id: number, status: Status) {
+  const aviso = (p: PedidoView, status: Status) =>
+    p.telefone ? whatsappUrl(p.telefone, avisoDeStatus({ ...p, status, loja }) ?? undefined) : null
+
+  function mudar(p: PedidoView, status: Status) {
+    const id = p.id
+    // Abre já no toque: o navegador bloqueia janelas abertas depois de esperar o servidor.
+    const link = aviso(p, status)
+    if (link) window.open(link, '_blank', 'noopener')
     startTransition(async () => {
       trocar({ id, status })
       await mudarStatus(id, status)
@@ -70,6 +78,7 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
       </p>
       {lista.map((p) => {
         const proximo = PROXIMO[p.status]
+        const avisoAtual = p.status !== 'novo' && aviso(p, p.status)
         return (
           <article key={p.id} className={`pedido pedido--${p.status}`}>
             <header>
@@ -104,7 +113,7 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
               </b>
               <div className="pedido__acoes">
                 {proximo && (
-                  <button type="button" className="botao" onClick={() => mudar(p.id, proximo)}>
+                  <button type="button" className="botao" onClick={() => mudar(p, proximo)}>
                     {ROTULO[proximo]}
                   </button>
                 )}
@@ -112,10 +121,15 @@ export function PainelPedidos({ pedidos }: { pedidos: PedidoView[] }) {
                   <button
                     type="button"
                     className="botao secundario"
-                    onClick={() => mudar(p.id, 'cancelado')}
+                    onClick={() => mudar(p, 'cancelado')}
                   >
                     Cancelar
                   </button>
+                )}
+                {avisoAtual && (
+                  <a className="botao secundario" href={avisoAtual} target="_blank" rel="noopener">
+                    Avisar cliente
+                  </a>
                 )}
               </div>
             </footer>

@@ -39,7 +39,7 @@ export default async function Pedidos() {
   return (
     <>
       <h1>Pedidos de hoje</h1>
-      <PainelPedidos pedidos={pedidos} />
+      <PainelPedidos pedidos={pedidos} loja={loja.nome} />
     </>
   )
 }
