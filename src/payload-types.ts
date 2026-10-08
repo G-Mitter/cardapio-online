@@ -235,6 +235,14 @@ export interface Loja {
    */
   chavePix?: string | null;
   /**
+   * Só os números do ID do Pixel. Opcional.
+   */
+  pixelMeta?: string | null;
+  /**
+   * G-XXXXXXXXXX (Analytics) ou AW-XXXXXXXXXX (Ads). Opcional.
+   */
+  tagGoogle?: string | null;
+  /**
    * Desmarque para pausar os pedidos (o cardápio continua visível).
    */
   aberta?: boolean | null;
@@ -626,6 +634,8 @@ export interface LojasSelect<T extends boolean = true> {
       };
   formasPagamento?: T;
   chavePix?: T;
+  pixelMeta?: T;
+  tagGoogle?: T;
   aberta?: T;
   updatedAt?: T;
   createdAt?: T;

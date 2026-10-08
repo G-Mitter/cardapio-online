@@ -72,6 +72,8 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
           bairros: bairrosComoTexto(loja.bairros ?? []),
           pagamentos: loja.formasPagamento ?? [],
           chavePix: loja.chavePix ?? '',
+          pixelMeta: loja.pixelMeta ?? '',
+          tagGoogle: loja.tagGoogle ?? '',
           aceitaRetirada: loja.aceitaRetirada !== false,
           aceitaAgendamento: loja.aceitaAgendamento === true,
           logo: url(loja.logo),

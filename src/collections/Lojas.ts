@@ -152,6 +152,23 @@ export const Lojas: CollectionConfig = {
       },
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'pixelMeta',
+          label: 'Pixel da Meta (Facebook/Instagram)',
+          type: 'text',
+          admin: { description: 'Só os números do ID do Pixel. Opcional.' },
+        },
+        {
+          name: 'tagGoogle',
+          label: 'Tag do Google',
+          type: 'text',
+          admin: { description: 'G-XXXXXXXXXX (Analytics) ou AW-XXXXXXXXXX (Ads). Opcional.' },
+        },
+      ],
+    },
+    {
       name: 'aberta',
       label: 'Recebendo pedidos agora',
       type: 'checkbox',
