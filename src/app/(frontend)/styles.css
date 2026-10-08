@@ -627,3 +627,10 @@ label.marcar {
     grid-template-columns: 1fr 1fr;
   }
 }
+.opcoes-escolhidas,
+.opcoes-grupo legend small {
+  color: var(--muted);
+}
+.opcoes-grupo {
+  flex-direction: column;
+}

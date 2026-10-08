@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
+import { gruposDoProduto, opcoesComoTexto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
 import type { Media } from '@/payload-types'
 
@@ -74,6 +75,20 @@ export default async function Produto({ params }: { params: Promise<{ id: string
             </select>
           </label>
         </div>
+        <label className="campo">
+          Opções e adicionais (opcional)
+          <textarea
+            name="opcoes"
+            rows={7}
+            defaultValue={opcoesComoTexto(gruposDoProduto(produto?.opcoes))}
+            placeholder={'Tamanho: obrigatório\n- Média\n- Grande = 8,00\nExtras: até 3\n- Bacon = 4,00\n- Queijo = 3,50'}
+          />
+          <small>
+            Uma linha para o grupo (com <b>obrigatório</b> e/ou <b>até 3</b> depois dos dois-pontos; sem isso, é
+            opcional e de escolha única) e uma linha com <b>-</b> para cada item, com o valor a somar depois
+            do <b>=</b>.
+          </small>
+        </label>
         <CampoImagem nome="foto" rotulo="Foto" atual={foto?.url ?? null} />
         <div className="linha">
           <label className="marcar">

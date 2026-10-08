@@ -8,6 +8,7 @@ import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import type { Bairro } from '@/lib/entrega'
+import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
 import { normalizar } from '@/lib/planilha'
 
 /** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
@@ -20,7 +21,15 @@ export type ProdutoView = {
   preco: number
   esgotado: boolean
   foto: Foto
+  /** Tamanho, borda, extras... Vazio = produto sem opções. */
+  opcoes: GrupoOpcao[]
 }
+
+/** Uma linha do carrinho: o mesmo produto com opções diferentes são linhas diferentes. */
+type Linha = { chave: string; produto: number; escolhas: Escolhas; quantidade: number }
+
+const chaveDe = (produto: number, escolhas: Escolhas) =>
+  `${produto}:${JSON.stringify(Object.entries(escolhas).filter(([, v]) => v.length).sort())}`
 
 export type CategoriaView = { id: number; nome: string; produtos: ProdutoView[] }
 
@@ -42,8 +51,12 @@ type LojaView = {
 
 /** Cardápio que o cliente final vê: escolhe produtos, monta o carrinho e finaliza o pedido no site. */
 export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: CategoriaView[] }) {
-  // Carrinho: id do produto → quantidade.
-  const [carrinho, setCarrinho] = useState<Record<number, number>>({})
+  const [linhas, setLinhas] = useState<Linha[]>([])
+  // Produto com opções aberto para escolher tamanho, extras...
+  const [configurando, setConfigurando] = useState<ProdutoView | null>(null)
+  const [selecao, setSelecao] = useState<Escolhas>({})
+  const [erroOpcoes, setErroOpcoes] = useState('')
+  const dialogoOpcoes = useRef<HTMLDialogElement>(null)
   const [modo, setModo] = useState<Modo>(loja.fazEntrega ? 'entrega' : 'retirada')
   const [resultado, setResultado] = useState<ResultadoPedido | null>(null)
   const [cliente, setCliente] = useState<ClienteEscolhido | null>(null)
@@ -67,29 +80,60 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     : categorias
 
   const produtos = categorias.flatMap((c) => c.produtos)
-  const itens = produtos.filter((p) => carrinho[p.id])
-  const quantidade = itens.reduce((s, p) => s + carrinho[p.id], 0)
+  const itens = linhas.flatMap((l) => {
+    const p = produtos.find((x) => x.id === l.produto)
+    if (!p) return []
+    const o = resolverEscolhas(p.opcoes, l.escolhas)
+    return [{ ...l, p, descricao: o.ok ? o.descricao : '', preco: p.preco + (o.ok ? o.adicional : 0) }]
+  })
+  const quantidade = itens.reduce((s, i) => s + i.quantidade, 0)
   // Só para mostrar na tela; o valor que vale é o que o servidor recalcula.
-  const subtotal = itens.reduce((s, p) => s + p.preco * carrinho[p.id], 0)
+  const subtotal = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
+  const noPedido = (id: number) => itens.filter((i) => i.produto === id).reduce((s, i) => s + i.quantidade, 0)
   const entrega = modo === 'entrega'
   // Com bairros, a taxa depende do endereço escolhido (calculada no servidor, junto do cadastro).
   const semEntrega = entrega && cliente?.taxa === null
   const taxa = !entrega ? 0 : loja.bairros.length ? (cliente?.taxa ?? 0) : loja.taxaEntrega
 
-  const mudar = (id: number, delta: number) =>
-    setCarrinho((c) => {
-      const q = (c[id] ?? 0) + delta
-      const novo = { ...c }
-      if (q > 0) novo[id] = q
-      else delete novo[id]
-      return novo
+  /** Soma (ou tira) `delta` da linha; cria a linha se for nova e apaga se zerar. */
+  const mudar = (produto: number, escolhas: Escolhas, delta: number) =>
+    setLinhas((ls) => {
+      const chave = chaveDe(produto, escolhas)
+      const q = (ls.find((l) => l.chave === chave)?.quantidade ?? 0) + delta
+      if (q <= 0) return ls.filter((l) => l.chave !== chave)
+      return ls.some((l) => l.chave === chave)
+        ? ls.map((l) => (l.chave === chave ? { ...l, quantidade: q } : l))
+        : [...ls, { chave, produto, escolhas, quantidade: q }]
     })
+
+  function escolherOpcoes(p: ProdutoView) {
+    setConfigurando(p)
+    setSelecao({})
+    setErroOpcoes('')
+    dialogoOpcoes.current?.showModal()
+  }
+
+  function marcar(g: GrupoOpcao, itemId: string, marcado: boolean) {
+    setSelecao((s) => {
+      const atual = s[g.id] ?? []
+      if (g.max === 1) return { ...s, [g.id]: [itemId] }
+      return { ...s, [g.id]: marcado ? [...atual, itemId] : atual.filter((id) => id !== itemId) }
+    })
+  }
+
+  const confirmacao = configurando && resolverEscolhas(configurando.opcoes, selecao)
+  function confirmarOpcoes() {
+    if (!configurando || !confirmacao) return
+    if (!confirmacao.ok) return setErroOpcoes(confirmacao.erro)
+    mudar(configurando.id, selecao, 1)
+    dialogoOpcoes.current?.close()
+  }
 
   function enviar(form: FormData) {
     startTransition(async () => {
       const r = await criarPedido({
         loja: loja.slug,
-        itens: itens.map((p) => ({ produto: p.id, quantidade: carrinho[p.id] })),
+        itens: itens.map((i) => ({ produto: i.produto, quantidade: i.quantidade, escolhas: i.escolhas })),
         modo,
         telefone: cliente?.telefone ?? '',
         enderecoId: cliente?.enderecoId,
@@ -99,7 +143,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         cpf: cpfNaNota ? String(form.get('cpf') ?? '') : '',
       })
       setResultado(r)
-      if (r.ok) setCarrinho({})
+      if (r.ok) setLinhas([])
     })
   }
 
@@ -170,7 +214,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
           <section key={c.id} id={`cat-${c.id}`}>
             <h2>{c.nome}</h2>
             {c.produtos.map((p) => {
-              const q = carrinho[p.id] ?? 0
+              const q = noPedido(p.id)
               return (
                 <article key={p.id} className={`item ${p.esgotado ? 'esgotado' : ''}`}>
                   <div>
@@ -179,18 +223,22 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     <div className="preco">{brl(p.preco)}</div>
                     {p.esgotado ? (
                       <div className="tag">Esgotado</div>
-                    ) : !loja.aberta ? null : q ? (
+                    ) : !loja.aberta ? null : p.opcoes.length ? (
+                      <button className="add" onClick={() => escolherOpcoes(p)}>
+                        {q ? `Escolher mais uma (${q} no pedido)` : 'Escolher opções'}
+                      </button>
+                    ) : q ? (
                       <div className="qtd">
-                        <button onClick={() => mudar(p.id, -1)} aria-label={`Tirar um ${p.nome}`}>
+                        <button onClick={() => mudar(p.id, {}, -1)} aria-label={`Tirar um ${p.nome}`}>
                           −
                         </button>
                         <b>{q}</b>
-                        <button onClick={() => mudar(p.id, 1)} aria-label={`Mais um ${p.nome}`}>
+                        <button onClick={() => mudar(p.id, {}, 1)} aria-label={`Mais um ${p.nome}`}>
                           +
                         </button>
                       </div>
                     ) : (
-                      <button className="add" onClick={() => mudar(p.id, 1)}>
+                      <button className="add" onClick={() => mudar(p.id, {}, 1)}>
                         Adicionar
                       </button>
                     )}
@@ -226,6 +274,60 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         </div>
       )}
 
+      <dialog
+        ref={dialogoOpcoes}
+        className="carrinho"
+        aria-labelledby="titulo-opcoes"
+        onClose={() => setConfigurando(null)}
+      >
+        <button className="fechar" onClick={() => dialogoOpcoes.current?.close()}>
+          Fechar
+        </button>
+        {configurando && (
+          <>
+            <h2 id="titulo-opcoes">{configurando.nome}</h2>
+            {configurando.opcoes.map((g) => (
+              <fieldset key={g.id} className="modo opcoes-grupo">
+                <legend>
+                  {g.nome}
+                  <small>
+                    {' '}
+                    · {g.min > 0 ? 'obrigatório' : 'opcional'}
+                    {g.max > 1 ? `, até ${g.max}` : ''}
+                  </small>
+                </legend>
+                {g.itens.map((i) => {
+                  const marcados = selecao[g.id] ?? []
+                  const marcado = marcados.includes(i.id)
+                  return (
+                    <label key={i.id}>
+                      <input
+                        type={g.max === 1 ? 'radio' : 'checkbox'}
+                        name={g.id}
+                        checked={marcado}
+                        disabled={g.max > 1 && !marcado && marcados.length >= g.max}
+                        onChange={(e) => marcar(g, i.id, e.target.checked)}
+                      />
+                      {i.nome}
+                      {i.preco > 0 && ` (+ ${brl(i.preco)})`}
+                    </label>
+                  )
+                })}
+              </fieldset>
+            ))}
+            {erroOpcoes && (
+              <p className="erro" role="alert">
+                {erroOpcoes}
+              </p>
+            )}
+            <button className="enviar" onClick={confirmarOpcoes}>
+              Adicionar ao pedido
+              {confirmacao?.ok && ` · ${brl(configurando.preco + confirmacao.adicional)}`}
+            </button>
+          </>
+        )}
+      </dialog>
+
       <dialog ref={dialogo} className="carrinho" aria-labelledby="titulo-pedido">
         <button className="fechar" onClick={() => dialogo.current?.close()}>
           Fechar
@@ -252,12 +354,23 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
           </div>
         ) : (
           <>
-            {itens.map((p) => (
-              <div key={p.id} className="linha">
+            {itens.map((i) => (
+              <div key={i.chave} className="linha">
                 <span>
-                  {carrinho[p.id]}× {p.nome}
+                  {i.quantidade}× {i.p.nome}
+                  {i.descricao && <small className="opcoes-escolhidas"> ({i.descricao})</small>}
+                  {i.p.opcoes.length > 0 && (
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => mudar(i.produto, i.escolhas, -1)}
+                      aria-label={`Tirar um ${i.p.nome}`}
+                    >
+                      Tirar um
+                    </button>
+                  )}
                 </span>
-                <span>{brl(p.preco * carrinho[p.id])}</span>
+                <span>{brl(i.preco * i.quantidade)}</span>
               </div>
             ))}
             {taxa > 0 && (

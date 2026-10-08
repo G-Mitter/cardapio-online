@@ -5,6 +5,7 @@ import { cache } from 'react'
 
 import type { CategoriaView } from '@/components/Cardapio'
 import { LojaAoVivo } from '@/components/LojaAoVivo'
+import { gruposDoProduto } from '@/lib/opcoes'
 import type { Media } from '@/payload-types'
 import config from '@/payload.config'
 
@@ -70,6 +71,7 @@ export default async function PaginaDaLoja({ params }: Props) {
             preco: p.preco,
             esgotado: Boolean(p.esgotado),
             foto: foto?.url ?? null,
+            opcoes: gruposDoProduto(p.opcoes),
           }
         }),
     }))

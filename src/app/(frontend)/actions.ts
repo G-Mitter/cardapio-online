@@ -21,6 +21,7 @@ import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
 import { taxaDoBairro } from '@/lib/entrega'
+import { gruposDoProduto } from '@/lib/opcoes'
 import { whatsappUrl } from '@/lib/whatsapp'
 import config from '@/payload.config'
 
@@ -130,7 +131,12 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   if (taxaEntrega === null) {
     return { ok: false, erro: 'A loja não entrega no bairro deste endereço. Escolha outro ou retire na loja.' }
   }
-  const resultado = montarPedido(produtos.docs, itens, taxaEntrega, modo)
+  const resultado = montarPedido(
+    produtos.docs.map((p) => ({ ...p, opcoes: gruposDoProduto(p.opcoes) })),
+    itens,
+    taxaEntrega,
+    modo,
+  )
   if (!resultado.ok) return resultado
   const { pedido } = resultado
 
@@ -157,10 +163,11 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       loja: loja.id,
       numero,
       status: 'novo',
-      itens: pedido.itens.map(({ nome, quantidade, precoUnitario }) => ({
+      itens: pedido.itens.map(({ nome, quantidade, precoUnitario, opcoes }) => ({
         nome,
         quantidade,
         precoUnitario,
+        opcoes,
       })),
       subtotal: pedido.subtotal,
       taxa: pedido.taxa,

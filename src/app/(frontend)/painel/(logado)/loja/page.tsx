@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import type { CategoriaView } from '@/components/Cardapio'
 import { FormLoja } from '@/components/painel/FormLoja'
 import { bairrosComoTexto } from '@/lib/entrega'
+import { gruposDoProduto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
 import { COR_PADRAO } from '@/lib/tema'
 import type { Media } from '@/payload-types'
@@ -36,6 +37,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
             preco: p.preco,
             esgotado: Boolean(p.esgotado),
             foto: url(p.foto),
+            opcoes: gruposDoProduto(p.opcoes),
           })),
         },
       ]

@@ -6,6 +6,8 @@
  * o preço editando a página.
  */
 
+import { type Escolhas, type GrupoOpcao, resolverEscolhas } from './opcoes'
+
 export type Modo = 'entrega' | 'retirada'
 
 /** Formas de pagamento que uma loja pode aceitar. O pagamento é feito na entrega ou na retirada. */
@@ -41,15 +43,19 @@ export type ProdutoParaPedido = {
   nome: string
   preco: number
   esgotado?: boolean | null
+  opcoes?: GrupoOpcao[]
 }
 
-export type ItemEscolhido = { produto: number | string; quantidade: number }
+export type ItemEscolhido = { produto: number | string; quantidade: number; escolhas?: Escolhas }
 
 export type ItemPedido = {
   produto: number | string
   nome: string
   quantidade: number
+  /** Já com os adicionais. */
   precoUnitario: number
+  /** Opções escolhidas, em texto; vazio se o produto não tem. */
+  opcoes: string
 }
 
 export type Pedido = { itens: ItemPedido[]; subtotal: number; taxa: number; total: number }
@@ -68,14 +74,22 @@ export function montarPedido(
   if (escolhidos.length === 0) return { ok: false, erro: 'O pedido está vazio.' }
 
   const itens: ItemPedido[] = []
-  for (const { produto, quantidade } of escolhidos) {
+  for (const { produto, quantidade, escolhas } of escolhidos) {
     const p = produtos.find((x) => String(x.id) === String(produto))
     if (!p) return { ok: false, erro: 'Um dos produtos não existe mais. Atualize a página.' }
     if (p.esgotado) return { ok: false, erro: `${p.nome} acabou de esgotar.` }
     if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > MAX_QUANTIDADE) {
       return { ok: false, erro: `Quantidade inválida para ${p.nome}.` }
     }
-    itens.push({ produto: p.id, nome: p.nome, quantidade, precoUnitario: p.preco })
+    const o = resolverEscolhas(p.opcoes ?? [], escolhas)
+    if (!o.ok) return { ok: false, erro: `${p.nome}: ${o.erro}` }
+    itens.push({
+      produto: p.id,
+      nome: p.nome,
+      quantidade,
+      precoUnitario: (centavos(p.preco) + centavos(o.adicional)) / 100,
+      opcoes: o.descricao,
+    })
   }
 
   const subtotal = itens.reduce((s, i) => s + centavos(i.precoUnitario) * i.quantidade, 0)
@@ -121,7 +135,8 @@ export function mensagemPedido(args: {
     `*Pedido nº ${numero} · ${loja}*`,
     '',
     ...pedido.itens.map(
-      (i) => `• ${i.quantidade}x ${i.nome}: ${brl(i.precoUnitario * i.quantidade)}`,
+      (i) =>
+        `• ${i.quantidade}x ${i.nome}${i.opcoes ? ` (${i.opcoes})` : ''}: ${brl(i.precoUnitario * i.quantidade)}`,
     ),
     modo === 'entrega' ? `• Entrega: ${brl(pedido.taxa)}` : '• Retirada no local',
     `*Total: ${brl(pedido.total)}*`,
