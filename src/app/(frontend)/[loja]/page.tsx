@@ -79,6 +79,7 @@ export default async function PaginaDaLoja({ params }: Props) {
         corPrincipal: loja.corPrincipal,
         fonte: loja.fonte,
         logo: loja.logo,
+        capa: loja.capa,
         horario: loja.horario,
         endereco: loja.endereco,
         aberta: loja.aberta,

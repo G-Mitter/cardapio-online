@@ -14,6 +14,7 @@ export type LojaDados = Pick<
   | 'corPrincipal'
   | 'fonte'
   | 'logo'
+  | 'capa'
   | 'horario'
   | 'endereco'
   | 'aberta'
@@ -45,6 +46,7 @@ export function LojaAoVivo({ loja, categorias }: { loja: LojaDados; categorias: 
           slug: data.slug,
           nome: data.nome,
           logo: url(data.logo),
+          capa: url(data.capa),
           horario: data.horario ?? '',
           endereco: data.endereco ?? '',
           aberta: data.aberta !== false,

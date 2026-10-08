@@ -6,6 +6,7 @@ import { useRef, useState, useTransition } from 'react'
 
 import { criarPedido, type ResultadoPedido } from '@/app/(frontend)/actions'
 import { brl, type Modo } from '@/lib/pedido'
+import { normalizar } from '@/lib/planilha'
 
 /** Endereço da imagem. O texto para leitor de tela vem do nome do produto ou da loja. */
 type Foto = string | null
@@ -25,6 +26,7 @@ type LojaView = {
   slug: string
   nome: string
   logo: Foto
+  capa: Foto
   horario: string
   endereco: string
   aberta: boolean
@@ -41,6 +43,20 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [resultado, setResultado] = useState<ResultadoPedido | null>(null)
   const [enviando, startTransition] = useTransition()
   const dialogo = useRef<HTMLDialogElement>(null)
+  const [busca, setBusca] = useState('')
+
+  // Busca sem acento e sem diferença de maiúsculas, no nome e na descrição.
+  const termo = normalizar(busca)
+  const visiveis = termo
+    ? categorias
+        .map((c) => ({
+          ...c,
+          produtos: c.produtos.filter((p) =>
+            normalizar(`${p.nome} ${p.descricao}`).includes(termo),
+          ),
+        }))
+        .filter((c) => c.produtos.length > 0)
+    : categorias
 
   const produtos = categorias.flatMap((c) => c.produtos)
   const itens = produtos.filter((p) => carrinho[p.id])
@@ -80,6 +96,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     <>
       <div className="wrap">
         <header className="loja">
+          {loja.capa && (
+            <div className="capa">
+              {/* Decorativa: o nome da loja já vem logo abaixo. */}
+              <Image src={loja.capa} alt="" fill priority sizes="(max-width: 520px) 100vw, 480px" />
+            </div>
+          )}
           <div className="logo">
             {loja.logo ? (
               <Image src={loja.logo} alt={`Logo da ${loja.nome}`} fill sizes="56px" />
@@ -98,7 +120,18 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
           </div>
         </header>
 
-        {categorias.length > 1 && (
+        {categorias.length > 0 && (
+          <input
+            type="search"
+            className="busca"
+            placeholder="Buscar no cardápio"
+            aria-label="Buscar no cardápio"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        )}
+
+        {!termo && categorias.length > 1 && (
           <nav className="cats" aria-label="Categorias">
             {categorias.map((c) => (
               <a key={c.id} href={`#cat-${c.id}`}>
@@ -110,7 +143,11 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
 
         {categorias.length === 0 && <p className="vazio">O cardápio ainda está sendo montado.</p>}
 
-        {categorias.map((c) => (
+        {termo && visiveis.length === 0 && (
+          <p className="vazio">Nada encontrado para &ldquo;{busca}&rdquo;.</p>
+        )}
+
+        {visiveis.map((c) => (
           <section key={c.id} id={`cat-${c.id}`}>
             <h2>{c.nome}</h2>
             {c.produtos.map((p) => {
