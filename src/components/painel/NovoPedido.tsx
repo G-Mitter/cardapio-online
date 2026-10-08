@@ -7,7 +7,7 @@ import type { Bairro } from '@/lib/entrega'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
 import { brl, type FormaPagamento } from '@/lib/pedido'
 
-import { criarPedidoPainel, type DadosPedidoPainel } from '@/app/(frontend)/painel/actions'
+import { criarPedidoDaMesa, criarPedidoPainel, type DadosPedidoPainel } from '@/app/(frontend)/painel/actions'
 
 type Produto = { id: number; nome: string; preco: number; opcoes: GrupoOpcao[] }
 type Linha = { chave: string; produto: Produto; escolhas: Escolhas; descricao: string; preco: number; quantidade: number }
@@ -23,6 +23,7 @@ export function NovoPedido({
   bairros,
   taxaEntrega,
   pagamentos,
+  mesa,
 }: {
   produtos: Produto[]
   fazEntrega: boolean
@@ -30,6 +31,8 @@ export function NovoPedido({
   bairros: Bairro[]
   taxaEntrega: number
   pagamentos: { value: FormaPagamento; label: string }[]
+  /** Lançando para uma mesa: sem tipo, cliente, endereço nem pagamento (paga no caixa). */
+  mesa?: string
 }) {
   const router = useRouter()
   const [enviando, startTransition] = useTransition()
@@ -79,9 +82,16 @@ export function NovoPedido({
     const campo = (nome: string) => String(form.get(nome) ?? '')
     setErro('')
     startTransition(async () => {
+      const itens = linhas.map((l) => ({ produto: l.produto.id, quantidade: l.quantidade, escolhas: l.escolhas }))
+      if (mesa) {
+        const r = await criarPedidoDaMesa(mesa, itens, campo('observacoes'))
+        if (r.ok) router.push('/painel/garcom')
+        else setErro(r.erro)
+        return
+      }
       const r = await criarPedidoPainel({
         tipo,
-        itens: linhas.map((l) => ({ produto: l.produto.id, quantidade: l.quantidade, escolhas: l.escolhas })),
+        itens,
         nome: campo('nome'),
         telefone: campo('telefone'),
         endereco: campo('endereco'),
@@ -197,6 +207,8 @@ export function NovoPedido({
           </ul>
         )}
 
+        {!mesa && (
+          <>
         <div className="campo">
           <label htmlFor="tipo">Tipo do pedido</label>
           <select id="tipo" value={tipo} onChange={(e) => setTipo(e.target.value as typeof tipo)}>
@@ -254,6 +266,8 @@ export function NovoPedido({
             </div>
           )}
         </div>
+          </>
+        )}
         <div className="campo">
           <label htmlFor="observacoes">Observações</label>
           <textarea id="observacoes" name="observacoes" maxLength={300} rows={2} />
@@ -265,8 +279,8 @@ export function NovoPedido({
             {entrega && ` (entrega ${brl(taxa)})`}
           </b>
         </p>
-        <button className="botao" disabled={linhas.length === 0 || !pagamento}>
-          {enviando ? 'Enviando…' : 'Lançar pedido'}
+        <button className="botao" disabled={linhas.length === 0 || (!mesa && !pagamento)}>
+          {enviando ? 'Enviando…' : mesa ? `Lançar na mesa ${mesa}` : 'Lançar pedido'}
         </button>
       </fieldset>
       {erro && (
