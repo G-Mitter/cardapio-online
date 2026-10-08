@@ -49,6 +49,8 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: '4mb' },
   },
+  // As planilhas de exemplo são lidas do disco pela importação (src/lib/exemplo-db.ts): vão junto na Vercel.
+  outputFileTracingIncludes: { '/painel/exemplo': ['./src/seed/exemplo/**/*'] },
   turbopack: {
     root: path.resolve(dirname),
   },

@@ -1,0 +1,5 @@
+﻿codigo;tipo;valor;minimo;vale_ate_dias;limite;usos;ativo
+BEMVINDO10;porcentagem;10;40;30;;3;sim
+FRETEGRATIS;valor;7;60;15;50;1;sim
+LURDES5;valor;5;;-1;;12;sim
+ESGOTADO;porcentagem;15;;30;2;2;sim

@@ -1,0 +1,4 @@
+﻿entregador;dia;troco_levou;entregou;descontou_taxa
+Carlos Moto;-2;30;esperado;não
+Renata Bike;-2;30;esperado-10;não
+Carlos Moto;-1;50;esperado+5;sim

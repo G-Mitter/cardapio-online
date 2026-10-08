@@ -1,0 +1,25 @@
+﻿produto;selos;leve;pague;opcoes
+Pizza de frango;mais-pedido;;;"Tamanho: obrigatório, até 1
+- Média
+- Grande = 12,00
+Borda: até 1
+- Catupiry = 8,00
+- Cheddar = 8,00"
+Vaca atolada;mais-pedido;;;
+Feijão tropeiro;;;;"Adicionais: até 3
+- Ovo extra = 3,00
+- Torresmo extra = 6,00
+- Couve extra = 2,00"
+Frango com quiabo;picante;;;
+Salada da casa;vegano,novo;;;"Molho: obrigatório, até 1
+- Mostarda e mel
+- Iogurte
+- Sem molho"
+Pão de queijo;promocao;3;2;
+Suco de laranja;;;;"Gelo: até 1
+- Com gelo
+- Sem gelo"
+Refrigerante lata;;4;3;"Sabor: obrigatório, até 1
+- Coca-Cola
+- Guaraná
+- Coca Zero"

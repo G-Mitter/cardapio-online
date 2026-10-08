@@ -1,0 +1,14 @@
+﻿tipo;descricao;valor;vencimento_dia;categoria;repetir;pago_dia;valor_pago;observacao
+pagar;Aluguel do salão;3500;-3;Aluguel;sim;-3;3500;
+pagar;Conta de luz (Cemig);780,45;-1;Água/luz/gás/internet;não;;;Vencida: testar destaque
+pagar;Gás (botijão P45);410;0;Água/luz/gás/internet;não;;;Vence hoje
+pagar;Internet;119,90;3;Água/luz/gás/internet;sim;;;
+pagar;Hortifruti Central;1250,30;5;Fornecedores;não;;;Boleto
+pagar;Açougue Boi Bom;2380;-5;Fornecedores;não;-5;2400,50;Pago com juros
+pagar;Salário cozinheira;2200;12;Funcionários;sim;;;
+pagar;DAS Simples Nacional;640,12;20;Impostos;sim;;;
+pagar;Aluguel da maquininha;89,90;2;Taxas de cartão;sim;;;
+receber;Cartão (crédito) de anteontem;1180;28;Outros;não;;;Previsão da maquininha
+receber;Cartão (débito) de ontem;640,20;0;Outros;não;;;
+receber;Evento: aniversário da Dona Cida;1800;-2;Outros;não;-2;1800;Sinal de 50% já recebido
+receber;Fiado: Sr. Tonico;86,50;-10;Outros;não;;;Atrasado

@@ -1,0 +1,8 @@
+﻿ref;dia;hora;mesa;garcom;cobrar_taxa_servico;pagamentos;troco
+F-2a;-2;13:20;2;marcos;sim;"dinheiro=100; cartao=resto";
+F-2b;-2;13:40;5;juliana;não;pix=resto;
+F-2c;-2;20:40;7;;sim;cartao=resto;
+F-1a;-1;13:15;2;marcos;sim;cartao=resto;
+F-1b;-1;13:50;5;juliana;sim;dinheiro=resto;auto
+F-1c;-1;20:35;7;;não;"cartao=metade; pix=resto";
+F0a;0;12:50;1;marcos;sim;cartao=resto;
