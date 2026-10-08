@@ -96,6 +96,7 @@ export default async function PaginaDaLoja({ params }: Props) {
         aberta: loja.aberta,
         fazEntrega: loja.fazEntrega,
         aceitaRetirada: loja.aceitaRetirada,
+        aceitaAgendamento: loja.aceitaAgendamento,
         taxaEntrega: loja.taxaEntrega,
         bairros: loja.bairros,
         formasPagamento: loja.formasPagamento,

@@ -13,6 +13,7 @@ import * as migration_20261008_182549_selos_produto from './20261008_182549_selo
 import * as migration_20261008_182940_repetir_pedido from './20261008_182940_repetir_pedido';
 import * as migration_20261008_184808_cupons from './20261008_184808_cupons';
 import * as migration_20261008_185332_promocao_quantidade from './20261008_185332_promocao_quantidade';
+import * as migration_20261008_185816_agendamento_pedidos from './20261008_185816_agendamento_pedidos';
 
 export const migrations = [
   {
@@ -88,6 +89,11 @@ export const migrations = [
   {
     up: migration_20261008_185332_promocao_quantidade.up,
     down: migration_20261008_185332_promocao_quantidade.down,
-    name: '20261008_185332_promocao_quantidade'
+    name: '20261008_185332_promocao_quantidade',
+  },
+  {
+    up: migration_20261008_185816_agendamento_pedidos.up,
+    down: migration_20261008_185816_agendamento_pedidos.down,
+    name: '20261008_185816_agendamento_pedidos'
   },
 ];

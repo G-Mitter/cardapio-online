@@ -452,6 +452,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         taxaEntrega: taxa,
         bairros: bairros.bairros,
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
+        aceitaAgendamento: marcado(form, 'aceitaAgendamento'),
         formasPagamento,
         chavePix,
         ...(logo !== undefined && { logo }),

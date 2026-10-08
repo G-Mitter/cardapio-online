@@ -11,6 +11,7 @@ import {
   type ResultadoPedido,
 } from '@/app/(frontend)/actions'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
+import { limitesDoCampo } from '@/lib/agendamento'
 import { normalizarCodigo } from '@/lib/cupom'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import type { Bairro } from '@/lib/entrega'
@@ -59,6 +60,7 @@ type LojaView = {
   aberta: boolean
   fazEntrega: boolean
   aceitaRetirada: boolean
+  aceitaAgendamento: boolean
   taxaEntrega: number
   /** Se houver, a loja entrega só nestes bairros (cada um com a sua taxa). */
   bairros: Bairro[]
@@ -78,6 +80,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [cliente, setCliente] = useState<ClienteEscolhido | null>(null)
   const [pagamento, setPagamento] = useState<FormaPagamento | undefined>(loja.pagamentos[0])
   const [cpfNaNota, setCpfNaNota] = useState(false)
+  const [agendar, setAgendar] = useState(false)
   const [enviando, startTransition] = useTransition()
   const [repetindo, startRepetir] = useTransition()
   const [avisoRepetir, setAvisoRepetir] = useState('')
@@ -232,6 +235,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         trocoPara: String(form.get('trocoPara') ?? ''),
         cpf: cpfNaNota ? String(form.get('cpf') ?? '') : '',
         cupom: cupom ?? undefined,
+        agendarPara: agendar ? String(form.get('agendarPara') ?? '') : undefined,
       })
       setResultado(r)
       if (r.ok) {
@@ -635,6 +639,29 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                       maxLength={10}
                     />
                   </label>
+                )}
+                {loja.aceitaAgendamento && (
+                  <>
+                    <label className="marcar">
+                      <input
+                        type="checkbox"
+                        checked={agendar}
+                        onChange={(e) => setAgendar(e.target.checked)}
+                      />
+                      Agendar para outro dia ou hora
+                    </label>
+                    {agendar && (
+                      <label>
+                        {entrega ? 'Receber em' : 'Retirar em'}
+                        <input
+                          type="datetime-local"
+                          name="agendarPara"
+                          required
+                          {...limitesDoCampo()}
+                        />
+                      </label>
+                    )}
+                  </>
                 )}
                 <label className="marcar">
                   <input

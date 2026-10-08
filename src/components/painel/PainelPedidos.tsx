@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useOptimistic, useState, useTransition } from 'react'
 
+import { rotuloAgendamento } from '@/lib/agendamento'
 import { brl, formatarCpf, rotuloPagamento } from '@/lib/pedido'
 import { avisoDeStatus, PROXIMO, ROTULO, type Status } from '@/lib/pedidosDoDia'
 import { whatsappUrl } from '@/lib/whatsapp'
@@ -19,6 +20,8 @@ export type PedidoView = {
   modo: 'entrega' | 'retirada'
   endereco: string
   observacoes: string
+  /** ISO; só em pedido agendado. */
+  agendadoPara: string | null
   pagamento: string
   trocoPara: number | null
   cpf: string
@@ -122,6 +125,11 @@ export function PainelPedidos({ pedidos, loja }: { pedidos: PedidoView[]; loja: 
                 </li>
               ))}
             </ul>
+            {p.agendadoPara && (
+              <div>
+                <b>Agendado para {rotuloAgendamento(p.agendadoPara)}</b>
+              </div>
+            )}
             {p.observacoes && <div className="pedido__obs">Obs.: {p.observacoes}</div>}
             {p.cpf && <div>CPF na nota: {formatarCpf(p.cpf)}</div>}
             <footer>

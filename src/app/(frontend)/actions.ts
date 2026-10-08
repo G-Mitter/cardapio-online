@@ -20,6 +20,7 @@ import {
 import { lerPreco } from '@/lib/planilha'
 import { enderecoCompleto, normalizarTelefone } from '@/lib/cliente'
 import { buscarCliente } from '@/lib/clientes-db'
+import { lerAgendamento, rotuloAgendamento } from '@/lib/agendamento'
 import { type Cupom, normalizarCodigo } from '@/lib/cupom'
 import { taxaDoBairro } from '@/lib/entrega'
 import { type Escolhas, gruposDoProduto, resolverEscolhas } from '@/lib/opcoes'
@@ -42,6 +43,8 @@ export type DadosPedido = {
   cpf?: string
   /** Código do cupom que o cliente aplicou, se algum. */
   cupom?: string
+  /** Só se o cliente agendou: "2026-10-10T19:30" (campo datetime-local). */
+  agendarPara?: string
 }
 
 export type ResultadoPedido =
@@ -111,6 +114,15 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   }
   if (modo === 'retirada' && loja.aceitaRetirada === false) {
     return { ok: false, erro: 'Esta loja não aceita retirada. Escolha entrega.' }
+  }
+
+  let agendadoPara: string | undefined
+  if (dados.agendarPara) {
+    if (!loja.aceitaAgendamento)
+      return { ok: false, erro: 'Esta loja não aceita pedidos agendados.' }
+    const a = lerAgendamento(dados.agendarPara)
+    if (!a.ok) return a
+    agendadoPara = a.quando
   }
 
   const pagamento = dados.pagamento
@@ -199,6 +211,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
       nome,
       telefone,
       endereco: modo === 'entrega' ? endereco : '',
+      agendadoPara,
       observacoes,
       pagamento,
       trocoPara,
@@ -229,6 +242,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
     trocoPara,
     cpf,
     codigoRetirada,
+    agendadoPara: agendadoPara && rotuloAgendamento(agendadoPara),
   })
   const pix =
     pagamento === 'pix' && loja.chavePix ? { chave: loja.chavePix, valor: pedido.total } : undefined

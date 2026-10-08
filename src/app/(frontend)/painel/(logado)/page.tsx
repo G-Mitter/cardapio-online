@@ -28,6 +28,7 @@ export default async function Pedidos() {
       modo: p.modo,
       endereco: p.endereco ?? '',
       observacoes: p.observacoes ?? '',
+      agendadoPara: p.agendadoPara ?? null,
       pagamento: p.pagamento ?? '',
       trocoPara: p.trocoPara ?? null,
       cpf: p.cpf ?? '',
