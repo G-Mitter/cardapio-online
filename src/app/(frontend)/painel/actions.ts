@@ -14,6 +14,7 @@ import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import type { Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
+import { fecharPagamento, lerTaxaServico, type Recebido, totalDaConta } from '@/lib/conta'
 import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
@@ -286,20 +287,66 @@ export async function criarPedidoDaMesa(
   return { ok: true, numero }
 }
 
-/** Fecha a conta da mesa: os pedidos dela saem da lista de contas abertas. */
-export async function fecharConta(mesa: string): Promise<{ ok: boolean }> {
-  const { payload, loja, comoUsuario } = await sessao()
+/**
+ * Fecha a conta da mesa e registra como ela pagou. Os valores saem dos pedidos no banco, não do
+ * navegador. Só os pedidos que entraram na conta fecham: pedido novo no meio do caminho fica aberto.
+ */
+export async function fecharContaDaMesa(
+  mesa: string,
+  cobrarTaxa: boolean,
+  recebido: Recebido[],
+): Promise<{ ok: true; troco: number } | { ok: false; erro: string }> {
+  const { payload, loja, user, garcom: ehGarcom, comoUsuario } = await sessaoGarcom()
+  const { docs } = await payload.find({
+    collection: 'pedidos',
+    where: {
+      loja: { equals: loja.id },
+      mesa: { equals: String(mesa) },
+      contaFechada: { not_equals: true },
+      status: { not_equals: 'cancelado' },
+    },
+    sort: 'createdAt',
+    limit: 200,
+    depth: 0,
+    ...comoUsuario,
+  })
+  if (!docs.length) return { ok: false, erro: 'Esta mesa não tem conta aberta.' }
+
+  const subtotal = docs.reduce((s, p) => s + Math.round(p.total * 100), 0) / 100
+  const { taxaServico, total } = totalDaConta(subtotal, loja.taxaServico ?? 0, cobrarTaxa === true)
+  const formas = (Array.isArray(recebido) ? recebido : []).filter((r) => loja.formasPagamento?.includes(r.forma))
+  const pago = fecharPagamento(total, formas)
+  if (!pago.ok) return pago
+
+  const garcomDaConta =
+    (ehGarcom ? user.id : null) ?? docs.map((p) => (typeof p.garcom === 'object' ? p.garcom?.id : p.garcom)).find(Boolean)
   try {
+    await payload.create({
+      collection: 'fechamentos',
+      overrideAccess: true,
+      data: {
+        loja: loja.id,
+        mesa: String(mesa),
+        pedidos: docs.map((p) => p.id),
+        subtotal,
+        taxaServico,
+        total,
+        pagamentos: pago.pagamentos,
+        troco: pago.troco,
+        garcom: garcomDaConta ?? undefined,
+        fechadoPor: user.id,
+      },
+    })
     await payload.update({
       collection: 'pedidos',
-      where: { loja: { equals: loja.id }, mesa: { equals: mesa }, contaFechada: { not_equals: true } },
+      where: { loja: { equals: loja.id }, id: { in: docs.map((p) => p.id) } },
       data: { contaFechada: true },
-      ...comoUsuario,
+      overrideAccess: true,
     })
-    return { ok: true }
   } catch {
-    return { ok: false }
+    return { ok: false, erro: 'Não foi possível fechar a conta. Tente de novo.' }
   }
+  return { ok: true, troco: pago.troco }
 }
 
 // ---------- Rota de entrega ----------
@@ -697,6 +744,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   if (!bairros.ok) return { erro: bairros.erro }
   const mesas = lerMesas(texto(form, 'mesas'))
   if (!mesas.ok) return { erro: mesas.erro }
+  const taxaServico = lerTaxaServico(texto(form, 'taxaServico'))
+  if (!taxaServico.ok) return { erro: taxaServico.erro }
   const pixelMeta = lerPixelMeta(texto(form, 'pixelMeta'))
   if (!pixelMeta.ok) return { erro: pixelMeta.erro }
   const tagGoogle = lerTagGoogle(texto(form, 'tagGoogle'))
@@ -720,6 +769,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         taxaEntrega: taxa,
         bairros: bairros.bairros,
         mesas: texto(form, 'mesas'),
+        taxaServico: taxaServico.valor,
         atendimentoMesas: (['ambos', 'garcom', 'cliente'] as const).find((a) => a === texto(form, 'atendimentoMesas')) ?? 'ambos',
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
         aceitaAgendamento: marcado(form, 'aceitaAgendamento'),

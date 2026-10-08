@@ -28,6 +28,8 @@ export type DadosLoja = {
   /** Quantidade ou nomes das mesas, como o dono digitou. */
   mesas: string
   atendimentoMesas: string
+  /** Taxa de serviço em %, como o dono digitou. */
+  taxaServico: string
   pagamentos: FormaPagamento[]
   chavePix: string
   pixelMeta: string
@@ -173,6 +175,14 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
           <small>
             Quantidade (10 vira as mesas 1 a 10) ou nomes separados por vírgula. Depois de salvar, imprima os QR Codes em
             Mesas.
+          </small>
+        </label>
+        <label className="campo">
+          Taxa de serviço das mesas (%)
+          <input name="taxaServico" value={d.taxaServico} onChange={muda('taxaServico')} inputMode="decimal" placeholder="10" maxLength={5} />
+          <small>
+            Aparece ao fechar a conta, e o cliente pode dispensar. É gorjeta dos funcionários: o repasse é com o seu
+            contador. Deixe vazio para não cobrar.
           </small>
         </label>
         <label className="campo">

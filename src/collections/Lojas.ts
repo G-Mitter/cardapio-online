@@ -131,6 +131,14 @@ export const Lojas: CollectionConfig = {
       ],
       admin: { condition: (data) => Boolean(data?.mesas) },
     },
+    {
+      name: 'taxaServico',
+      label: 'Taxa de serviço (%)',
+      type: 'number',
+      min: 0,
+      max: 30,
+      admin: { description: 'Sugerida ao fechar a conta da mesa; o cliente pode dispensar. Vazio ou 0 = não cobra.' },
+    },
     // Texto impresso embaixo de cada QR Code; vazio usa o texto padrão (INSTRUCOES_PADRAO em lib/mesas.ts).
     { name: 'instrucoesMesa', label: 'Instruções impressas no QR Code', type: 'textarea', maxLength: 400 },
     {

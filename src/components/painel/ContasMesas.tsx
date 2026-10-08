@@ -1,11 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
-
-import { brl } from '@/lib/pedido'
-
-import { fecharConta } from '@/app/(frontend)/painel/actions'
+import { FecharConta } from '@/components/painel/FecharConta'
+import { brl, type FormaPagamento } from '@/lib/pedido'
 
 type Conta = {
   mesa: string
@@ -15,10 +11,15 @@ type Conta = {
   pedidos: { id: number; numero: number; itens: { nome: string; quantidade: number; opcoes: string }[] }[]
 }
 
-export function ContasMesas({ contas }: { contas: Conta[] }) {
-  const router = useRouter()
-  const [fechando, startTransition] = useTransition()
-
+export function ContasMesas({
+  contas,
+  taxaPct,
+  formas,
+}: {
+  contas: Conta[]
+  taxaPct: number
+  formas: { value: FormaPagamento; label: string }[]
+}) {
   if (!contas.length) return <p className="vazio">Nenhuma mesa com conta aberta.</p>
   return (
     <div className="pedidos">
@@ -46,21 +47,7 @@ export function ContasMesas({ contas }: { contas: Conta[] }) {
           ))}
           <footer>
             <b>Total: {brl(c.total)}</b>
-            <div className="pedido__acoes">
-              <button
-                type="button"
-                className="botao"
-                disabled={fechando}
-                onClick={() =>
-                  startTransition(async () => {
-                    await fecharConta(c.mesa)
-                    router.refresh()
-                  })
-                }
-              >
-                Fechar conta
-              </button>
-            </div>
+            <FecharConta mesa={c.mesa} subtotal={c.total} taxaPct={taxaPct} formas={formas} />
           </footer>
         </article>
       ))}
