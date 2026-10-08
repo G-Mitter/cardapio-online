@@ -14,6 +14,7 @@ import {
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { limitesDoCampo } from '@/lib/agendamento'
 import { normalizarCodigo } from '@/lib/cupom'
+import { registrarCompra } from '@/lib/pixel'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import type { Bairro } from '@/lib/entrega'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
@@ -261,6 +262,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
       })
       setResultado(r)
       if (r.ok) {
+        registrarCompra(r.total)
         setLinhas([])
         setCupom(null)
         setDesconto(0)

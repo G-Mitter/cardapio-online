@@ -52,6 +52,8 @@ export type ResultadoPedido =
   | {
       ok: true
       numero: number
+      /** Total do pedido, para os pixels de anúncios. */
+      total: number
       mensagem: string
       link: string
       /** Só quando o cliente escolheu Pix e a loja tem chave: para ele copiar e pagar. */
@@ -256,6 +258,7 @@ export async function criarPedido(dados: DadosPedido): Promise<ResultadoPedido> 
   return {
     ok: true,
     numero,
+    total: pedido.total,
     mensagem,
     link: whatsappUrl(loja.whatsapp, mensagem)!,
     pix,

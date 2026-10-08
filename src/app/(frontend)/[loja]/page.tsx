@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import { cache } from 'react'
 
 import type { CategoriaView } from '@/components/Cardapio'
+import { Pixels } from '@/components/Pixels'
 import { LojaAoVivo } from '@/components/LojaAoVivo'
 import { gruposDoProduto } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
@@ -82,26 +83,29 @@ export default async function PaginaDaLoja({ params }: Props) {
     .filter((c) => c.produtos.length > 0)
 
   return (
-    <LojaAoVivo
-      loja={{
-        id: loja.id,
-        nome: loja.nome,
-        slug: loja.slug,
-        corPrincipal: loja.corPrincipal,
-        fonte: loja.fonte,
-        logo: loja.logo,
-        capa: loja.capa,
-        horario: loja.horario,
-        endereco: loja.endereco,
-        aberta: loja.aberta,
-        fazEntrega: loja.fazEntrega,
-        aceitaRetirada: loja.aceitaRetirada,
-        aceitaAgendamento: loja.aceitaAgendamento,
-        taxaEntrega: loja.taxaEntrega,
-        bairros: loja.bairros,
-        formasPagamento: loja.formasPagamento,
-      }}
-      categorias={secoes}
-    />
+    <>
+      <Pixels meta={loja.pixelMeta} google={loja.tagGoogle} />
+      <LojaAoVivo
+        loja={{
+          id: loja.id,
+          nome: loja.nome,
+          slug: loja.slug,
+          corPrincipal: loja.corPrincipal,
+          fonte: loja.fonte,
+          logo: loja.logo,
+          capa: loja.capa,
+          horario: loja.horario,
+          endereco: loja.endereco,
+          aberta: loja.aberta,
+          fazEntrega: loja.fazEntrega,
+          aceitaRetirada: loja.aceitaRetirada,
+          aceitaAgendamento: loja.aceitaAgendamento,
+          taxaEntrega: loja.taxaEntrega,
+          bairros: loja.bairros,
+          formasPagamento: loja.formasPagamento,
+        }}
+        categorias={secoes}
+      />
+    </>
   )
 }

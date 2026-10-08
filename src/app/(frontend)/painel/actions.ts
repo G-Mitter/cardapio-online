@@ -12,6 +12,7 @@ import { COOKIE_LOJA, sessao } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros } from '@/lib/entrega'
+import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { lerOpcoes } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
 import { lerSelos } from '@/lib/selos'
@@ -445,6 +446,10 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   if (taxa === null) return { erro: 'Taxa de entrega inválida. Use, por exemplo, 6,00.' }
   const bairros = lerBairros(texto(form, 'bairros'))
   if (!bairros.ok) return { erro: bairros.erro }
+  const pixelMeta = lerPixelMeta(texto(form, 'pixelMeta'))
+  if (!pixelMeta.ok) return { erro: pixelMeta.erro }
+  const tagGoogle = lerTagGoogle(texto(form, 'tagGoogle'))
+  if (!tagGoogle.ok) return { erro: tagGoogle.erro }
 
   try {
     const logo = await imagem(form, 'logo', `Logo da ${nome}`)
@@ -467,6 +472,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         aceitaAgendamento: marcado(form, 'aceitaAgendamento'),
         formasPagamento,
         chavePix,
+        pixelMeta: pixelMeta.id,
+        tagGoogle: tagGoogle.id,
         ...(logo !== undefined && { logo }),
         ...(capa !== undefined && { capa }),
       },

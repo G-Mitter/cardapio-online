@@ -41,6 +41,14 @@ export default function Privacidade() {
         entrega ou na retirada. A conversa no WhatsApp segue as regras do próprio WhatsApp.
       </p>
 
+      <h2>Anúncios</h2>
+      <p>
+        Algumas lojas usam o Pixel da Meta (Facebook e Instagram) e a tag do Google para medir
+        visitas e pedidos e criar anúncios. Nesse caso, o seu navegador envia à Meta e ao Google
+        dados de navegação e o valor do pedido, e eles seguem as próprias políticas. Não enviamos o
+        seu nome, telefone nem endereço.
+      </p>
+
       <h2>Quem vê o quê</h2>
       <p>
         A loja vê o nome, telefone, endereço e CPF (se marcado) dos pedidos feitos nela, e só deles.

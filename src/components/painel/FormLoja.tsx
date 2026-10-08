@@ -27,6 +27,8 @@ export type DadosLoja = {
   bairros: string
   pagamentos: FormaPagamento[]
   chavePix: string
+  pixelMeta: string
+  tagGoogle: string
   aceitaRetirada: boolean
   aceitaAgendamento: boolean
   logo: string | null
@@ -218,6 +220,34 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             />
           </label>
         )}
+        <fieldset className="campo">
+          <legend>Anúncios (opcional)</legend>
+          <div className="linha">
+            <label className="campo">
+              Pixel da Meta (Facebook/Instagram)
+              <input
+                name="pixelMeta"
+                defaultValue={loja.pixelMeta}
+                inputMode="numeric"
+                maxLength={20}
+                placeholder="123456789012345"
+              />
+            </label>
+            <label className="campo">
+              Tag do Google (Analytics ou Ads)
+              <input
+                name="tagGoogle"
+                defaultValue={loja.tagGoogle}
+                maxLength={22}
+                placeholder="G-XXXXXXXXXX ou AW-XXXXXXXXXX"
+              />
+            </label>
+          </div>
+          <small>
+            Com o código preenchido, o cardápio avisa a Meta e o Google das visitas e dos pedidos
+            feitos, para você medir e criar anúncios.
+          </small>
+        </fieldset>
         <button className="botao">Salvar</button>
       </Formulario>
 
