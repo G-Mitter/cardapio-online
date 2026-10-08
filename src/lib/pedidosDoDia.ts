@@ -61,3 +61,12 @@ export function ordenar<T extends { status: Status; createdAt: string }>(pedidos
       STATUS.indexOf(a.status) - STATUS.indexOf(b.status) || a.createdAt.localeCompare(b.createdAt),
   )
 }
+
+/** Quanto antes do horário marcado um pedido agendado aparece na cozinha. */
+export const ANTECEDENCIA_COZINHA_MIN = 60
+
+/** Pedido na tela da cozinha: sem agendamento, ou agendado para daqui a no máximo 1 hora (ou atrasado). */
+export function naCozinha(agendadoPara: string | null, agora = new Date()): boolean {
+  if (!agendadoPara) return true
+  return new Date(agendadoPara).getTime() - agora.getTime() <= ANTECEDENCIA_COZINHA_MIN * 60_000
+}

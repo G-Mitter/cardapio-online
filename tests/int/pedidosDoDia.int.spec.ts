@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { avisoDeStatus, inicioDoDia, ordenar } from '@/lib/pedidosDoDia'
+import { avisoDeStatus, inicioDoDia, naCozinha, ordenar } from '@/lib/pedidosDoDia'
 
 describe('inicioDoDia', () => {
   it('usa a meia-noite de Brasília, mesmo quando em UTC já é outro dia', () => {
@@ -42,5 +42,17 @@ describe('avisoDeStatus', () => {
 
   it('não avisa pedido novo', () => {
     expect(avisoDeStatus({ ...base, status: 'novo' })).toBeNull()
+  })
+})
+
+describe('naCozinha', () => {
+  const agora = new Date('2026-10-06T15:00:00Z')
+  it('mostra pedido sem agendamento e esconde o agendado para mais de 1 hora adiante', () => {
+    expect(naCozinha(null, agora)).toBe(true)
+    expect(naCozinha('2026-10-06T16:00:00Z', agora)).toBe(true)
+    expect(naCozinha('2026-10-06T16:01:00Z', agora)).toBe(false)
+  })
+  it('mantém o agendado que já passou do horário', () => {
+    expect(naCozinha('2026-10-06T14:00:00Z', agora)).toBe(true)
   })
 })

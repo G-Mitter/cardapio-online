@@ -455,3 +455,55 @@ details.perigo form {
   text-align: center;
   color: var(--muted);
 }
+
+/* Tela da cozinha: letra grande para ler de longe. */
+.cozinha__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.cozinha__colunas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.cozinha__coluna h2 {
+  margin: 0 0 0.5rem;
+}
+.cozinha__cartao {
+  border: 2px solid #ccc;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  background: #fff;
+}
+.cozinha__cartao[role='button'] {
+  cursor: pointer;
+}
+.cozinha__coluna--novo .cozinha__cartao {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+.cozinha__coluna--pronto .cozinha__cartao {
+  border-color: #16a34a;
+}
+.cozinha__cartao header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.5rem;
+}
+.cozinha__cartao ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+.cozinha__obs {
+  font-weight: 700;
+}
+.cozinha__acao {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  opacity: 0.7;
+}
