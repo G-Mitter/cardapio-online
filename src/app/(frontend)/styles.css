@@ -109,6 +109,20 @@ header h1 {
   background: transparent;
   border: 1.5px solid currentColor;
 }
+.busca {
+  width: 100%;
+  margin-top: 12px;
+  font: 16px var(--body); /* 16px evita o zoom automático do iPhone */
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px;
+}
+.busca:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
 .cats {
   display: flex;
   gap: 8px;
