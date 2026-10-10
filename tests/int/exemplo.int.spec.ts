@@ -8,6 +8,7 @@ import { conferir, lerRelatorio, type PagamentoLoja } from '@/lib/maquininha'
 import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
 import type { ProdutoParaPedido } from '@/lib/pedido'
 import { lerTabela } from '@/lib/exemplo'
+import { PADRAO } from '@/seed/exemplo/padrao'
 
 const pasta = path.resolve(__dirname, '../../src/seed/exemplo')
 const planilhas = Object.fromEntries(NOMES.map((n) => [n, readFileSync(path.join(pasta, `${n}.csv`), 'utf8')])) as Planilhas
@@ -154,5 +155,11 @@ describe('relatório de maquininha de exemplo', () => {
     const c = conferir(leitura.vendas, pagamentos)
     expect(c.confere).toHaveLength(1)
     expect(c.soNaMaquininha).toHaveLength(1)
+  })
+})
+
+describe('planilhas padrão embutidas', () => {
+  it('são iguais aos .csv da pasta', () => {
+    expect(PADRAO).toEqual(planilhas)
   })
 })

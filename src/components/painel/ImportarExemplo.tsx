@@ -32,7 +32,11 @@ export function ImportarExemplo() {
   function importar() {
     setRetorno(null)
     startTransition(async () => {
-      setRetorno(await importarExemplo(enviadas))
+      try {
+        setRetorno(await importarExemplo(enviadas))
+      } catch {
+        setRetorno({ ok: false, erro: 'Não consegui falar com o servidor (pode ter passado do tempo limite). Confira Pedidos e tente de novo.' })
+      }
       setCerteza(false)
     })
   }
