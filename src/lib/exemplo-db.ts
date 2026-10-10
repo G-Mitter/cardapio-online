@@ -7,6 +7,7 @@
  */
 import { randomInt } from 'node:crypto'
 
+import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { Payload } from 'payload'
 
 import type { Loja } from '@/payload-types'
@@ -28,6 +29,11 @@ import {
 } from './exemplo'
 import { gruposDoProduto } from './opcoes'
 import { normalizar } from './planilha'
+
+/** Vários de cada vez: cada gravação espera o banco responder, e um a um a importação passava do tempo limite da Vercel. */
+const emParalelo = async <T>(itens: T[], fn: (item: T) => Promise<unknown>, lote = 9) => {
+  for (let i = 0; i < itens.length; i += lote) await Promise.all(itens.slice(i, i + lote).map(fn))
+}
 
 export type Dono = { payload: Payload; user: { id: number }; loja: Loja }
 
@@ -66,14 +72,14 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
     if (!idPorNome.has(normalizar(p.nome))) erros.push({ arquivo: 'produtos', linha: p.linha, motivo: `O produto "${p.nome}" não existe no cardápio da Cantina.` })
   }
   if (erros.length) return { ok: false, erros }
-  for (const p of lidos.produtos) {
-    await payload.update({
+  await emParalelo(lidos.produtos, (p) =>
+    payload.update({
       collection: 'produtos',
       id: idPorNome.get(normalizar(p.nome))!,
       data: { opcoes: p.opcoes, selos: p.selos as never, leve: p.leve, pague: p.pague },
       overrideAccess: true,
-    })
-  }
+    }),
+  )
 
   // 2. Planejar tudo antes de apagar qualquer coisa: planilha com erro não estraga os dados.
   const produtos = (await buscaProdutos()).docs.map((p) => ({
@@ -89,17 +95,17 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
   const r = planejar(planilhas, { agora, loja: { taxaEntrega: loja.taxaEntrega ?? 0 }, produtos })
   if (!r.ok) return { ok: false, erros: r.erros }
   const { plano } = r
-  const donos = { loja: { equals: loja.id } }
 
   // 3. Apagar o que os exemplos criam (filhos antes dos pais).
-  for (const collection of ['acertos', 'fechamentos', 'pedidos', 'lancamentos', 'carrinhos', 'cupons', 'entregadores'] as const) {
-    await payload.delete({ collection, where: donos, overrideAccess: true })
+  // Direto no banco: apagar por documento (Payload) leva dezenas de segundos na Vercel. As tabelas filhas
+  // (itens, relações, pagamentos, sessões) caem junto por ON DELETE CASCADE; o que aponta para estas linhas vira nulo.
+  const { drizzle } = payload.db
+  for (const tabela of ['acertos', 'fechamentos', 'pedidos', 'lancamentos', 'carrinhos', 'cupons', 'entregadores']) {
+    await drizzle.execute(sql`DELETE FROM ${sql.identifier(tabela)} WHERE loja_id = ${loja.id}`)
   }
-  await payload.delete({
-    collection: 'users',
-    where: { lojaDoGarcom: { equals: loja.id }, roles: { contains: 'garcom' } },
-    overrideAccess: true,
-  })
+  await drizzle.execute(
+    sql`DELETE FROM users WHERE loja_do_garcom_id = ${loja.id} AND id IN (SELECT parent_id FROM users_roles WHERE value = 'garcom')`,
+  )
 
   // 4. Loja
   await payload.update({
@@ -115,7 +121,7 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
     overrideAccess: true,
   })
 
-  for (const c of plano.cupons) await payload.create({ collection: 'cupons', data: { ...c, loja: loja.id }, overrideAccess: true })
+  await emParalelo(plano.cupons, (c) => payload.create({ collection: 'cupons', data: { ...c, loja: loja.id }, overrideAccess: true }))
 
   const garcom = new Map<string, number>()
   for (const g of plano.garcons) {
@@ -131,15 +137,15 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
     const d = await payload.create({ collection: 'entregadores', data: { ...e, loja: loja.id }, overrideAccess: true })
     entregador.set(e.nome, d.id)
   }
-  for (const c of plano.clientes) {
+  await emParalelo(plano.clientes, async (c) => {
     const existente = await buscarCliente(payload, c.telefone)
     if (existente) await payload.update({ collection: 'clientes', id: existente.id, data: { nome: c.nome, enderecos: c.enderecos }, overrideAccess: true })
     else await payload.create({ collection: 'clientes', data: { ...c, aceitouEm: agora.toISOString() }, overrideAccess: true })
-  }
+  })
 
   // 5. Pedidos (em ordem de data, então o número cresce com o tempo)
   const pedidoId = new Map<string, number>()
-  for (const p of plano.pedidos) {
+  await emParalelo(plano.pedidos, async (p) => {
     const doc = await payload.create({
       collection: 'pedidos',
       overrideAccess: true,
@@ -181,9 +187,9 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
     })
     await datar(payload, 'pedidos', doc.id, p.criado, p.atualizado)
     pedidoId.set(p.ref, doc.id)
-  }
+  })
 
-  for (const f of plano.fechamentos) {
+  await emParalelo(plano.fechamentos, async (f) => {
     const doc = await payload.create({
       collection: 'fechamentos',
       overrideAccess: true,
@@ -201,9 +207,9 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
       },
     })
     await datar(payload, 'fechamentos', doc.id, f.criado)
-  }
+  })
 
-  for (const a of plano.acertos) {
+  await emParalelo(plano.acertos, async (a) => {
     const doc = await payload.create({
       collection: 'acertos',
       overrideAccess: true,
@@ -225,24 +231,24 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
       },
     })
     await datar(payload, 'acertos', doc.id, momento(a.dia, 0, '22:00', agora) ?? agora)
-  }
+  })
 
-  for (const l of plano.lancamentos) {
-    await payload.create({
+  await emParalelo(plano.lancamentos, (l) =>
+    payload.create({
       collection: 'lancamentos',
       overrideAccess: true,
       data: { ...l, categoria: l.categoria as never, loja: loja.id, diaDoMes: Number(l.vencimento.slice(8)) },
-    })
-  }
+    }),
+  )
 
-  for (const c of plano.carrinhos) {
+  await emParalelo(plano.carrinhos, async (c) => {
     const doc = await payload.create({
       collection: 'carrinhos',
       overrideAccess: true,
       data: { loja: loja.id, telefone: c.telefone, nome: c.nome, resumo: c.resumo, total: c.total },
     })
     await datar(payload, 'carrinhos', doc.id, c.atualizado)
-  }
+  })
 
   return {
     ok: true,
