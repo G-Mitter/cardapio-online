@@ -6,12 +6,11 @@
  * (painel/(logado)/exemplo/actions.ts).
  */
 import { randomInt } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 
 import type { Payload } from 'payload'
 
 import type { Loja } from '@/payload-types'
+import { PADRAO } from '@/seed/exemplo/padrao'
 
 import { buscarCliente } from './clientes-db'
 import { hojeEmBrasilia } from './entregadores'
@@ -29,8 +28,6 @@ import {
 } from './exemplo'
 import { gruposDoProduto } from './opcoes'
 import { normalizar } from './planilha'
-
-const PASTA = path.join(process.cwd(), 'src/seed/exemplo')
 
 export type Dono = { payload: Payload; user: { id: number }; loja: Loja }
 
@@ -54,7 +51,7 @@ export async function gravarExemplo({ payload, user, loja }: Dono, enviadas: Par
   const planilhas = {} as Planilhas
   for (const n of NOMES) {
     const t = enviadas?.[n]
-    planilhas[n] = typeof t === 'string' && t.trim() ? t.slice(0, 500_000) : await readFile(path.join(PASTA, `${n}.csv`), 'utf8')
+    planilhas[n] = typeof t === 'string' && t.trim() ? t.slice(0, 500_000) : PADRAO[n]
   }
 
   const buscaProdutos = () =>
