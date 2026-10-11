@@ -721,13 +721,29 @@ label.marcar {
   font: 600 16px var(--body);
   margin: 0 0 6px;
 }
-.seus-pedidos__item {
+.seus-pedidos__linha {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--brand-soft);
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.seus-pedidos__item {
+  flex: 0 0 220px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 10px;
+  border: 1px solid var(--brand-soft);
+  border-radius: 12px;
+}
+.seus-pedidos__fotos {
+  display: flex;
+  gap: 6px;
+}
+.seus-pedidos .foto {
+  width: 64px;
+  height: 64px;
+  flex: none;
 }
 .seus-pedidos__item small {
   display: block;

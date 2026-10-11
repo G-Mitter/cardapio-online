@@ -398,7 +398,12 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         <ContaDaMesa loja={loja.slug} mesa={mesa} atualizar={resultadoMesa?.ok ? resultadoMesa.numero : 0} />
 
         {!mesa && (
-          <SeusPedidos pedidos={pedidosLocais} ocupado={repetindo} aoPedirDeNovo={pedirOutraVez} />
+          <SeusPedidos
+            pedidos={pedidosLocais}
+            ocupado={repetindo}
+            fotoDe={(id) => produtos.find((p) => p.id === id)?.foto ?? null}
+            aoPedirDeNovo={pedirOutraVez}
+          />
         )}
         {avisoRepetir && linhas.length === 0 && !mesa && pedidosLocais.length > 0 && (
           <p className="erro" role="status">

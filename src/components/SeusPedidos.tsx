@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
 import { brl } from '@/lib/pedido'
@@ -46,34 +47,47 @@ export function usePedidosLocais(loja: string) {
 export function SeusPedidos({
   pedidos,
   ocupado,
+  fotoDe,
   aoPedirDeNovo,
 }: {
   pedidos: PedidoLocal[]
   ocupado: boolean
+  /** Foto do produto no cardápio de agora (null se não tiver ou saiu do cardápio). */
+  fotoDe: (produto: number) => string | null
   aoPedirDeNovo: (p: PedidoLocal) => void
 }) {
   if (!pedidos.length) return null
   return (
     <section className="seus-pedidos" aria-labelledby="titulo-seus-pedidos">
-      <h2 id="titulo-seus-pedidos">Seus pedidos</h2>
-      {pedidos.map((p) => (
-        <div key={p.numero} className="seus-pedidos__item">
-          <div>
-            <b>
-              Pedido nº {p.numero} · {new Date(p.em).toLocaleDateString('pt-BR')} · {brl(p.total)}
-            </b>
+      <h2 id="titulo-seus-pedidos">Peça de novo</h2>
+      <div className="seus-pedidos__linha">
+        {pedidos.map((p) => (
+          <div key={p.numero} className="seus-pedidos__item">
+            <div className="seus-pedidos__fotos">
+              {p.itens.slice(0, 3).map((i) => {
+                const foto = fotoDe(i.produto)
+                return (
+                  <span key={i.produto} className="foto" aria-hidden>
+                    {foto ? <Image src={foto} alt="" fill sizes="64px" /> : i.nome[0]}
+                  </span>
+                )
+              })}
+            </div>
             <small>{p.itens.map((i) => `${i.quantidade}× ${i.nome}`).join(', ')}</small>
+            <b>
+              {new Date(p.em).toLocaleDateString('pt-BR')} · {brl(p.total)}
+            </b>
             {p.modo === 'retirada' && p.codigoRetirada && (
               <small>
                 Código de retirada <strong>{p.codigoRetirada}</strong>
               </small>
             )}
+            <button type="button" className="secundario" disabled={ocupado} onClick={() => aoPedirDeNovo(p)}>
+              Adicionar ao carrinho
+            </button>
           </div>
-          <button type="button" className="secundario" disabled={ocupado} onClick={() => aoPedirDeNovo(p)}>
-            Pedir de novo
-          </button>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   )
 }
