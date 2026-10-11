@@ -271,6 +271,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const sugestoes = sugerir(
     categorias,
     itens.map((i) => i.produto),
+    5,
   )
 
   function enviar(form: FormData) {
@@ -667,12 +668,17 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
             {itens.length > 0 && sugestoes.length > 0 && (
               <div className="sugestoes">
                 <h3>Peça também</h3>
-                {sugestoes.map((p) => (
-                  <button key={p.id} type="button" onClick={() => mudar(p.id, {}, 1)}>
-                    <span>{p.nome}</span>
-                    <span>+ {brl(p.preco)}</span>
-                  </button>
-                ))}
+                <div className="sugestoes__linha">
+                  {sugestoes.map((p) => (
+                    <button key={p.id} type="button" onClick={() => mudar(p.id, {}, 1)}>
+                      <span className="foto" aria-hidden>
+                        {p.foto ? <Image src={p.foto} alt="" fill sizes="104px" /> : p.nome[0]}
+                      </span>
+                      <span>{p.nome}</span>
+                      <b>+ {brl(p.preco)}</b>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
