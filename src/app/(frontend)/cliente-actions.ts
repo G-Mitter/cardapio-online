@@ -3,20 +3,27 @@
 /**
  * Cadastro do cliente final pelo telefone. Vale em todas as lojas.
  *
- * Decisão (08/10/2026): sem código de confirmação do telefone. Por isso quem digita
- * um número já cadastrado só vê o primeiro nome e os endereços escondidos
- * (src/lib/cliente.ts); o endereço completo só vai para a loja, dentro do pedido.
+ * Decisão (08/10/2026): sem código de confirmação do telefone. Quem digita um número
+ * já cadastrado vê só o primeiro nome. Decisão (11/10/2026): o endereço aparece completo,
+ * para o cliente poder escolher e corrigir; sobrenome, CPF e pedidos nunca voltam aqui.
  */
 import { getPayload, type Payload } from 'payload'
 
-import { type Endereco, mascararEndereco, normalizarTelefone, primeiroNome } from '@/lib/cliente'
+import { type Endereco, enderecoCompleto, normalizarTelefone, primeiroNome } from '@/lib/cliente'
 import { buscarCliente as buscar } from '@/lib/clientes-db'
 import { taxaDoBairro } from '@/lib/entrega'
 import type { Cliente, Loja } from '@/payload-types'
 import config from '@/payload.config'
 
 /** `taxa`: o que a loja cobra para entregar neste endereço; null se ela não entrega naquele bairro. */
-export type EnderecoResumo = { id: string; resumo: string; taxa: number | null }
+export type EnderecoResumo = {
+  id: string
+  resumo: string
+  rua: string
+  complemento: string
+  bairro: string
+  taxa: number | null
+}
 
 export type Identificacao =
   | { ok: true; novo: true }
@@ -39,14 +46,17 @@ function lerEndereco(e: Partial<Endereco> | undefined): Endereco | string {
   return { rua, complemento: texto(e?.complemento, 60), bairro }
 }
 
-/** O que pode voltar para o navegador: nada de sobrenome, rua completa ou complemento. */
+/** O que pode voltar para o navegador: primeiro nome e endereços; nada de sobrenome nem CPF. */
 const resumo = (c: Cliente, loja: Loja | undefined): Identificacao => ({
   ok: true,
   novo: false,
   nome: primeiroNome(c.nome),
   enderecos: (c.enderecos ?? []).map((e) => ({
     id: e.id!,
-    resumo: mascararEndereco(e),
+    resumo: enderecoCompleto(e),
+    rua: e.rua,
+    complemento: e.complemento ?? '',
+    bairro: e.bairro,
     taxa: loja ? taxaDoBairro(loja.bairros, e.bairro, loja.taxaEntrega ?? 0) : null,
   })),
 })
@@ -122,6 +132,33 @@ export async function adicionarEndereco(
     collection: 'clientes',
     id: cliente.id,
     data: { enderecos: [...enderecos, endereco] },
+    overrideAccess: true,
+  })
+  return resumo(atualizado, await buscarLoja(payload, loja))
+}
+
+/** Troca um endereço já cadastrado pelo que o cliente digitou (o id continua o mesmo). */
+export async function corrigirEndereco(
+  telefone: string,
+  enderecoId: string,
+  dados: Partial<Endereco>,
+  loja: string,
+): Promise<Identificacao> {
+  const tel = normalizarTelefone(telefone)
+  const endereco = lerEndereco(dados)
+  if (!tel) return { ok: false, erro: 'Telefone incompleto.' }
+  if (typeof endereco === 'string') return { ok: false, erro: endereco }
+
+  const payload = await getPayload({ config })
+  const cliente = await buscar(payload, tel)
+  if (!cliente) return { ok: false, erro: 'Cadastro não encontrado. Digite o telefone de novo.' }
+  const enderecos = cliente.enderecos ?? []
+  if (!enderecos.some((e) => e.id === enderecoId))
+    return { ok: false, erro: 'Endereço não encontrado.' }
+  const atualizado = await payload.update({
+    collection: 'clientes',
+    id: cliente.id,
+    data: { enderecos: enderecos.map((e) => (e.id === enderecoId ? { ...endereco, id: e.id } : e)) },
     overrideAccess: true,
   })
   return resumo(atualizado, await buscarLoja(payload, loja))

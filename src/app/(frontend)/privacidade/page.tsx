@@ -61,8 +61,9 @@ export default function Privacidade() {
       <h2>Quem vê o quê</h2>
       <p>
         A loja vê o nome, telefone, endereço e CPF (se marcado) dos pedidos feitos nela, e só deles.
-        Quem digita o seu telefone em outro aparelho vê apenas o seu primeiro nome e o começo dos
-        endereços, para você reconhecer o seu cadastro.
+        Quem digita o seu telefone, em qualquer aparelho, vê o seu primeiro nome e os seus endereços
+        cadastrados, para escolher ou corrigir um deles. Não mostramos sobrenome, CPF nem pedidos
+        anteriores.
       </p>
 
       <h2>Neste aparelho</h2>
