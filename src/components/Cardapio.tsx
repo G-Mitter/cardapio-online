@@ -9,14 +9,17 @@ import {
   criarPedido,
   criarPedidoMesa,
   guardarCarrinho,
+  pedirDeNovo,
   repetirUltimoPedido,
   type ResultadoMesa,
   type ResultadoPedido,
 } from '@/app/(frontend)/actions'
 import { ContaDaMesa } from '@/components/ContaDaMesa'
+import { SeusPedidos, usePedidosLocais } from '@/components/SeusPedidos'
 import { type ClienteEscolhido, Identificacao } from '@/components/Identificacao'
 import { limitesDoCampo } from '@/lib/agendamento'
 import { normalizarCodigo } from '@/lib/cupom'
+import type { PedidoLocal } from '@/lib/pedidosLocais'
 import { registrarCompra } from '@/lib/pixel'
 import { brl, FORMAS_PAGAMENTO, type FormaPagamento, type Modo } from '@/lib/pedido'
 import type { Bairro } from '@/lib/entrega'
@@ -117,6 +120,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [enviando, startTransition] = useTransition()
   const [repetindo, startRepetir] = useTransition()
   const [avisoRepetir, setAvisoRepetir] = useState('')
+  const { pedidos: pedidosLocais, guardar: guardarPedidoLocal } = usePedidosLocais(loja.slug)
   // Cupom: o que o cliente digitou, o código aplicado e quanto ele abate (calculado no servidor).
   const [campoCupom, setCampoCupom] = useState('')
   const [cupom, setCupom] = useState<string | null>(null)
@@ -216,6 +220,21 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
     })
   }
 
+  /** "Pedir de novo" da lista "Seus pedidos": confere os itens com o cardápio de agora e abre o carrinho. */
+  function pedirOutraVez(p: PedidoLocal) {
+    startRepetir(async () => {
+      const r = await pedirDeNovo(loja.slug, p.itens)
+      if (!r.ok) return setAvisoRepetir(r.erro)
+      for (const i of r.itens) mudar(i.produto, i.escolhas, i.quantidade)
+      setAvisoRepetir(
+        r.faltaram.length
+          ? `Não deu para repetir: ${r.faltaram.join(', ')} (esgotou ou mudou no cardápio).`
+          : '',
+      )
+      if (r.itens.length) abrirPedido()
+    })
+  }
+
   // Mexeu no carrinho com cupom aplicado: o desconto (e o mínimo do cupom) são conferidos de novo.
   const chaveCarrinho = linhas.map((l) => `${l.chave}x${l.quantidade}`).join('|')
   useEffect(() => {
@@ -296,6 +315,19 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
       setResultado(r)
       if (r.ok) {
         registrarCompra(r.total)
+        guardarPedidoLocal({
+          numero: r.numero,
+          em: new Date().toISOString(),
+          total: r.total,
+          modo,
+          codigoRetirada: r.codigoRetirada,
+          itens: itens.map((i) => ({
+            produto: i.produto,
+            nome: i.p.nome,
+            quantidade: i.quantidade,
+            escolhas: i.escolhas,
+          })),
+        })
         setLinhas([])
         setCupom(null)
         setDesconto(0)
@@ -364,6 +396,15 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         </header>
 
         <ContaDaMesa loja={loja.slug} mesa={mesa} atualizar={resultadoMesa?.ok ? resultadoMesa.numero : 0} />
+
+        {!mesa && (
+          <SeusPedidos pedidos={pedidosLocais} ocupado={repetindo} aoPedirDeNovo={pedirOutraVez} />
+        )}
+        {avisoRepetir && linhas.length === 0 && !mesa && pedidosLocais.length > 0 && (
+          <p className="erro" role="status">
+            {avisoRepetir}
+          </p>
+        )}
 
         {categorias.length > 0 && (
           <input

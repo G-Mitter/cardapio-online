@@ -714,3 +714,22 @@ label.marcar {
   margin: 0 0 0.5rem;
   padding-left: 1.2rem;
 }
+.seus-pedidos {
+  margin: 12px 0;
+}
+.seus-pedidos h2 {
+  font: 600 16px var(--body);
+  margin: 0 0 6px;
+}
+.seus-pedidos__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--brand-soft);
+}
+.seus-pedidos__item small {
+  display: block;
+  color: var(--muted);
+}
