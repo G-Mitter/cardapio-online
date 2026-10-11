@@ -113,6 +113,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   const [pagamento, setPagamento] = useState<FormaPagamento | undefined>(loja.pagamentos[0])
   const [cpfNaNota, setCpfNaNota] = useState(false)
   const [agendar, setAgendar] = useState(false)
+  const [agendarPara, setAgendarPara] = useState('')
   const [enviando, startTransition] = useTransition()
   const [repetindo, startRepetir] = useTransition()
   const [avisoRepetir, setAvisoRepetir] = useState('')
@@ -289,7 +290,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         trocoPara: String(form.get('trocoPara') ?? ''),
         cpf: cpfNaNota ? String(form.get('cpf') ?? '') : '',
         cupom: cupom ?? undefined,
-        agendarPara: agendar ? String(form.get('agendarPara') ?? '') : undefined,
+        agendarPara: agendar ? agendarPara : undefined,
       })
       setResultado(r)
       if (r.ok) {
@@ -298,6 +299,8 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
         setCupom(null)
         setDesconto(0)
         setCampoCupom('')
+        setAgendar(false)
+        setAgendarPara('')
       }
     })
   }
@@ -345,6 +348,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
             </span>
             {mesa && <span className="status">Mesa {mesa}</span>}
             {loja.horario && <span>{loja.horario}</span>}
+            {!mesa && loja.aceitaAgendamento && <span>Aceita pedidos agendados</span>}
             {loja.fazEntrega && <span>{textoEntrega(loja)}</span>}
             {loja.endereco && <span>{loja.endereco}</span>}
             {loja.pagamentos.length > 0 && (
@@ -695,6 +699,40 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 </label>
               </fieldset>
             )}
+            {!mesa && loja.aceitaAgendamento && (
+              <fieldset className="modo">
+                <legend>Quando?</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="quando"
+                    checked={!agendar}
+                    onChange={() => setAgendar(false)}
+                  />
+                  O quanto antes
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="quando"
+                    checked={agendar}
+                    onChange={() => setAgendar(true)}
+                  />
+                  Agendar para outro dia ou hora
+                </label>
+                {agendar && (
+                  <label>
+                    {entrega ? 'Receber em' : 'Retirar em'}
+                    <input
+                      type="datetime-local"
+                      value={agendarPara}
+                      onChange={(e) => setAgendarPara(e.target.value)}
+                      {...limitesDoCampo()}
+                    />
+                  </label>
+                )}
+              </fieldset>
+            )}
             {!mesa && <Identificacao loja={loja.slug} modo={modo} aoMudar={setCliente} />}
             {!mesa && cliente && itens.length === 0 && (
               <>
@@ -776,29 +814,6 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     />
                   </label>
                 )}
-                {loja.aceitaAgendamento && (
-                  <>
-                    <label className="marcar">
-                      <input
-                        type="checkbox"
-                        checked={agendar}
-                        onChange={(e) => setAgendar(e.target.checked)}
-                      />
-                      Agendar para outro dia ou hora
-                    </label>
-                    {agendar && (
-                      <label>
-                        {entrega ? 'Receber em' : 'Retirar em'}
-                        <input
-                          type="datetime-local"
-                          name="agendarPara"
-                          required
-                          {...limitesDoCampo()}
-                        />
-                      </label>
-                    )}
-                  </>
-                )}
                 <label className="marcar">
                   <input
                     type="checkbox"
@@ -848,6 +863,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                     enviando ||
                     !cliente ||
                     !pagamento ||
+                    (agendar && !agendarPara) ||
                     (entrega && (!cliente.enderecoId || semEntrega))
                   }
                 >
