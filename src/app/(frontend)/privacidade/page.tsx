@@ -67,7 +67,7 @@ export default function Privacidade() {
 
       <h2>Neste aparelho</h2>
       <p>
-        Para mostrar "Seus pedidos" e o código de retirada, o cardápio guarda no próprio navegador
+        Para mostrar &quot;Seus pedidos&quot; e o código de retirada, o cardápio guarda no próprio navegador
         do seu aparelho os últimos pedidos feitos nele (número, itens, valor e código de retirada).
         Esses dados não são enviados a ninguém e saem se você limpar os dados do navegador.
       </p>
