@@ -773,7 +773,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                   Agendar para outro dia ou hora
                 </label>
                 {agendar && (
-                  <label>
+                  <label className="modo__data">
                     {entrega ? 'Receber em' : 'Retirar em'}
                     <input
                       type="datetime-local"

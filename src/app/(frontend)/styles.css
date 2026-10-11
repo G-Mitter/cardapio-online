@@ -324,6 +324,18 @@ textarea {
   padding: 0;
   margin: 12px 0 0;
 }
+.modo {
+  flex-wrap: wrap;
+}
+/* Campo de data do agendamento: linha própria, para não estourar a largura da tela. */
+.modo .modo__data {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.modo__data input {
+  flex: 1;
+  min-width: 0;
+}
 .enderecos {
   flex-direction: column;
 }
