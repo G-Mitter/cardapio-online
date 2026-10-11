@@ -82,6 +82,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   // Produto com opções aberto para escolher tamanho, extras...
   const [configurando, setConfigurando] = useState<ProdutoView | null>(null)
   const [selecao, setSelecao] = useState<Escolhas>({})
+  const [qtdOpcoes, setQtdOpcoes] = useState(1)
   const [erroOpcoes, setErroOpcoes] = useState('')
   const dialogoOpcoes = useRef<HTMLDialogElement>(null)
   const [modo, setModo] = useState<Modo>(loja.fazEntrega ? 'entrega' : 'retirada')
@@ -173,6 +174,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   function escolherOpcoes(p: ProdutoView) {
     setConfigurando(p)
     setSelecao({})
+    setQtdOpcoes(1)
     setErroOpcoes('')
     dialogoOpcoes.current?.showModal()
   }
@@ -189,7 +191,7 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
   function confirmarOpcoes() {
     if (!configurando || !confirmacao) return
     if (!confirmacao.ok) return setErroOpcoes(confirmacao.erro)
-    mudar(configurando.id, selecao, 1)
+    mudar(configurando.id, selecao, qtdOpcoes)
     dialogoOpcoes.current?.close()
   }
 
@@ -510,9 +512,22 @@ export function Cardapio({ loja, categorias }: { loja: LojaView; categorias: Cat
                 {erroOpcoes}
               </p>
             )}
+            <div className="qtd">
+              <button
+                onClick={() => setQtdOpcoes((q) => Math.max(1, q - 1))}
+                aria-label="Menos um"
+              >
+                −
+              </button>
+              <b>{qtdOpcoes}</b>
+              <button onClick={() => setQtdOpcoes((q) => Math.min(99, q + 1))} aria-label="Mais um">
+                +
+              </button>
+            </div>
             <button className="enviar" onClick={confirmarOpcoes}>
-              Adicionar ao pedido
-              {confirmacao?.ok && ` · ${brl(configurando.preco + confirmacao.adicional)}`}
+              {qtdOpcoes > 1 ? `Adicionar ${qtdOpcoes} ao pedido` : 'Adicionar ao pedido'}
+              {confirmacao?.ok &&
+                ` · ${brl((configurando.preco + confirmacao.adicional) * qtdOpcoes)}`}
             </button>
           </>
         )}
