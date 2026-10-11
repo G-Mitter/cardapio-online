@@ -8,7 +8,7 @@ import { normalizarTelefone } from '../lib/cliente'
  * todas as lojas do sistema: por isso não tem campo "loja" nem passa pelo plugin.
  *
  * Ninguém acessa pela API. Quem lê e grava é o servidor do cardápio
- * (src/app/(frontend)/cliente-actions.ts), que só devolve dados escondidos.
+ * (src/app/(frontend)/cliente-actions.ts), que só devolve o primeiro nome e os endereços.
  */
 export const Clientes: CollectionConfig = {
   slug: 'clientes',

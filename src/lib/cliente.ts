@@ -17,18 +17,6 @@ export function normalizarTelefone(valor: string | null | undefined): string | n
 
 export const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0] ?? ''
 
-/**
- * Endereço escondido, para mostrar a quem digitou um telefone já cadastrado sem
- * confirmar que o número é dele: o começo da rua e o número, o suficiente para o
- * dono reconhecer. "Rua dos Timbiras, 1200, ap 301" vira "Rua dos Ti…, 1200".
- */
-export function mascararEndereco(e: Endereco): string {
-  const rua = e.rua.trim()
-  const numero = rua.match(/(\d+)\D*$/)?.[1]
-  const inicio = rua.length > 10 ? `${rua.slice(0, 10).trimEnd()}…` : rua
-  return numero && !inicio.includes(numero) ? `${inicio}, ${numero}` : inicio
-}
-
 /** Endereço completo, como vai para a loja no pedido. */
 export const enderecoCompleto = (e: Endereco) =>
   [e.rua, e.complemento, e.bairro].map((p) => p?.trim()).filter(Boolean).join(', ')

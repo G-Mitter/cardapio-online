@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import {
   adicionarEndereco,
   cadastrarCliente,
+  corrigirEndereco,
   identificarCliente,
   type EnderecoResumo,
   type Identificacao as Resposta,
@@ -30,20 +31,31 @@ const endereco = (f: FormData) => ({
   bairro: String(f.get('bairro') ?? ''),
 })
 
-function CamposEndereco() {
+function CamposEndereco({ inicial }: { inicial?: EnderecoResumo }) {
   return (
     <>
       <label>
         Rua e número
-        <input name="rua" required maxLength={120} autoComplete="address-line1" />
+        <input
+          name="rua"
+          required
+          maxLength={120}
+          autoComplete="address-line1"
+          defaultValue={inicial?.rua}
+        />
       </label>
       <label>
         Complemento
-        <input name="complemento" maxLength={60} autoComplete="address-line2" />
+        <input
+          name="complemento"
+          maxLength={60}
+          autoComplete="address-line2"
+          defaultValue={inicial?.complemento}
+        />
       </label>
       <label>
         Bairro
-        <input name="bairro" required maxLength={60} />
+        <input name="bairro" required maxLength={60} defaultValue={inicial?.bairro} />
       </label>
     </>
   )
@@ -51,7 +63,7 @@ function CamposEndereco() {
 
 /**
  * Telefone primeiro. Cadastro novo pede nome (e endereço, se for entrega); cadastro
- * conhecido mostra só o primeiro nome e os endereços escondidos para escolher.
+ * conhecido mostra o primeiro nome e os endereços para escolher ou corrigir.
  * Quem já está identificado avisa o carrinho por `aoMudar`.
  */
 export function Identificacao({
@@ -70,6 +82,7 @@ export function Identificacao({
   const [enderecos, setEnderecos] = useState<EnderecoResumo[]>([])
   const [escolhido, setEscolhido] = useState<string>()
   const [novoEndereco, setNovoEndereco] = useState(false)
+  const [editando, setEditando] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, startTransition] = useTransition()
   const campoTelefone = useRef<HTMLInputElement>(null)
@@ -96,6 +109,7 @@ export function Identificacao({
     setNome(r.nome)
     setEnderecos(r.enderecos)
     setNovoEndereco(false)
+    setEditando(false)
     // O mais recente fica marcado: é o que acabou de ser adicionado ou o último usado.
     escolher(r.enderecos.at(-1)?.id, tel, r.enderecos)
   }
@@ -115,6 +129,8 @@ export function Identificacao({
     setErro('')
     aoMudar(null)
   }
+
+  const noEdicao = enderecos.find((e) => e.id === escolhido)
 
   const mensagemErro = erro && (
     <p className="erro" role="alert">
@@ -218,7 +234,20 @@ export function Identificacao({
               ))}
             </fieldset>
           )}
-          {novoEndereco || enderecos.length === 0 ? (
+          {editando && noEdicao ? (
+            <form
+              onSubmit={enviar((f) => corrigirEndereco(telefone, noEdicao.id, endereco(f), loja))}
+            >
+              <CamposEndereco inicial={noEdicao} />
+              {mensagemErro}
+              <button className="secundario" disabled={enviando}>
+                {enviando ? 'Salvando…' : 'Salvar alterações'}
+              </button>{' '}
+              <button type="button" className="link" onClick={() => setEditando(false)}>
+                Cancelar
+              </button>
+            </form>
+          ) : novoEndereco || enderecos.length === 0 ? (
             <form onSubmit={enviar((f) => adicionarEndereco(telefone, endereco(f), loja))}>
               <CamposEndereco />
               {mensagemErro}
@@ -227,9 +256,23 @@ export function Identificacao({
               </button>
             </form>
           ) : (
-            <button type="button" className="link" onClick={() => setNovoEndereco(true)}>
-              + Adicionar endereço
-            </button>
+            <>
+              {noEdicao && (
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => {
+                    setErro('')
+                    setEditando(true)
+                  }}
+                >
+                  Editar endereço
+                </button>
+              )}{' '}
+              <button type="button" className="link" onClick={() => setNovoEndereco(true)}>
+                + Adicionar endereço
+              </button>
+            </>
           )}
         </>
       )}

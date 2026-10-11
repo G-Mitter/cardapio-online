@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { enderecoCompleto, mascararEndereco, normalizarTelefone, primeiroNome } from '@/lib/cliente'
+import { enderecoCompleto, normalizarTelefone, primeiroNome } from '@/lib/cliente'
 
 describe('cadastro do cliente', () => {
   it('qualquer jeito de digitar o telefone vira a mesma chave', () => {
@@ -16,12 +16,8 @@ describe('cadastro do cliente', () => {
     expect(normalizarTelefone('')).toBeNull()
   })
 
-  it('quem digita um telefone conhecido vê só o primeiro nome e o endereço escondido', () => {
+  it('primeiro nome ignora sobrenome e espaços a mais', () => {
     expect(primeiroNome('  Maria   da Silva ')).toBe('Maria')
-    expect(
-      mascararEndereco({ rua: 'Rua dos Timbiras, 1200', complemento: 'ap 301', bairro: 'Centro' }),
-    ).toBe('Rua dos Ti…, 1200')
-    expect(mascararEndereco({ rua: 'Rua A, 5', bairro: 'Centro' })).toBe('Rua A, 5')
   })
 
   it('a loja recebe o endereço completo', () => {
