@@ -65,6 +65,13 @@ export default function Privacidade() {
         endereços, para você reconhecer o seu cadastro.
       </p>
 
+      <h2>Neste aparelho</h2>
+      <p>
+        Para mostrar "Seus pedidos" e o código de retirada, o cardápio guarda no próprio navegador
+        do seu aparelho os últimos pedidos feitos nele (número, itens, valor e código de retirada).
+        Esses dados não são enviados a ninguém e saem se você limpar os dados do navegador.
+      </p>
+
       <h2>Para que usamos</h2>
       <p>
         Para preparar e entregar os seus pedidos, preencher o cadastro nas próximas compras e

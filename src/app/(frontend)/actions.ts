@@ -451,25 +451,69 @@ export async function repetirUltimoPedido(telefone: string, loja: string): Promi
   const ultimo = docs[0]
   if (!ultimo) return { ok: false, erro: 'Você ainda não fez pedidos nesta loja.' }
 
+  return conferirItens(
+    payload,
+    lojas.docs[0].id,
+    (ultimo.itens ?? []).map((i) => ({
+      produto: i.produto ?? 0,
+      nome: i.nome,
+      quantidade: i.quantidade,
+      escolhas: (i.escolhas ?? {}) as Escolhas,
+    })),
+  )
+}
+
+type ItemParaConferir = { produto: number; nome: string; quantidade: number; escolhas: Escolhas }
+
+/** Separa o que ainda dá para pedir (produto existe, não esgotou, opções valem) do que faltou. */
+async function conferirItens(
+  payload: Payload,
+  loja: number,
+  pedidos: ItemParaConferir[],
+): Promise<ResultadoRepetir> {
   const produtos = await payload.find({
     collection: 'produtos',
-    where: {
-      loja: { equals: lojas.docs[0].id },
-      id: { in: (ultimo.itens ?? []).map((i) => i.produto).filter(Boolean) },
-    },
+    where: { loja: { equals: loja }, id: { in: pedidos.map((i) => i.produto).filter(Boolean) } },
     limit: 100,
     depth: 0,
   })
   const itens: { produto: number; quantidade: number; escolhas: Escolhas }[] = []
   const faltaram: string[] = []
-  for (const i of ultimo.itens ?? []) {
+  for (const i of pedidos) {
     const p = produtos.docs.find((x) => x.id === i.produto)
-    const escolhas = (i.escolhas ?? {}) as Escolhas
-    const ok = p && !p.esgotado && resolverEscolhas(gruposDoProduto(p.opcoes), escolhas).ok
-    if (ok) itens.push({ produto: p.id, quantidade: i.quantidade, escolhas })
+    const ok = p && !p.esgotado && resolverEscolhas(gruposDoProduto(p.opcoes), i.escolhas).ok
+    if (ok) itens.push({ produto: p.id, quantidade: i.quantidade, escolhas: i.escolhas })
     else faltaram.push(i.nome)
   }
   return { ok: true, itens, faltaram }
+}
+
+/**
+ * "Pedir de novo" da lista "Seus pedidos" (guardada no aparelho): o navegador manda os itens
+ * e o servidor confere de novo contra o cardápio de agora. Nada de telefone nem dado pessoal.
+ */
+export async function pedirDeNovo(loja: string, pedidos: ItemParaConferir[]): Promise<ResultadoRepetir> {
+  const payload = await getPayload({ config })
+  const lojas = await payload.find({
+    collection: 'lojas',
+    where: { slug: { equals: texto(loja, 100) } },
+    limit: 1,
+    depth: 0,
+  })
+  if (!lojas.docs[0]) return { ok: false, erro: 'Loja não encontrada.' }
+  const limpos = (Array.isArray(pedidos) ? pedidos : []).slice(0, 50).flatMap((i) =>
+    Number.isInteger(i?.produto) && Number.isInteger(i.quantidade) && i.quantidade > 0
+      ? [
+          {
+            produto: i.produto,
+            nome: texto(i.nome, 120),
+            quantidade: Math.min(i.quantidade, 99),
+            escolhas: i.escolhas && typeof i.escolhas === 'object' ? i.escolhas : {},
+          },
+        ]
+      : [],
+  )
+  return conferirItens(payload, lojas.docs[0].id, limpos)
 }
 
 export type ResultadoCupom = { ok: true; codigo: string; desconto: number } | { ok: false; erro: string }
