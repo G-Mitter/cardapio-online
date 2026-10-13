@@ -56,7 +56,7 @@ export function TelaCozinha({ pedidos }: { pedidos: PedidoCozinha[] }) {
   )
 
   useEffect(() => {
-    const t = setInterval(() => router.refresh(), ATUALIZA_MS)
+    const t = setInterval(() => document.visibilityState === 'visible' && router.refresh(), ATUALIZA_MS)
     return () => clearInterval(t)
   }, [router])
 
