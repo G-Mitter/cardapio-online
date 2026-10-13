@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useOptimistic, useState, useTransition } from 'react'
 
@@ -204,6 +205,11 @@ export function PainelPedidos({
                   >
                     Cancelar
                   </button>
+                )}
+                {PROXIMO[p.status] && !p.mesa && (
+                  <Link className="botao secundario" href={`/painel/editar-pedido/${p.id}`}>
+                    Editar
+                  </Link>
                 )}
                 {avisoAtual && (
                   <a className="botao secundario" href={avisoAtual} target="_blank" rel="noopener">

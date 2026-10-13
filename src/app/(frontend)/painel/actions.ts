@@ -22,7 +22,8 @@ import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
 import { lerSelos } from '@/lib/selos'
-import { FORMAS_PAGAMENTO, type FormaPagamento, type ItemEscolhido, montarPedido } from '@/lib/pedido'
+import { FORMAS_PAGAMENTO, type FormaPagamento, type ItemEscolhido, mensagemPedido, montarPedido } from '@/lib/pedido'
+import { rotuloAgendamento } from '@/lib/agendamento'
 import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
@@ -123,6 +124,92 @@ export async function mudarStatus(
   } catch {
     return { ok: false }
   }
+}
+
+/**
+ * Troca os itens de um pedido que ainda não foi entregue (o cliente pediu para acrescentar algo).
+ * Preço e total saem do banco; entrega e cupom continuam como estavam. Devolve o link do WhatsApp
+ * do cliente com o pedido atualizado, para a loja reenviar.
+ */
+export async function editarPedido(
+  id: number,
+  itens: ItemEscolhido[],
+  observacoes: string,
+): Promise<{ ok: true; whatsapp: string | null } | { ok: false; erro: string }> {
+  const { payload, loja, comoUsuario } = await sessao()
+  const { docs } = await payload.find({
+    collection: 'pedidos',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    limit: 1,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const p = docs[0]
+  if (!p || p.mesa) return { ok: false, erro: 'Pedido não encontrado.' }
+  if (p.status === 'entregue' || p.status === 'cancelado') return { ok: false, erro: 'Este pedido já foi encerrado.' }
+
+  const escolhidos = Array.isArray(itens) ? itens.slice(0, 100) : []
+  const produtos = await payload.find({
+    collection: 'produtos',
+    where: { loja: { equals: loja.id }, id: { in: escolhidos.map((i) => i.produto) } },
+    limit: 100,
+    depth: 0,
+    ...comoUsuario,
+  })
+  // Item que já estava no pedido não trava a edição se o produto esgotou depois.
+  const jaNoPedido = new Set(p.itens.map((i) => i.produto))
+  const r = montarPedido(
+    produtos.docs.map((x) => ({ ...x, opcoes: gruposDoProduto(x.opcoes), esgotado: x.esgotado && !jaNoPedido.has(x.id) })),
+    escolhidos,
+    p.taxa,
+    p.modo,
+  )
+  if (!r.ok) return r
+  const { pedido } = r
+  // ponytail: o cupom vira um valor fixo (limitado ao que sobra); recalcular pela regra do cupom se precisar.
+  const desconto = Math.min(p.desconto ?? 0, Math.max(0, pedido.subtotal - pedido.promocao))
+  const total = Math.round((pedido.subtotal + pedido.taxa - pedido.promocao - desconto) * 100) / 100
+  const obs = String(observacoes ?? '').trim().slice(0, 300)
+  try {
+    await payload.update({
+      collection: 'pedidos',
+      id,
+      overrideAccess: true,
+      data: {
+        itens: pedido.itens.map(({ produto, nome, quantidade, precoUnitario, opcoes, escolhas }) => ({
+          produto: Number(produto),
+          nome,
+          quantidade,
+          precoUnitario,
+          opcoes,
+          escolhas,
+        })),
+        subtotal: pedido.subtotal,
+        promocao: pedido.promocao,
+        desconto,
+        total,
+        observacoes: obs,
+      },
+    })
+  } catch {
+    return { ok: false, erro: 'Não foi possível salvar. Tente de novo.' }
+  }
+
+  const texto = mensagemPedido({
+    loja: loja.nome,
+    numero: p.numero,
+    pedido: { ...pedido, desconto, cupom: p.cupom ?? undefined, total },
+    modo: p.modo,
+    nome: p.nome,
+    endereco: p.endereco ?? undefined,
+    observacoes: obs,
+    pagamento: p.pagamento ?? undefined,
+    trocoPara: p.trocoPara,
+    cpf: p.cpf,
+    codigoRetirada: p.codigoRetirada ?? undefined,
+    agendadoPara: p.agendadoPara ? rotuloAgendamento(p.agendadoPara) : undefined,
+  })
+  return { ok: true, whatsapp: p.telefone ? whatsappUrl(p.telefone, `Seu pedido foi atualizado:\n\n${texto}`) : null }
 }
 
 export type DadosPedidoPainel = {
