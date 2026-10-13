@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 
 import {
   APAGAR_APOS_DIAS,
@@ -17,6 +18,8 @@ export const metadata: Metadata = { title: 'Carrinhos abandonados' }
 /** Quem montou o carrinho, se identificou e não finalizou. A loja chama no WhatsApp ou apaga. */
 export default async function Carrinhos() {
   const { payload, loja, comoUsuario } = await sessao()
+  const h = await headers()
+  const link = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}/${loja.slug}`
   // Limpeza: carrinho velho some sozinho.
   await payload.delete({
     collection: 'carrinhos',
@@ -49,13 +52,14 @@ export default async function Carrinhos() {
       {!docs.length && <p className="vazio">Nenhum carrinho abandonado agora.</p>}
       <ul className="lista">
         {docs.map((c) => {
-          const link = whatsappUrl(
+          const zap = whatsappUrl(
             c.telefone,
             mensagemRecuperacao({
               nome: c.nome,
               loja: loja.nome,
               resumo: c.resumo,
               total: c.total,
+              link,
             }),
           )
           return (
@@ -66,8 +70,8 @@ export default async function Carrinhos() {
                   {c.resumo} · {brl(c.total)}
                 </span>
               </div>
-              {link && (
-                <a className="botao secundario" href={link} target="_blank" rel="noopener">
+              {zap && (
+                <a className="botao secundario" href={zap} target="_blank" rel="noopener">
                   Chamar no WhatsApp
                 </a>
               )}

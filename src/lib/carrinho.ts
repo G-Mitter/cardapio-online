@@ -24,6 +24,9 @@ export function mensagemRecuperacao(c: {
   loja: string
   resumo: string
   total: number
+  /** Endereço do cardápio: o cliente abre e finaliza sozinho. */
+  link?: string
 }): string {
-  return `Olá, ${primeiroNome(c.nome)}! Aqui é da ${c.loja}. Vimos que você deixou no carrinho: ${c.resumo} (${brl(c.total)}). Posso ajudar a finalizar o pedido?`
+  const finalizar = c.link ? ` Para finalizar é só abrir o cardápio: ${c.link}` : ''
+  return `Olá, ${primeiroNome(c.nome)}! Aqui é da ${c.loja}. Vimos que você deixou no carrinho: ${c.resumo} (${brl(c.total)}).${finalizar} Posso ajudar a finalizar o pedido?`
 }
