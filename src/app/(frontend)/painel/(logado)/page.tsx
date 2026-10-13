@@ -10,22 +10,24 @@ export const metadata: Metadata = { title: 'Pedidos de hoje' }
 /** Tela inicial do painel: os pedidos do dia, com troca de status em um toque. */
 export default async function Pedidos() {
   const { payload, loja, comoUsuario } = await sessao()
-  const { docs } = await payload.find({
-    collection: 'pedidos',
-    where: { loja: { equals: loja.id }, createdAt: { greater_than_equal: inicioDoDia() } },
-    depth: 0,
-    limit: 500,
-    ...comoUsuario,
-  })
-
-  const { docs: entregadores } = await payload.find({
-    collection: 'entregadores',
-    where: { loja: { equals: loja.id }, ativo: { not_equals: false } },
-    sort: 'nome',
-    depth: 0,
-    limit: 0,
-    ...comoUsuario,
-  })
+  // As duas leituras não dependem uma da outra: vão juntas ao banco.
+  const [{ docs }, { docs: entregadores }] = await Promise.all([
+    payload.find({
+      collection: 'pedidos',
+      where: { loja: { equals: loja.id }, createdAt: { greater_than_equal: inicioDoDia() } },
+      depth: 0,
+      limit: 500,
+      ...comoUsuario,
+    }),
+    payload.find({
+      collection: 'entregadores',
+      where: { loja: { equals: loja.id }, ativo: { not_equals: false } },
+      sort: 'nome',
+      depth: 0,
+      limit: 0,
+      ...comoUsuario,
+    }),
+  ])
   const nomeDoEntregador = new Map(entregadores.map((e) => [e.id, e.nome]))
 
   const pedidos = ordenar(

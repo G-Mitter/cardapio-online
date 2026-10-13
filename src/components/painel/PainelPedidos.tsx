@@ -62,15 +62,16 @@ export function PainelPedidos({
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [naRota, setNaRota] = useState<number[]>([])
-  // A troca de status aparece na hora; se o servidor recusar, a próxima atualização desfaz.
+  // Status e entregador aparecem na hora; se o servidor recusar, a próxima atualização desfaz.
   const [lista, trocar] = useOptimistic(
     pedidos,
-    (atual, { id, status }: { id: number; status: Status }) =>
-      atual.map((p) => (p.id === id ? { ...p, status } : p)),
+    (atual, { id, ...mudanca }: { id: number } & Partial<Pick<PedidoView, 'status' | 'entregadorId' | 'entregador'>>) =>
+      atual.map((p) => (p.id === id ? { ...p, ...mudanca } : p)),
   )
 
   useEffect(() => {
-    const t = setInterval(() => router.refresh(), ATUALIZA_MS)
+    // Aba escondida não precisa buscar nada: poupa o servidor e o banco.
+    const t = setInterval(() => document.visibilityState === 'visible' && router.refresh(), ATUALIZA_MS)
     return () => clearInterval(t)
   }, [router])
 
@@ -142,6 +143,7 @@ export function PainelPedidos({
                   onChange={(e) => {
                     const id = e.target.value ? Number(e.target.value) : null
                     startTransition(async () => {
+                      trocar({ id: p.id, entregadorId: id, entregador: entregadores.find((en) => en.id === id)?.nome ?? '' })
                       await atribuirEntregador([p.id], id)
                       router.refresh()
                     })
