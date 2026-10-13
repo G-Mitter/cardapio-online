@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
@@ -7,10 +8,10 @@ import type { Bairro } from '@/lib/entrega'
 import { type Escolhas, type GrupoOpcao, resolverEscolhas } from '@/lib/opcoes'
 import { brl, type FormaPagamento } from '@/lib/pedido'
 
-import { criarPedidoDaMesa, criarPedidoPainel, type DadosPedidoPainel } from '@/app/(frontend)/painel/actions'
+import { criarPedidoDaMesa, criarPedidoPainel, editarPedido, type DadosPedidoPainel } from '@/app/(frontend)/painel/actions'
 
 type Produto = { id: number; nome: string; preco: number; opcoes: GrupoOpcao[] }
-type Linha = { chave: string; produto: Produto; escolhas: Escolhas; descricao: string; preco: number; quantidade: number }
+export type Linha = { chave: string; produto: Produto; escolhas: Escolhas; descricao: string; preco: number; quantidade: number }
 
 const chaveDe = (id: number, escolhas: Escolhas) =>
   `${id}:${JSON.stringify(Object.entries(escolhas).filter(([, v]) => v.length).sort())}`
@@ -24,6 +25,7 @@ export function NovoPedido({
   taxaEntrega,
   pagamentos,
   mesa,
+  edicao,
 }: {
   produtos: Produto[]
   fazEntrega: boolean
@@ -33,16 +35,20 @@ export function NovoPedido({
   pagamentos: { value: FormaPagamento; label: string }[]
   /** Lançando para uma mesa: sem tipo, cliente, endereço nem pagamento (paga no caixa). */
   mesa?: string
+  /** Mexendo num pedido já feito: só itens e observações; entrega e cupom ficam como estavam. */
+  edicao?: { id: number; numero: number; linhas: Linha[]; observacoes: string; taxa: number; desconto: number }
 }) {
   const router = useRouter()
   const [enviando, startTransition] = useTransition()
-  const [linhas, setLinhas] = useState<Linha[]>([])
+  const [linhas, setLinhas] = useState<Linha[]>(edicao?.linhas ?? [])
   const [tipo, setTipo] = useState<DadosPedidoPainel['tipo']>('balcao')
   const [bairro, setBairro] = useState('')
   const [pagamento, setPagamento] = useState<FormaPagamento | ''>(pagamentos[0]?.value ?? '')
   const [configurando, setConfigurando] = useState<Produto | null>(null)
   const [selecao, setSelecao] = useState<Escolhas>({})
   const [erro, setErro] = useState('')
+  // Depois de salvar a edição: o link para reenviar o pedido atualizado ao cliente.
+  const [salvo, setSalvo] = useState<{ whatsapp: string | null } | null>(null)
 
   const mudar = (produto: Produto, escolhas: Escolhas, delta: number) =>
     setLinhas((ls) => {
@@ -75,7 +81,7 @@ export function NovoPedido({
 
   const confirmacao = configurando && resolverEscolhas(configurando.opcoes, selecao)
   const entrega = tipo === 'entrega'
-  const taxa = !entrega ? 0 : bairros.length ? (bairros.find((b) => b.nome === bairro)?.taxa ?? 0) : taxaEntrega
+  const taxa = edicao ? edicao.taxa : !entrega ? 0 : bairros.length ? (bairros.find((b) => b.nome === bairro)?.taxa ?? 0) : taxaEntrega
   const subtotal = linhas.reduce((s, l) => s + l.preco * l.quantidade, 0)
 
   function enviar(form: FormData) {
@@ -83,6 +89,12 @@ export function NovoPedido({
     setErro('')
     startTransition(async () => {
       const itens = linhas.map((l) => ({ produto: l.produto.id, quantidade: l.quantidade, escolhas: l.escolhas }))
+      if (edicao) {
+        const r = await editarPedido(edicao.id, itens, campo('observacoes'))
+        if (r.ok) setSalvo({ whatsapp: r.whatsapp })
+        else setErro(r.erro)
+        return
+      }
       if (mesa) {
         const r = await criarPedidoDaMesa(mesa, itens, campo('observacoes'))
         if (r.ok) router.push('/painel/garcom')
@@ -103,6 +115,26 @@ export function NovoPedido({
       if (r.ok) router.push('/painel')
       else setErro(r.erro)
     })
+  }
+
+  if (salvo) {
+    return (
+      <div className="form">
+        <p>Pedido nº {edicao?.numero} atualizado.</p>
+        <div className="pedido__acoes">
+          {salvo.whatsapp ? (
+            <a className="botao" href={salvo.whatsapp} target="_blank" rel="noopener">
+              Reenviar no WhatsApp
+            </a>
+          ) : (
+            <p className="vazio">Este pedido não tem telefone para reenviar.</p>
+          )}
+          <Link className="botao secundario" href="/painel">
+            Voltar aos pedidos
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -207,7 +239,7 @@ export function NovoPedido({
           </ul>
         )}
 
-        {!mesa && (
+        {!mesa && !edicao && (
           <>
         <div className="campo">
           <label htmlFor="tipo">Tipo do pedido</label>
@@ -270,17 +302,17 @@ export function NovoPedido({
         )}
         <div className="campo">
           <label htmlFor="observacoes">Observações</label>
-          <textarea id="observacoes" name="observacoes" maxLength={300} rows={2} />
+          <textarea id="observacoes" name="observacoes" maxLength={300} rows={2} defaultValue={edicao?.observacoes} />
         </div>
 
         <p>
           <b>
-            Total: {brl(subtotal + taxa)}
+            Total: {brl(Math.max(0, subtotal + taxa - (edicao?.desconto ?? 0)))}
             {entrega && ` (entrega ${brl(taxa)})`}
           </b>
         </p>
-        <button className="botao" disabled={linhas.length === 0 || (!mesa && !pagamento)}>
-          {enviando ? 'Enviando…' : mesa ? `Lançar na mesa ${mesa}` : 'Lançar pedido'}
+        <button className="botao" disabled={linhas.length === 0 || (!mesa && !edicao && !pagamento)}>
+          {enviando ? 'Enviando…' : edicao ? 'Salvar alterações' : mesa ? `Lançar na mesa ${mesa}` : 'Lançar pedido'}
         </button>
       </fieldset>
       {erro && (
