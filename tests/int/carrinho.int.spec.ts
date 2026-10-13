@@ -23,6 +23,12 @@ it('mensagem usa só o primeiro nome e o total', () => {
   expect(m).toMatch(/R\$\s?8,00/)
 })
 
+it('mensagem leva o link do cardápio quando há', () => {
+  const base = { nome: 'Maria', loja: 'Cantina', resumo: '1x Suco', total: 8 }
+  expect(mensagemRecuperacao({ ...base, link: 'https://x.com/cantina' })).toContain('https://x.com/cantina')
+  expect(mensagemRecuperacao(base)).not.toContain('http')
+})
+
 it('calcula o corte de tempo', () => {
   expect(emMinutosAtras(30, new Date('2026-10-10T15:00:00Z'))).toBe('2026-10-10T14:30:00.000Z')
 })
