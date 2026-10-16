@@ -13,7 +13,7 @@ export const maxDuration = 60
 
 /** Só o administrador geral vê esta tela; as demais lojas dão "página não encontrada". */
 export default async function Exemplo() {
-  const { user, loja } = await sessao()
+  const { user, loja } = await sessao('loja')
   if (!ehAdmin(user)) notFound()
   return (
     <>

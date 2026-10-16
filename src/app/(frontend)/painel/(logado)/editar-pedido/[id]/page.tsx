@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Editar pedido' }
 /** Acrescentar ou tirar itens de um pedido em andamento; depois, reenviar ao cliente no WhatsApp. */
 export default async function EditarPedido({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const { docs } = await payload.find({
     collection: 'pedidos',
     where: { id: { equals: Number(id) }, loja: { equals: loja.id } },

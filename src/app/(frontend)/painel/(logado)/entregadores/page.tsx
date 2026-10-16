@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Entregadores' }
 
 /** Entregadores da loja e o relatório do dia: quantas entregas e quanto de taxa cada um fez. */
 export default async function Entregadores({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('equipe')
   const { dia, de, ate } = intervaloDoDia((await searchParams).dia)
   const [entregadores, entregues, acertos] = await Promise.all([
     payload.find({

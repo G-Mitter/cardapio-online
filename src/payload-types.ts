@@ -317,7 +317,22 @@ export interface Media {
 export interface User {
   id: number;
   roles: ('admin' | 'loja' | 'garcom')[];
+  /**
+   * Só para o tipo Garçom. Ao salvar, o "Nome de usuário" ganha o final .slug-da-loja sozinho.
+   */
   lojaDoGarcom?: (number | null) | Loja;
+  /**
+   * Lista de permissões, ex.: ["pedidos","financeiro"]. Vazio (null) = pode tudo.
+   */
+  permissoes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   nome?: string | null;
   ativo?: boolean | null;
   tenants?:
@@ -825,6 +840,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   roles?: T;
   lojaDoGarcom?: T;
+  permissoes?: T;
   nome?: T;
   ativo?: T;
   tenants?:

@@ -1,15 +1,20 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import { PainelPedidos } from '@/components/painel/PainelPedidos'
-import { idDoGarcom, nomesDosGarcons, sessao } from '@/lib/painel'
+import { idDoGarcom, nomesDosGarcons, sessao, sessaoGarcom } from '@/lib/painel'
+import { primeiraTela, temPermissao } from '@/lib/permissoes'
 import { inicioDoDia, ordenar } from '@/lib/pedidosDoDia'
 
 export const metadata: Metadata = { title: 'Pedidos de hoje' }
 
 /** Tela inicial do painel: os pedidos do dia, com troca de status em um toque. */
 export default async function Pedidos() {
-  const { payload, loja, comoUsuario } = await sessao()
+  // Quem não mexe nos pedidos cai na primeira tela que pode usar.
+  const { user } = await sessaoGarcom(null)
+  if (!temPermissao(user, 'pedidos')) redirect(primeiraTela(user))
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   // As duas leituras não dependem uma da outra: vão juntas ao banco.
   const [{ docs }, { docs: entregadores }] = await Promise.all([
     payload.find({

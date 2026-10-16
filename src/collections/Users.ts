@@ -70,6 +70,15 @@ export const Users: CollectionConfig = {
       admin: { description: 'Só para o tipo Garçom. Ao salvar, o "Nome de usuário" ganha o final .slug-da-loja sozinho.' },
       access: { create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
     },
+    // O que o usuário da loja pode fazer no painel (lista de src/lib/permissoes.ts). Vazio = pode tudo, como antes.
+    // Quem edita é o painel (pelo servidor, conferindo quem pode) e o administrador; ninguém se dá permissão pela API.
+    {
+      name: 'permissoes',
+      label: 'Permissões no painel',
+      type: 'json',
+      admin: { description: 'Lista de permissões, ex.: ["pedidos","financeiro"]. Vazio (null) = pode tudo.' },
+      access: { create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
+    },
     { name: 'nome', label: 'Nome', type: 'text' },
     // Desligado não entra mais (nem com a sessão que já estava aberta). Não se apaga, para o relatório.
     { name: 'ativo', label: 'Ativo', type: 'checkbox', defaultValue: true },

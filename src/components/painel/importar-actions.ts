@@ -11,6 +11,7 @@ import { headers } from 'next/headers'
 import { getPayload, type Payload } from 'payload'
 
 import { type ErroLinha, lerProdutos, normalizar } from '@/lib/planilha'
+import { temPermissao } from '@/lib/permissoes'
 import config from '@/payload.config'
 
 type Tabela = (string | number | boolean | null)[][]
@@ -30,7 +31,8 @@ export type Previa =
 async function contexto(lojaId: number) {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
-  if (!user) return { erro: 'Entre no painel de novo.' } as const
+  if (!user || user.ativo === false) return { erro: 'Entre no painel de novo.' } as const
+  if (!temPermissao(user, 'loja')) return { erro: 'Você não tem permissão para importar planilhas.' } as const
   // Com overrideAccess: false o plugin de multi-cliente só devolve as lojas do usuário.
   const { docs } = await payload.find({
     collection: 'lojas',

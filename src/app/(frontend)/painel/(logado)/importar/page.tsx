@@ -6,7 +6,7 @@ import { sessao } from '@/lib/painel'
 export const metadata: Metadata = { title: 'Importar planilha' }
 
 export default async function Importar() {
-  const { loja } = await sessao()
+  const { loja } = await sessao('loja')
   return (
     <>
       <h1>Importar planilha</h1>

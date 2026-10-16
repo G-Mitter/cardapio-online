@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'Mesas' }
 
 /** Tela do garçom: todas as mesas, Livre ou com conta aberta. Toque na mesa para lançar pedidos. */
 export default async function TelaDoGarcom() {
-  const { payload, loja, user, comoUsuario } = await sessaoGarcom()
+  const { payload, loja, user, comoUsuario } = await sessaoGarcom('pedidos')
   const { docs } = await payload.find({
     collection: 'pedidos',
     where: {

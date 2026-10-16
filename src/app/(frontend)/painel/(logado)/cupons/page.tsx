@@ -14,7 +14,7 @@ const dataBr = (iso: string) => diaDoFim(iso).split('-').reverse().join('/')
 
 /** Cupons de desconto: criar, ligar/desligar e apagar. O cliente digita o código no carrinho. */
 export default async function Cupons() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const { docs } = await payload.find({
     collection: 'cupons',
     where: { loja: { equals: loja.id } },

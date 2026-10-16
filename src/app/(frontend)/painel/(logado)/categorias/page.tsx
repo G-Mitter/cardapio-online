@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Categorias' }
 
 /** Categorias do cardápio: renomear, mudar a ordem com as setas, criar e apagar, tudo numa tela. */
 export default async function Categorias() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const { docs } = await payload.find({
     collection: 'categorias',
     where: { loja: { equals: loja.id } },

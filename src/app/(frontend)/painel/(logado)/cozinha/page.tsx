@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Cozinha' }
 
 /** Pedidos em aberto, em letra grande, para ficar no tablet ou na TV da cozinha. */
 export default async function Cozinha() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const agora = new Date()
   const { docs } = await payload.find({
     collection: 'pedidos',

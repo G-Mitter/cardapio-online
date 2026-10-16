@@ -1,7 +1,7 @@
 'use server'
 
 /**
- * Tudo o que o painel da loja grava. Cada ação começa por `sessao()`, que confere o login
+ * Tudo o que o painel da loja grava. Cada ação começa por `sessao(permissão)`, que confere o login, a permissão
  * e a loja; as gravações vão como o usuário logado, e o Payload confere o acesso de novo.
  */
 import { cookies } from 'next/headers'
@@ -23,6 +23,7 @@ import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { gruposDoProduto, lerOpcoesDaTela } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
+import { SEM_EXCLUIR, temPermissao } from '@/lib/permissoes'
 import { lerSelos } from '@/lib/selos'
 import { FORMAS_PAGAMENTO, type FormaPagamento, type ItemEscolhido, mensagemPedido, montarPedido } from '@/lib/pedido'
 import { rotuloAgendamento } from '@/lib/agendamento'
@@ -84,7 +85,7 @@ export async function sair() {
 
 /** Para quem cuida de mais de uma loja: escolhe com qual trabalhar. */
 export async function trocarLoja(form: FormData) {
-  const { lojas } = await sessao()
+  const { lojas } = await sessao(null)
   const id = Number(form.get('loja'))
   if (lojas.some((l) => l.id === id)) {
     ;(await cookies()).set(COOKIE_LOJA, String(id), { httpOnly: true, sameSite: 'lax', path: '/' })
@@ -101,7 +102,7 @@ export async function mudarStatus(
   codigo?: string,
 ): Promise<{ ok: boolean; erro?: string }> {
   if (!STATUS.includes(status)) return { ok: false }
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   try {
     if (status === 'entregue') {
       const { docs } = await payload.find({
@@ -139,7 +140,7 @@ export async function editarPedido(
   itens: ItemEscolhido[],
   observacoes: string,
 ): Promise<{ ok: true; whatsapp: string | null } | { ok: false; erro: string }> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const { docs } = await payload.find({
     collection: 'pedidos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -237,7 +238,7 @@ export type DadosPedidoPainel = {
 export async function criarPedidoPainel(
   dados: DadosPedidoPainel,
 ): Promise<{ ok: true; numero: number } | { ok: false; erro: string }> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const tipo = dados.tipo
   if (tipo !== 'balcao' && tipo !== 'retirada' && tipo !== 'entrega') return { ok: false, erro: 'Escolha o tipo do pedido.' }
   const modo = tipo === 'entrega' ? 'entrega' : 'retirada'
@@ -326,7 +327,7 @@ export async function criarPedidoDaMesa(
   itens: ItemEscolhido[],
   observacoes: string,
 ): Promise<{ ok: true; numero: number } | { ok: false; erro: string }> {
-  const { payload, loja, user, garcom, comoUsuario } = await sessaoGarcom()
+  const { payload, loja, user, garcom, comoUsuario } = await sessaoGarcom('pedidos')
   const mesas = lerMesas(loja.mesas ?? '')
   if (!mesas.ok || !mesas.mesas.includes(mesa)) return { ok: false, erro: 'Mesa não encontrada.' }
   const lista = Array.isArray(itens) ? itens.slice(0, 100) : []
@@ -388,7 +389,7 @@ export async function fecharContaDaMesa(
   cobrarTaxa: boolean,
   recebido: Recebido[],
 ): Promise<{ ok: true; troco: number } | { ok: false; erro: string }> {
-  const { payload, loja, user, garcom: ehGarcom, comoUsuario } = await sessaoGarcom()
+  const { payload, loja, user, garcom: ehGarcom, comoUsuario } = await sessaoGarcom('pedidos')
   const { docs } = await payload.find({
     collection: 'pedidos',
     where: {
@@ -489,7 +490,7 @@ export type Rota =
 
 /** Monta a rota do entregador com os pedidos de entrega escolhidos no painel. */
 export async function montarRota(ids: number[]): Promise<Rota> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const enderecoLoja = loja.endereco?.trim()
   if (!enderecoLoja)
     return { ok: false, erro: 'Coloque o endereço da loja em "Dados da loja" para montar a rota.' }
@@ -537,7 +538,7 @@ export async function montarRota(ids: number[]): Promise<Rota> {
 // ---------- Entregadores ----------
 
 export async function salvarEntregador(_: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('equipe')
   const nome = texto(form, 'nome').slice(0, 80)
   const whatsapp = texto(form, 'whatsapp')
   if (!nome) return { erro: 'Coloque o nome do entregador.' }
@@ -555,7 +556,7 @@ export async function salvarEntregador(_: Estado, form: FormData): Promise<Estad
 }
 
 export async function ligarEntregador(id: number, ativo: boolean) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('equipe')
   await payload.update({
     collection: 'entregadores',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -567,7 +568,7 @@ export async function ligarEntregador(id: number, ativo: boolean) {
 
 /** Pedidos entregues pelo entregador no dia que ainda não entraram em nenhum acerto. */
 async function pendentesDoAcerto(entregador: number, dia: string) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('equipe')
   const { dia: diaValido, de, ate } = intervaloDoDia(dia)
   const [entregues, feitos] = await Promise.all([
     payload.find({
@@ -643,7 +644,7 @@ export async function fazerAcerto(
 
 /** Troca a forma de pagamento de um pedido entregue (o cliente pagou diferente), antes do acerto. */
 export async function mudarPagamentoDoPedido(id: number, form: FormData) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const forma = texto(form, 'forma') as FormaPagamento
   // O dia vem escondido no formulário para a tela continuar no dia que o dono estava vendo.
   const voltar = `/painel/entregadores?dia=${intervaloDoDia(texto(form, 'dia')).dia}`
@@ -666,7 +667,7 @@ export async function mudarPagamentoDoPedido(id: number, form: FormData) {
 
 /** Põe o entregador (ou tira, com null) nos pedidos de entrega escolhidos. */
 export async function atribuirEntregador(ids: number[], entregador: number | null): Promise<{ ok: boolean }> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   try {
     if (entregador !== null) {
       // Só entregador desta loja.
@@ -699,7 +700,7 @@ async function subirImagem(form: FormData, campo: string, alt: string) {
   const arquivo = form.get(campo)
   if (!(arquivo instanceof File) || arquivo.size === 0) return undefined
   if (!arquivo.type.startsWith('image/')) throw new Error('O arquivo precisa ser uma imagem.')
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao(null)
   const media = await payload.create({
     collection: 'media',
     data: { alt, loja: loja.id },
@@ -723,7 +724,7 @@ async function imagem(form: FormData, campo: string, alt: string) {
 // ---------- Produtos ----------
 
 export async function salvarProduto(id: number | null, _: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const nome = texto(form, 'nome')
   const preco = lerPreco(texto(form, 'preco'))
   if (!nome) return { erro: 'Coloque o nome do produto.' }
@@ -794,7 +795,8 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
 }
 
 export async function apagarProduto(id: number): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, user, comoUsuario } = await sessao('cardapio')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
   await payload.delete({
     collection: 'produtos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -804,7 +806,7 @@ export async function apagarProduto(id: number): Promise<Estado> {
 }
 
 export async function marcarEsgotado(id: number, esgotado: boolean) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   await payload.update({
     collection: 'produtos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -819,7 +821,7 @@ export async function marcarEsgotado(id: number, esgotado: boolean) {
  * a cada troca, então empates antigos não atrapalham.
  */
 export async function moverProduto(id: number, direcao: -1 | 1) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const produto = await payload.find({
     collection: 'produtos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -854,7 +856,7 @@ export async function moverProduto(id: number, direcao: -1 | 1) {
 // ---------- Categorias ----------
 
 export async function salvarCategoria(id: number | null, _: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const nome = texto(form, 'nome')
   if (!nome) return { erro: 'Coloque o nome da categoria.' }
   const data = { nome }
@@ -879,7 +881,7 @@ export async function salvarCategoria(id: number | null, _: Estado, form: FormDa
 
 /** Sobe (-1) ou desce (1) uma categoria; renumera todas (0, 1, 2...) a cada troca. */
 export async function moverCategoria(id: number, direcao: -1 | 1) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const todas = await payload.find({
     collection: 'categorias',
     where: { loja: { equals: loja.id } },
@@ -902,7 +904,8 @@ export async function moverCategoria(id: number, direcao: -1 | 1) {
 }
 
 export async function apagarCategoria(id: number): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, user, comoUsuario } = await sessao('cardapio')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
   const { totalDocs } = await payload.count({
     collection: 'produtos',
     where: { categoria: { equals: id }, loja: { equals: loja.id } },
@@ -921,7 +924,7 @@ export async function apagarCategoria(id: number): Promise<Estado> {
 // ---------- Cupons ----------
 
 export async function salvarCupom(_: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const codigo = normalizarCodigo(texto(form, 'codigo'))
   const porcentagem = texto(form, 'tipo') === 'porcentagem'
   const valor = lerPreco(texto(form, 'valor'))
@@ -965,7 +968,7 @@ export async function salvarCupom(_: Estado, form: FormData): Promise<Estado> {
 }
 
 export async function ligarCupom(id: number, ativo: boolean) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   await payload.update({
     collection: 'cupons',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -976,7 +979,8 @@ export async function ligarCupom(id: number, ativo: boolean) {
 }
 
 export async function apagarCupom(id: number): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, user, comoUsuario } = await sessao('cardapio')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
   await payload.delete({
     collection: 'cupons',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -988,7 +992,8 @@ export async function apagarCupom(id: number): Promise<Estado> {
 // ---------- Carrinhos abandonados ----------
 
 export async function apagarCarrinho(id: number): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, user, comoUsuario } = await sessao('pedidos')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
   await payload.delete({
     collection: 'carrinhos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -1015,7 +1020,7 @@ function lerHorarioDoForm(form: FormData, atual: string) {
 }
 
 export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('loja')
   const nome = texto(form, 'nome')
   if (!nome) return { erro: 'Coloque o nome da loja.' }
   const taxa = lerPreco(texto(form, 'taxaEntrega') || '0')
@@ -1085,7 +1090,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
 
 /** Texto impresso embaixo dos QR Codes das mesas; vazio volta ao texto sugerido. */
 export async function salvarInstrucoesMesa(_: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('loja')
   try {
     await payload.update({
       collection: 'lojas',
@@ -1102,7 +1107,7 @@ export async function salvarInstrucoesMesa(_: Estado, form: FormData): Promise<E
 // ---------- Financeiro ----------
 
 export async function salvarLancamento(_: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('financeiro')
   const tipo = TIPOS.find((t) => t.value === texto(form, 'tipo'))?.value
   const descricao = texto(form, 'descricao').slice(0, 120)
   const valor = lerPreco(texto(form, 'valor'))
@@ -1136,7 +1141,7 @@ export async function salvarLancamento(_: Estado, form: FormData): Promise<Estad
 
 /** Dá baixa: data e valor pagos (podem ter juros ou desconto). Conta fixa gera a do mês seguinte. */
 export async function baixarLancamento(id: number, form: FormData) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('financeiro')
   const { docs } = await payload.find({
     collection: 'lancamentos',
     where: { id: { equals: id }, loja: { equals: loja.id }, pagoEm: { exists: false } },
@@ -1177,7 +1182,8 @@ function voltarAoFinanceiro(form: FormData, abaPadrao: string) {
 }
 
 export async function apagarLancamento(id: number): Promise<Estado> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, user, comoUsuario } = await sessao('financeiro')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
   await payload.delete({
     collection: 'lancamentos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
@@ -1192,7 +1198,7 @@ export async function apagarLancamento(id: number): Promise<Estado> {
 const USUARIO = /^[a-z0-9_-]{3,20}$/
 
 export async function salvarGarcom(_: Estado, form: FormData): Promise<Estado> {
-  const { payload, loja } = await sessao()
+  const { payload, loja } = await sessao('equipe')
   const nome = texto(form, 'nome').slice(0, 80)
   const usuario = texto(form, 'usuario').toLowerCase()
   const senha = String(form.get('senha') ?? '')
@@ -1213,7 +1219,7 @@ export async function salvarGarcom(_: Estado, form: FormData): Promise<Estado> {
 
 /** Só mexe em garçom desta loja: confere antes de gravar. */
 async function mudarGarcom(id: number, data: { ativo: boolean } | { password: string }) {
-  const { payload, loja } = await sessao()
+  const { payload, loja } = await sessao('equipe')
   const { docs } = await payload.find({
     collection: 'users',
     where: { id: { equals: id }, lojaDoGarcom: { equals: loja.id }, roles: { contains: 'garcom' } },
@@ -1241,7 +1247,7 @@ export async function trocarSenhaGarcom(id: number, _: Estado, form: FormData): 
  * (uma por data; repetir a conferência do mesmo relatório não duplica).
  */
 export async function conferirMaquininha(texto: string, lancar: boolean) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('financeiro')
   if (texto.length > 1_000_000) return { erro: 'Arquivo grande demais. Envie o relatório de um período menor.' }
   const leitura = lerRelatorio(texto)
   if (!leitura.vendas.length) return { erro: leitura.erros[0]?.motivo ?? 'Não achei vendas no relatório.' }

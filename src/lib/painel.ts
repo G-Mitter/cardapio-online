@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getPayload, type Payload } from 'payload'
 import { cache } from 'react'
 
+import { type Permissao, temPermissao } from '@/lib/permissoes'
 import config from '@/payload.config'
 
 /** Cookie com a loja escolhida no painel, para quem tem mais de uma (você, como administrador). */
@@ -17,15 +18,18 @@ export const COOKIE_LOJA = 'painel-loja'
  *
  * Garçom não passa por aqui: `sessao` o manda para a tela dele, então nenhuma página nem
  * ação do dono funciona para garçom. Telas de garçom usam `sessaoGarcom`.
+ *
+ * `permissao` é a área que a página ou ação usa; sem ela o usuário vai para "sem acesso". O argumento é
+ * obrigatório de propósito (o TypeScript não deixa esquecer); `null` vale para qualquer usuário logado.
  */
-export const sessao = async () => {
-  const s = await sessaoGarcom()
+export const sessao = async (permissao: Permissao | null) => {
+  const s = await sessaoGarcom(permissao)
   if (s.garcom) redirect('/painel/garcom')
   return s
 }
 
 /** Como `sessao`, mas aceita o garçom (e diz quem é). Só para as telas e ações feitas para ele. */
-export const sessaoGarcom = cache(async () => {
+export const sessaoGarcom = cache(async (permissao: Permissao | null) => {
   // headers() antes de abrir o banco: o painel nunca é gerado no build, que assim não migra o banco
   // em paralelo (vários processos criando as mesmas tabelas derrubavam o build do CI).
   const h = await headers()
@@ -50,6 +54,7 @@ export const sessaoGarcom = cache(async () => {
     limit: 0,
     sort: 'nome',
   })
+  if (permissao && !temPermissao(user, permissao)) redirect('/painel/sem-acesso')
   const escolhida = Number((await cookies()).get(COOKIE_LOJA)?.value)
   const loja = lojas.find((l) => l.id === escolhida) ?? lojas[0]
   if (!loja) redirect('/painel/entrar?sem-loja=1')
