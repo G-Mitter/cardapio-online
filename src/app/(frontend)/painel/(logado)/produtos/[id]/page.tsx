@@ -5,10 +5,10 @@ import { notFound } from 'next/navigation'
 import { BotaoApagar } from '@/components/painel/Apagar'
 import { CampoDinheiro } from '@/components/painel/CampoDinheiro'
 import { Contador } from '@/components/painel/Contador'
-import { CampoComExemplo } from '@/components/painel/CampoComExemplo'
+import { ListaOpcoes } from '@/components/painel/ListaOpcoes'
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
-import { gruposDoProduto, opcoesComoTexto } from '@/lib/opcoes'
+import { gruposDoProduto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
 import { SELOS } from '@/lib/selos'
 import type { Media } from '@/payload-types'
@@ -104,19 +104,7 @@ export default async function Produto({ params }: { params: Promise<{ id: string
             </label>
           ))}
         </fieldset>
-        <CampoComExemplo
-          name="opcoes"
-          rotulo="Opções e adicionais (opcional)"
-          rows={7}
-          defaultValue={opcoesComoTexto(gruposDoProduto(produto?.opcoes))}
-          exemplo={
-            'Tamanho: obrigatório\n- Média\n- Grande = 8,00\nExtras: até 3\n- Bacon = 4,00\n- Queijo = 3,50'
-          }
-        >
-          Uma linha para o grupo (com <b>obrigatório</b> e/ou <b>até 3</b> depois dos dois-pontos;
-          sem isso, é opcional e de escolha única) e uma linha com <b>-</b> para cada item, com o
-          valor a somar depois do <b>=</b>.
-        </CampoComExemplo>
+        <ListaOpcoes inicial={gruposDoProduto(produto?.opcoes)} />
         <CampoImagem nome="foto" rotulo="Foto" atual={foto?.url ?? null} />
         <label className="marcar">
           <input type="checkbox" name="esgotado" defaultChecked={Boolean(produto?.esgotado)} />

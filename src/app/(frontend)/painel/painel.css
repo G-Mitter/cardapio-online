@@ -651,3 +651,14 @@ details.perigo form {
   padding: 0;
   margin-bottom: 6px;
 }
+
+/* Opções do produto: um cartão por grupo */
+.grupo-opcao {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}

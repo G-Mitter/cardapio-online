@@ -50,15 +50,6 @@ export function lerOpcoes(texto: string): { ok: true; grupos: GrupoNovo[] } | { 
   return { ok: true, grupos }
 }
 
-export const opcoesComoTexto = (grupos: { nome: string; min: number; max: number; itens: { nome: string; preco: number }[] }[]) =>
-  grupos
-    .map((g) => {
-      const regras = [g.min > 0 && 'obrigatório', g.max > 1 && `até ${g.max}`].filter(Boolean).join(', ')
-      const itens = g.itens.map((i) => `- ${i.nome}${i.preco ? ` = ${i.preco.toFixed(2).replace('.', ',')}` : ''}`)
-      return [`${g.nome}${regras ? `: ${regras}` : ''}`, ...itens].join('\n')
-    })
-    .join('\n')
-
 /**
  * Confere as escolhas contra os grupos do produto e devolve o que elas somam ao preço
  * e o texto que vai no pedido ("Grande, Borda catupiry"). Roda no navegador (mostrar o
@@ -109,3 +100,38 @@ export const gruposDoProduto = (
     max: g.max ?? 1,
     itens: (g.itens ?? []).map((i, m) => ({ id: i.id ?? String(m), nome: i.nome, preco: i.preco ?? 0 })),
   }))
+
+/** Grupo como a tela do painel manda (JSON no campo `opcoes`). */
+export type GrupoDaTela = { nome: string; obrigatorio: boolean; max: number; itens: { nome: string; preco: number }[] }
+
+/**
+ * Lê o JSON do painel e confere nome, valor e máximo no servidor: a tela só ajuda, o que vale é isto.
+ * O máximo nunca passa da quantidade de itens.
+ */
+export function lerOpcoesDaTela(json: string): { ok: true; grupos: GrupoNovo[] } | { ok: false; erro: string } {
+  let cru: unknown
+  try {
+    cru = json.trim() ? JSON.parse(json) : []
+  } catch {
+    return { ok: false, erro: 'Não consegui ler as opções. Atualize a página e tente de novo.' }
+  }
+  if (!Array.isArray(cru)) return { ok: false, erro: 'Não consegui ler as opções. Atualize a página e tente de novo.' }
+  const grupos: GrupoNovo[] = []
+  for (const g of cru as Partial<GrupoDaTela>[]) {
+    const nome = String(g?.nome ?? '').trim().slice(0, 60)
+    if (!nome) return { ok: false, erro: 'Todo grupo de opções precisa de um nome.' }
+    const itens: GrupoNovo['itens'] = []
+    for (const i of Array.isArray(g.itens) ? g.itens : []) {
+      const descricao = String(i?.nome ?? '').trim().slice(0, 60)
+      const preco = Number(i?.preco ?? 0)
+      if (!descricao) return { ok: false, erro: `Todo item do grupo ${nome} precisa de uma descrição.` }
+      if (!Number.isFinite(preco) || preco < 0 || preco > 99999) return { ok: false, erro: `Valor inválido em ${descricao} (${nome}).` }
+      itens.push({ nome: descricao, preco: Math.round(preco * 100) / 100 })
+    }
+    if (!itens.length) return { ok: false, erro: `O grupo ${nome} não tem itens.` }
+    const max = Math.trunc(Number(g.max))
+    if (!(max >= 1)) return { ok: false, erro: `Máximo de escolhas inválido em ${nome}.` }
+    grupos.push({ nome, min: g.obrigatorio ? 1 : 0, max: Math.min(max, itens.length), itens })
+  }
+  return { ok: true, grupos }
+}
