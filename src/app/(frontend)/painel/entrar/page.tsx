@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { Formulario } from '@/components/painel/Formulario'
 
@@ -35,6 +36,9 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
         </label>
         <button className="botao">Entrar</button>
       </Formulario>
+      <p>
+        Ainda não tem loja? <Link href="/cadastrar">Criar minha loja</Link>
+      </p>
     </main>
   )
 }

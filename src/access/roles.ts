@@ -10,6 +10,17 @@ export const ehAdmin = (user: unknown): boolean =>
 
 export const soAdmin: Access = ({ req: { user } }) => ehAdmin(user)
 
+/**
+ * Para campos da loja que não são públicos (ex.: CPF/CNPJ): só o administrador e os donos daquela loja.
+ * `Lojas.read` é público, então o sigilo precisa ser por campo.
+ */
+export const adminOuDonoDaLoja = ({ req: { user }, doc }: { req: { user?: unknown }; doc?: { id?: unknown } }): boolean => {
+  if (ehAdmin(user)) return true
+  const tenants = (user as { tenants?: { tenant?: unknown }[] } | null)?.tenants ?? []
+  const id = (t: unknown) => (typeof t === 'object' && t ? (t as { id?: unknown }).id : t)
+  return tenants.some((t) => doc?.id != null && id(t.tenant) === doc.id)
+}
+
 /** Logado e não desligado (garçom desligado perde o acesso na hora, mesmo com o login aberto). */
 export const logado: Access = ({ req: { user } }) =>
   Boolean(user) && (user as { ativo?: boolean }).ativo !== false

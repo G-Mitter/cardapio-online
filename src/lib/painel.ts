@@ -94,3 +94,14 @@ export async function nomesDosGarcons(
 /** Id do garçom que lançou o pedido, ou null. */
 export const idDoGarcom = (p: { garcom?: number | { id: number } | null }) =>
   p.garcom ? (typeof p.garcom === 'object' ? p.garcom.id : p.garcom) : null
+
+/** Grava o cookie de login (o mesmo do /admin: quem entra no painel também está logado lá). */
+export async function iniciarSessao(payload: Payload, resultado: { token?: string; exp?: number }) {
+  ;(await cookies()).set(`${payload.config.cookiePrefix}-token`, resultado.token ?? '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    expires: resultado.exp ? new Date(resultado.exp * 1000) : undefined,
+  })
+}

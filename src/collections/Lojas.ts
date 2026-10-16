@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { soAdmin, todos } from '../access/roles'
+import { adminOuDonoDaLoja, ehAdmin, soAdmin, todos } from '../access/roles'
 import { FORMAS_PAGAMENTO } from '../lib/pedido'
 import { FONTES, corValida } from '../lib/tema'
 import { whatsappUrl } from '../lib/whatsapp'
@@ -226,6 +226,21 @@ export const Lojas: CollectionConfig = {
           admin: { description: 'G-XXXXXXXXXX (Analytics) ou AW-XXXXXXXXXX (Ads). Opcional.' },
         },
       ],
+    },
+    // Dados de quem contratou (nota de serviço no futuro). A loja é pública; estes campos não.
+    {
+      name: 'documento',
+      label: 'CPF ou CNPJ de quem contratou',
+      type: 'text',
+      admin: { description: 'Só números. Visível só para você e para o dono da loja.' },
+      access: { read: adminOuDonoDaLoja, create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
+    },
+    {
+      name: 'aceitouTermosEm',
+      label: 'Termos aceitos em',
+      type: 'date',
+      admin: { readOnly: true, description: 'Preenchido no cadastro feito pelo próprio cliente.' },
+      access: { read: adminOuDonoDaLoja, create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
     },
     {
       name: 'aberta',
