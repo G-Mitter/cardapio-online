@@ -687,3 +687,60 @@ details.perigo form {
   border: 1px solid var(--line);
   border-radius: 14px;
 }
+
+/* Ticket da impressora térmica: fica escondido na tela e é a única coisa que sai no papel. */
+.ticket-area {
+  display: none;
+}
+.ticket {
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #000;
+  break-after: page;
+  padding: 2mm;
+}
+.ticket h2,
+.ticket h3 {
+  margin: 0 0 2mm;
+  text-align: center;
+}
+.ticket p,
+.ticket ul {
+  margin: 0 0 1mm;
+  padding: 0;
+  list-style: none;
+}
+.ticket hr {
+  border: 0;
+  border-top: 1px dashed #000;
+  margin: 2mm 0;
+}
+.ticket li small {
+  display: block;
+  padding-left: 4mm;
+}
+.ticket__valor {
+  float: right;
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ticket-area,
+  .ticket-area * {
+    visibility: visible;
+  }
+  .ticket-area {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .ticket--80 {
+    width: 80mm;
+  }
+  .ticket--58 {
+    width: 58mm;
+  }
+}

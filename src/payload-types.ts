@@ -200,6 +200,7 @@ export interface Pedido {
   pagamento?: ('pix' | 'cartao' | 'dinheiro') | null;
   trocoPara?: number | null;
   cpf?: string | null;
+  impresso?: boolean | null;
   origem?: ('site' | 'mesa' | 'garcom' | 'balcao' | 'ifood') | null;
   observacoes?: string | null;
   updatedAt: string;
@@ -249,6 +250,11 @@ export interface Loja {
    * Pedido do cardápio online ou do QR Code da mesa já entra como Preparando, sem esperar alguém tocar. Pedido agendado e o que a equipe lança continuam Novo.
    */
   aceiteAutomatico?: boolean | null;
+  impressaoAutomatica?: boolean | null;
+  larguraTicket?: ('80' | '58') | null;
+  viasTicket?: number | null;
+  impressaoDesde?: string | null;
+  imprimirOrigens?: ('site' | 'mesa' | 'garcom' | 'balcao' | 'ifood')[] | null;
   /**
    * Quantidade ("10" vira as mesas 1 a 10) ou nomes separados por vírgula. Cada mesa tem um QR Code no painel.
    */
@@ -774,6 +780,7 @@ export interface PedidosSelect<T extends boolean = true> {
   pagamento?: T;
   trocoPara?: T;
   cpf?: T;
+  impresso?: T;
   origem?: T;
   observacoes?: T;
   updatedAt?: T;
@@ -854,6 +861,11 @@ export interface LojasSelect<T extends boolean = true> {
   aceitaRetirada?: T;
   aceitaAgendamento?: T;
   aceiteAutomatico?: T;
+  impressaoAutomatica?: T;
+  larguraTicket?: T;
+  viasTicket?: T;
+  impressaoDesde?: T;
+  imprimirOrigens?: T;
   mesas?: T;
   atendimentoMesas?: T;
   taxaServico?: T;
