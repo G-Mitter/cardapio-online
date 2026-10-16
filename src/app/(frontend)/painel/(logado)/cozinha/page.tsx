@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 import { TelaCozinha } from '@/components/painel/TelaCozinha'
-import { sessao } from '@/lib/painel'
+import { idDoGarcom, nomesDosGarcons, sessao } from '@/lib/painel'
 import { naCozinha } from '@/lib/pedidosDoDia'
 
 export const metadata: Metadata = { title: 'Cozinha' }
@@ -24,6 +24,7 @@ export default async function Cozinha() {
     ...comoUsuario,
   })
 
+  const garcons = await nomesDosGarcons(payload, docs)
   const pedidos = docs
     .filter((p) => naCozinha(p.agendadoPara ?? null, agora))
     .map((p) => ({
@@ -35,6 +36,7 @@ export default async function Cozinha() {
       modo: p.modo,
       balcao: Boolean(p.balcao),
       mesa: p.mesa ?? '',
+      garcom: garcons.get(idDoGarcom(p) ?? -1) ?? '',
       agendadoPara: p.agendadoPara ?? null,
       observacoes: p.observacoes ?? '',
       itens: (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade, opcoes: i.opcoes ?? '' })),

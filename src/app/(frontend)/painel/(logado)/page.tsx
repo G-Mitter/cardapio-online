@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { PainelPedidos } from '@/components/painel/PainelPedidos'
-import { sessao } from '@/lib/painel'
+import { idDoGarcom, nomesDosGarcons, sessao } from '@/lib/painel'
 import { inicioDoDia, ordenar } from '@/lib/pedidosDoDia'
 
 export const metadata: Metadata = { title: 'Pedidos de hoje' }
@@ -28,6 +28,7 @@ export default async function Pedidos() {
       ...comoUsuario,
     }),
   ])
+  const garcons = await nomesDosGarcons(payload, docs)
   const nomeDoEntregador = new Map(entregadores.map((e) => [e.id, e.nome]))
 
   const pedidos = ordenar(
@@ -41,6 +42,7 @@ export default async function Pedidos() {
       modo: p.modo,
       balcao: Boolean(p.balcao),
       mesa: p.mesa ?? '',
+      garcom: garcons.get(idDoGarcom(p) ?? -1) ?? '',
       endereco: p.endereco ?? '',
       entregadorId: typeof p.entregador === 'number' ? p.entregador : null,
       entregador: typeof p.entregador === 'number' ? (nomeDoEntregador.get(p.entregador) ?? '') : '',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { avisoDeStatus, inicioDoDia, naCozinha, ordenar } from '@/lib/pedidosDoDia'
+import { avisoDeStatus, inicioDoDia, naCozinha, ordenar, rotuloTipo } from '@/lib/pedidosDoDia'
 
 describe('inicioDoDia', () => {
   it('usa a meia-noite de Brasília, mesmo quando em UTC já é outro dia', () => {
@@ -54,5 +54,13 @@ describe('naCozinha', () => {
   })
   it('mantém o agendado que já passou do horário', () => {
     expect(naCozinha('2026-10-06T14:00:00Z', agora)).toBe(true)
+  })
+})
+
+describe('rotuloTipo', () => {
+  it('mostra o garçom só no pedido de mesa', () => {
+    expect(rotuloTipo('retirada', false, '2', 'Juliana')).toBe('Mesa 2 · Garçom Juliana')
+    expect(rotuloTipo('retirada', false, '2')).toBe('Mesa 2')
+    expect(rotuloTipo('entrega', false, '', 'Juliana')).toBe('Entrega')
   })
 })
