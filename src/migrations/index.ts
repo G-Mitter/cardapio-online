@@ -33,6 +33,7 @@ import * as migration_20261016_175830_setor_categoria from './20261016_175830_se
 import * as migration_20261016_180008_aceite_origem from './20261016_180008_aceite_origem';
 import * as migration_20261016_180316_impressao from './20261016_180316_impressao';
 import * as migration_20261016_184524_caixa from './20261016_184524_caixa';
+import * as migration_20261016_201352_custo_ingrediente from './20261016_201352_custo_ingrediente';
 
 export const migrations = [
   {
@@ -208,6 +209,11 @@ export const migrations = [
   {
     up: migration_20261016_184524_caixa.up,
     down: migration_20261016_184524_caixa.down,
-    name: '20261016_184524_caixa'
+    name: '20261016_184524_caixa',
+  },
+  {
+    up: migration_20261016_201352_custo_ingrediente.up,
+    down: migration_20261016_201352_custo_ingrediente.down,
+    name: '20261016_201352_custo_ingrediente'
   },
 ];

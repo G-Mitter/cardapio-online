@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Apagavel, BotaoApagar } from '@/components/painel/Apagar'
 import { Formulario } from '@/components/painel/Formulario'
 import { rotuloQuantidade, situacao, UNIDADES } from '@/lib/estoque'
+import { brl } from '@/lib/pedido'
 import { sessao } from '@/lib/painel'
 
 import { ajustarEstoque, apagarIngrediente, salvarIngrediente } from '../../actions'
@@ -47,6 +48,7 @@ export default async function Estoque() {
               <span>
                 {rotuloQuantidade(i.quantidade, i.unidade)}
                 {i.minimo > 0 && ` · avisa em ${rotuloQuantidade(i.minimo, i.unidade)}`}
+                {i.custo != null && ` · custo ${brl(i.custo)} por ${i.unidade}`}
                 {AVISO[i.situacao] && ` · ${AVISO[i.situacao]}`}
               </span>
             </div>
@@ -79,6 +81,10 @@ export default async function Estoque() {
                   <label className="campo">
                     Avisar quando chegar a
                     <input name="minimo" inputMode="decimal" defaultValue={String(i.minimo).replace('.', ',')} />
+                  </label>
+                  <label className="campo">
+                    Custo por {i.unidade} (R$)
+                    <input name="custo" inputMode="decimal" defaultValue={i.custo != null ? String(i.custo).replace('.', ',') : ''} placeholder="32,00" />
                   </label>
                 </div>
                 <button className="botao">Salvar</button>
@@ -118,6 +124,10 @@ export default async function Estoque() {
           <label className="campo">
             Avisar quando chegar a (opcional)
             <input name="minimo" inputMode="decimal" placeholder="2" />
+          </label>
+          <label className="campo">
+            Custo por unidade (R$, opcional)
+            <input name="custo" inputMode="decimal" placeholder="32,00" />
           </label>
         </div>
         <button className="botao">Cadastrar</button>

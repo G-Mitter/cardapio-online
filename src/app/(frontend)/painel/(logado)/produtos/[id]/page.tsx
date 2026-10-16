@@ -9,6 +9,7 @@ import { ListaFicha } from '@/components/painel/ListaFicha'
 import { ListaOpcoes } from '@/components/painel/ListaOpcoes'
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
+import { custoDoPrato, lerFichaSalva, textoDoCusto } from '@/lib/estoque'
 import { gruposDoProduto } from '@/lib/opcoes'
 import { sessao } from '@/lib/painel'
 import { SELOS } from '@/lib/selos'
@@ -48,6 +49,7 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   if (!novo && !produto) notFound()
 
   const foto = typeof produto?.foto === 'object' ? (produto.foto as Media | null) : null
+  const custo = produto ? custoDoPrato(lerFichaSalva(produto.ficha), new Map(ingredientes.docs.map((i) => [i.id, i.custo])), produto.preco) : null
   const categoriaAtual =
     typeof produto?.categoria === 'object' ? produto.categoria.id : produto?.categoria
 
@@ -119,6 +121,7 @@ export default async function Produto({ params }: { params: Promise<{ id: string
           inicial={(produto?.ficha ?? []).map((l) => ({ ingrediente: typeof l.ingrediente === 'object' ? l.ingrediente.id : l.ingrediente, quantidade: l.quantidade }))}
           ingredientes={ingredientes.docs.map((i) => ({ id: i.id, nome: i.nome, unidade: i.unidade }))}
         />
+        {custo && <small>Pela ficha salva: {textoDoCusto(custo, new Map(ingredientes.docs.map((i) => [i.id, i.nome])))}.</small>}
         <CampoImagem nome="foto" rotulo="Foto" atual={foto?.url ?? null} />
         <label className="marcar">
           <input type="checkbox" name="esgotado" defaultChecked={Boolean(produto?.esgotado)} />

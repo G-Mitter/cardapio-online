@@ -1019,6 +1019,8 @@ export async function salvarIngrediente(id: number | null, _: Estado, form: Form
   if (!nome) return { erro: 'Coloque o nome do ingrediente.' }
   if (minimo === null) return { erro: 'Quantidade mínima inválida. Use, por exemplo, 2 ou 1,5.' }
   if (inicial === null) return { erro: 'Quantidade inválida. Use, por exemplo, 10 ou 2,5.' }
+  const custo = texto(form, 'custo') ? lerQuantidade(texto(form, 'custo')) : null
+  if (texto(form, 'custo') && custo === null) return { erro: 'Custo inválido. Use, por exemplo, 32 ou 0,035.' }
 
   const { totalDocs } = await payload.count({
     collection: 'ingredientes',
@@ -1027,7 +1029,7 @@ export async function salvarIngrediente(id: number | null, _: Estado, form: Form
   if (totalDocs) return { erro: `Já existe o ingrediente ${nome}.` }
 
   try {
-    const data = { nome, unidade: lerUnidade(texto(form, 'unidade')), minimo }
+    const data = { nome, unidade: lerUnidade(texto(form, 'unidade')), minimo, custo }
     if (id) {
       await payload.update({ collection: 'ingredientes', where: { id: { equals: id }, loja: { equals: loja.id } }, data, ...comoUsuario })
     } else {
