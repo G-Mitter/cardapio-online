@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: 'Minha loja' }
 const url = (img: unknown) => (typeof img === 'object' && img ? ((img as Media).url ?? null) : null)
 
 export default async function MinhaLoja({ searchParams }: { searchParams: Promise<{ salvo?: string }> }) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('loja')
   const { salvo } = await searchParams
 
   // Alguns produtos de verdade para a prévia ficar parecida com o cardápio.

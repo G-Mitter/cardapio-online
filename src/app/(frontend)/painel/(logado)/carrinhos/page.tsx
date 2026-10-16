@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: 'Carrinhos abandonados' }
 
 /** Quem montou o carrinho, se identificou e não finalizou. A loja chama no WhatsApp ou apaga. */
 export default async function Carrinhos() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const h = await headers()
   const link = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}/${loja.slug}`
   // Limpeza: carrinho velho some sozinho.

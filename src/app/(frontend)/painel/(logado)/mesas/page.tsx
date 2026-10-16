@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Mesas' }
 
 /** Contas abertas por mesa: tudo o que cada mesa pediu, com "Fechar conta". */
 export default async function Mesas() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const { docs } = await payload.find({
     collection: 'pedidos',
     where: {

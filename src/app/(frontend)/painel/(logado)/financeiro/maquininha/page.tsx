@@ -7,7 +7,7 @@ import { sessao } from '@/lib/painel'
 export const metadata: Metadata = { title: 'Conferir a maquininha' }
 
 export default async function Maquininha() {
-  await sessao()
+  await sessao('financeiro')
   return (
     <>
       <p>

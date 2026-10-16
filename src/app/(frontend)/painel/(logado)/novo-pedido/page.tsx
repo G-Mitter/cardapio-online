@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'Novo pedido' }
 
 /** Pedido lançado pela loja, no balcão ou por telefone. */
 export default async function NovoPedidoPagina() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
   const produtos = await payload.find({
     collection: 'produtos',
     where: { loja: { equals: loja.id } },

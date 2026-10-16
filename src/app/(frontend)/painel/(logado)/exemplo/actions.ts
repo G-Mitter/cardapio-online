@@ -8,7 +8,7 @@ import { gravarExemplo, montarRelatorioExemplo, type ResultadoExemplo } from '@/
 import { sessao } from '@/lib/painel'
 
 async function permitido() {
-  const s = await sessao()
+  const s = await sessao('loja')
   return ehAdmin(s.user) && s.loja.slug === SLUG_EXEMPLO ? s : null
 }
 

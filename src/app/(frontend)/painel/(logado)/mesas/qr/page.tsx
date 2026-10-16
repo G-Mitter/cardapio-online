@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: 'QR Codes das mesas' }
 
 /** Uma folha com o QR Code de cada mesa; cada um abre o cardápio da loja já na mesa certa. */
 export default async function QrDasMesas() {
-  const { loja } = await sessao()
+  const { loja } = await sessao('loja')
   const lista = lerMesas(loja.mesas ?? '')
   const mesas = lista.ok ? lista.mesas : []
   if (!mesas.length) {

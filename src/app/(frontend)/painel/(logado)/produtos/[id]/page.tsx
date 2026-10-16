@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: 'Produto' }
 /** Cadastro de um produto. /painel/produtos/novo cria; /painel/produtos/<id> edita. */
 export default async function Produto({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const novo = id === 'novo'
 
   const [categorias, existentes] = await Promise.all([

@@ -25,7 +25,7 @@ const MAX_BYTES = 3_500_000
 const MODELO = process.env.GEMINI_MODEL || 'gemini-3.8-flash'
 
 export async function lerFotoNoGoogle(imagens: string[]): Promise<ResultadoFoto> {
-  await sessao()
+  await sessao('financeiro')
   const chave = process.env.GEMINI_API_KEY
   if (!chave) return { ok: false, tipo: 'indisponivel', motivo: 'A leitura pelo Google não está ligada. Corrija os valores à mão ou envie o arquivo da maquininha.' }
   const fotos = (Array.isArray(imagens) ? imagens : []).filter((i): i is string => typeof i === 'string').slice(0, MAX_FOTOS)
@@ -56,7 +56,7 @@ export async function lerFotoNoGoogle(imagens: string[]): Promise<ResultadoFoto>
 
 /** Quanto a loja vendeu em cartão num dia (pedidos entregues e contas de mesa), para comparar com os totais do relatório. */
 export async function totalCartaoDoDia(dia: string): Promise<number> {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('financeiro')
   const { de, ate } = intervaloDoDia(dia)
   const busca = { limit: 0, depth: 0, ...comoUsuario } as const
   const [pedidos, fechamentos] = await Promise.all([

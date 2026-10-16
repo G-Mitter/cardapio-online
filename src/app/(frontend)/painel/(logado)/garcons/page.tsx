@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Garçons' }
 
 /** Garçons da loja: cadastro, liga/desliga e troca de senha. Eles entram no mesmo /painel/entrar. */
 export default async function Garcons({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('equipe')
   const { dia, de, ate } = intervaloDoDia((await searchParams).dia)
   // Os garçons não têm acesso próprio; o servidor lista só os desta loja, depois de conferir o dono.
   const { docs } = await payload.find({

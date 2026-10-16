@@ -18,7 +18,7 @@ const ROTULO_SITUACAO = { vencida: 'Vencida', hoje: 'Vence hoje', em7: 'Vence em
 /** Contas a pagar e a receber, com o aviso do que vence e o resumo do mês. */
 export default async function Financeiro({ searchParams }: { searchParams: Promise<{ aba?: string; mes?: string }> }) {
   const { aba: abaTexto, mes: mesTexto } = await searchParams
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('financeiro')
   const aba = TIPOS.find((t) => t.value === abaTexto) ?? TIPOS[0]
   const { mes, de, ate } = intervaloDoMes(mesTexto)
   const hoje = hojeEmBrasilia()

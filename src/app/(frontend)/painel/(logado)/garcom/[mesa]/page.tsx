@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: 'Mesa' }
 /** Uma mesa: o que já pediu e o lançamento de mais itens. É também para onde o QR da mesa leva o garçom. */
 export default async function MesaDoGarcom({ params }: { params: Promise<{ mesa: string }> }) {
   const mesa = decodeURIComponent((await params).mesa)
-  const { payload, loja, comoUsuario } = await sessaoGarcom()
+  const { payload, loja, comoUsuario } = await sessaoGarcom('pedidos')
   const mesas = lerMesas(loja.mesas ?? '')
   if (!mesas.ok || !mesas.mesas.includes(mesa)) notFound()
 

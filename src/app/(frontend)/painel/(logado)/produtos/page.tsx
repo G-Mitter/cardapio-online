@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Produtos' }
 
 /** Produtos da loja por categoria, com "esgotado" num toque. */
 export default async function Produtos() {
-  const { payload, loja, comoUsuario } = await sessao()
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
   const [categorias, produtos] = await Promise.all([
     payload.find({ collection: 'categorias', where: { loja: { equals: loja.id } }, sort: 'ordem', limit: 0, depth: 0, ...comoUsuario }),
     payload.find({ collection: 'produtos', where: { loja: { equals: loja.id } }, sort: ['ordem', 'id'], limit: 0, depth: 1, ...comoUsuario }),

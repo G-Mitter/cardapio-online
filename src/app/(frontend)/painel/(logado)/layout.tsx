@@ -3,31 +3,17 @@ import { AvisosDeApagar } from '@/components/painel/Apagar'
 import { Menu } from '@/components/painel/Menu'
 import { SLUG_EXEMPLO } from '@/lib/exemplo'
 import { sessaoGarcom } from '@/lib/painel'
+import { telasDoUsuario } from '@/lib/permissoes'
 
 import { sair, trocarLoja } from '../actions'
-
-const MENU = [
-  ['/painel', 'Pedidos'],
-  ['/painel/cozinha', 'Cozinha'],
-  ['/painel/mesas', 'Mesas'],
-  ['/painel/entregadores', 'Entregadores'],
-  ['/painel/garcons', 'Garçons'],
-  ['/painel/produtos', 'Produtos'],
-  ['/painel/categorias', 'Categorias'],
-  ['/painel/cupons', 'Cupons'],
-  ['/painel/carrinhos', 'Carrinhos'],
-  ['/painel/financeiro', 'Financeiro'],
-  ['/painel/loja', 'Minha loja'],
-  ['/painel/importar', 'Importar planilha'],
-] as const
 
 const MENU_GARCOM = [['/painel/garcom', 'Mesas']] as const
 
 /** Moldura das telas do painel: nome da loja, menu e sair. Sem login, `sessao` manda para /painel/entrar. */
 export default async function LayoutLogado({ children }: { children: React.ReactNode }) {
-  const { loja, lojas, garcom, user } = await sessaoGarcom()
+  const { loja, lojas, garcom, user } = await sessaoGarcom(null)
   // Os dados de exemplo só aparecem para o administrador geral, na loja de demonstração.
-  const itens = [...MENU, ...(ehAdmin(user) && loja.slug === SLUG_EXEMPLO ? ([['/painel/exemplo', 'Dados de exemplo']] as const) : [])]
+  const itens = [...telasDoUsuario(user).map(([href, rotulo]) => [href, rotulo] as const), ...(ehAdmin(user) && loja.slug === SLUG_EXEMPLO ? ([['/painel/exemplo', 'Dados de exemplo']] as const) : [])]
 
   return (
     <>
