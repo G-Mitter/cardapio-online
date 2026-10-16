@@ -6,7 +6,7 @@
 
 export const PERMISSOES = [
   { valor: 'pedidos', rotulo: 'Mexer nos pedidos', ajuda: 'Pedidos, cozinha, mesas, novo pedido e carrinhos abandonados' },
-  { valor: 'financeiro', rotulo: 'Ver o financeiro', ajuda: 'Caixa do dia, relatórios de vendas, contas a pagar e a receber, dar baixa e conferir a maquininha' },
+  { valor: 'financeiro', rotulo: 'Ver o financeiro', ajuda: 'Caixa do dia, relatórios de vendas, compras, contas a pagar e a receber, dar baixa e conferir a maquininha' },
   { valor: 'cardapio', rotulo: 'Editar o cardápio', ajuda: 'Produtos, categorias, cupons e estoque' },
   { valor: 'loja', rotulo: 'Editar a loja', ajuda: 'Dados, taxas, mesas, QR Codes e importar planilha' },
   { valor: 'equipe', rotulo: 'Cuidar da equipe', ajuda: 'Entregadores, acerto e garçons' },
@@ -43,6 +43,7 @@ export const TELAS = [
   ['/painel/categorias', 'Categorias', 'cardapio'],
   ['/painel/cupons', 'Cupons', 'cardapio'],
   ['/painel/estoque', 'Estoque', 'cardapio'],
+  ['/painel/compras', 'Compras', 'financeiro'],
   ['/painel/carrinhos', 'Carrinhos', 'pedidos'],
   ['/painel/caixa', 'Caixa', 'financeiro'],
   ['/painel/financeiro', 'Financeiro', 'financeiro'],

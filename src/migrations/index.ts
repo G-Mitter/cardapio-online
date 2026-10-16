@@ -34,6 +34,7 @@ import * as migration_20261016_180008_aceite_origem from './20261016_180008_acei
 import * as migration_20261016_180316_impressao from './20261016_180316_impressao';
 import * as migration_20261016_184524_caixa from './20261016_184524_caixa';
 import * as migration_20261016_201352_custo_ingrediente from './20261016_201352_custo_ingrediente';
+import * as migration_20261016_202253_compras_fornecedores from './20261016_202253_compras_fornecedores';
 
 export const migrations = [
   {
@@ -214,6 +215,11 @@ export const migrations = [
   {
     up: migration_20261016_201352_custo_ingrediente.up,
     down: migration_20261016_201352_custo_ingrediente.down,
-    name: '20261016_201352_custo_ingrediente'
+    name: '20261016_201352_custo_ingrediente',
+  },
+  {
+    up: migration_20261016_202253_compras_fornecedores.up,
+    down: migration_20261016_202253_compras_fornecedores.down,
+    name: '20261016_202253_compras_fornecedores'
   },
 ];
