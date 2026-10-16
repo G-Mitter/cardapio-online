@@ -66,14 +66,30 @@ function adiar(chave: string, nome: string, executar: Executar) {
 }
 
 /** Item de lista que some enquanto espera para ser apagado. */
-export function Apagavel({ chave, children, className }: { chave: string; children: ReactNode; className?: string }) {
-  const somem = useSyncExternalStore(assinar, () => escondidos, () => escondidos)
+export function Apagavel({
+  chave,
+  children,
+  className,
+}: {
+  chave: string
+  children: ReactNode
+  className?: string
+}) {
+  const somem = useSyncExternalStore(
+    assinar,
+    () => escondidos,
+    () => escondidos,
+  )
   return somem.includes(chave) ? null : <li className={className}>{children}</li>
 }
 
 /** Linha de tabela que some do mesmo jeito. */
 export function ApagavelLinha({ chave, children }: { chave: string; children: ReactNode }) {
-  const somem = useSyncExternalStore(assinar, () => escondidos, () => escondidos)
+  const somem = useSyncExternalStore(
+    assinar,
+    () => escondidos,
+    () => escondidos,
+  )
   return somem.includes(chave) ? null : <tr>{children}</tr>
 }
 
@@ -128,7 +144,12 @@ export function BotaoApagar({
 
   return (
     <>
-      <button type="button" className={className} aria-label={`${rotulo} ${nome}`} onClick={() => caixa.current?.showModal()}>
+      <button
+        type="button"
+        className={className}
+        aria-label={`${rotulo} ${nome}`}
+        onClick={() => caixa.current?.showModal()}
+      >
         {rotulo}
       </button>
       <dialog ref={caixa} className="dialogo" aria-labelledby={`${chave}-titulo`}>
@@ -139,7 +160,12 @@ export function BotaoApagar({
               Apagar
             </button>
           )}
-          <button type="button" className="botao secundario" autoFocus onClick={() => caixa.current?.close()}>
+          <button
+            type="button"
+            className="botao secundario"
+            autoFocus
+            onClick={() => caixa.current?.close()}
+          >
             {bloqueio ? 'Entendi' : 'Cancelar'}
           </button>
         </div>
@@ -150,12 +176,20 @@ export function BotaoApagar({
 
 /** Os avisos "apagado · Desfazer", fixos embaixo da tela. Fica uma vez só, no layout do painel. */
 export function AvisosDeApagar() {
-  const lista = useSyncExternalStore(assinar, () => avisos, () => avisos)
+  const lista = useSyncExternalStore(
+    assinar,
+    () => avisos,
+    () => avisos,
+  )
   if (!lista.length) return null
   return (
     <div className="avisos">
       {lista.map((a) => (
-        <div key={a.id} className={a.erro ? 'aviso aviso--erro' : 'aviso'} role={a.erro ? 'alert' : 'status'}>
+        <div
+          key={a.id}
+          className={a.erro ? 'aviso aviso--erro' : 'aviso'}
+          role={a.erro ? 'alert' : 'status'}
+        >
           <span>{a.texto}</span>
           {a.desfazer && (
             <button type="button" className="aviso__desfazer" onClick={a.desfazer}>
