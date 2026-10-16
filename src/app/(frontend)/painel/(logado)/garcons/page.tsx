@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { CampoUsuario } from '@/components/painel/CampoUsuario'
 import { Formulario } from '@/components/painel/Formulario'
 import { resumoPorGarcom } from '@/lib/conta'
 import { intervaloDoDia } from '@/lib/entregadores'
@@ -79,10 +80,7 @@ export default async function Garcons({ searchParams }: { searchParams: Promise<
             Nome
             <input name="nome" required maxLength={80} />
           </label>
-          <label className="campo">
-            Usuário
-            <input name="usuario" required minLength={3} maxLength={20} autoCapitalize="none" placeholder="maria" />
-          </label>
+          <CampoUsuario slug={loja.slug} />
           <label className="campo">
             Senha
             <input name="senha" type="password" minLength={6} autoComplete="new-password" required />

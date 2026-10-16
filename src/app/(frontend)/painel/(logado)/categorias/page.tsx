@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { Apagavel, BotaoApagar } from '@/components/painel/Apagar'
+import { Contador } from '@/components/painel/Contador'
 import { Formulario } from '@/components/painel/Formulario'
 import { sessao } from '@/lib/painel'
 
@@ -44,7 +45,7 @@ export default async function Categorias() {
           <Apagavel key={c.id} chave={`categoria:${c.id}`}>
             <Formulario acao={salvarCategoria.bind(null, c.id)} className="form-linha">
               <input name="nome" defaultValue={c.nome} aria-label="Nome" required maxLength={60} />
-              <input name="ordem" type="number" defaultValue={c.ordem ?? 0} aria-label="Ordem" className="curto" />
+              <Contador rotulo="Ordem" name="ordem" inicial={c.ordem ?? 0} />
               <button className="botao secundario">Salvar</button>
             </Formulario>
             <BotaoApagar
@@ -63,7 +64,7 @@ export default async function Categorias() {
       <h2>Nova categoria</h2>
       <Formulario key={docs.length} acao={salvarCategoria.bind(null, null)} className="form-linha">
         <input name="nome" placeholder="Ex.: Sobremesas" aria-label="Nome" required maxLength={60} />
-        <input name="ordem" type="number" defaultValue={(docs.at(-1)?.ordem ?? 0) + 1} aria-label="Ordem" className="curto" />
+        <Contador rotulo="Ordem" name="ordem" inicial={(docs.at(-1)?.ordem ?? 0) + 1} />
         <button className="botao">Criar</button>
       </Formulario>
     </>
