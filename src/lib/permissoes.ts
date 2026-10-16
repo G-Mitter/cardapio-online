@@ -7,11 +7,11 @@
 export const PERMISSOES = [
   { valor: 'pedidos', rotulo: 'Mexer nos pedidos', ajuda: 'Pedidos, cozinha, mesas, novo pedido e carrinhos abandonados' },
   { valor: 'financeiro', rotulo: 'Ver o financeiro', ajuda: 'Contas a pagar e a receber, dar baixa e conferir a maquininha' },
-  { valor: 'cardapio', rotulo: 'Editar o cardápio', ajuda: 'Produtos, categorias e cupons' },
+  { valor: 'cardapio', rotulo: 'Editar o cardápio', ajuda: 'Produtos, categorias, cupons e estoque' },
   { valor: 'loja', rotulo: 'Editar a loja', ajuda: 'Dados, taxas, mesas, QR Codes e importar planilha' },
   { valor: 'equipe', rotulo: 'Cuidar da equipe', ajuda: 'Entregadores, acerto e garçons' },
   { valor: 'usuarios', rotulo: 'Criar e gerenciar usuários', ajuda: 'Quem entra no painel e o que cada um pode' },
-  { valor: 'excluir', rotulo: 'Excluir', ajuda: 'Apagar produtos, categorias, cupons, lançamentos e carrinhos' },
+  { valor: 'excluir', rotulo: 'Excluir', ajuda: 'Apagar produtos, categorias, cupons, ingredientes, lançamentos e carrinhos' },
 ] as const
 
 export type Permissao = (typeof PERMISSOES)[number]['valor']
@@ -41,6 +41,7 @@ export const TELAS = [
   ['/painel/produtos', 'Produtos', 'cardapio'],
   ['/painel/categorias', 'Categorias', 'cardapio'],
   ['/painel/cupons', 'Cupons', 'cardapio'],
+  ['/painel/estoque', 'Estoque', 'cardapio'],
   ['/painel/carrinhos', 'Carrinhos', 'pedidos'],
   ['/painel/financeiro', 'Financeiro', 'financeiro'],
   ['/painel/loja', 'Minha loja', 'loja'],

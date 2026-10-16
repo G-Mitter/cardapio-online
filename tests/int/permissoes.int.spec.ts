@@ -19,7 +19,7 @@ describe('permissões', () => {
 
   it('o menu mostra só o que pode, e a entrada cai na primeira tela permitida', () => {
     const cardapio = { roles: ['loja'], permissoes: ['cardapio'] }
-    expect(telasDoUsuario(cardapio).map(([h]) => h)).toEqual(['/painel/produtos', '/painel/categorias', '/painel/cupons'])
+    expect(telasDoUsuario(cardapio).map(([h]) => h)).toEqual(['/painel/produtos', '/painel/categorias', '/painel/cupons', '/painel/estoque'])
     expect(primeiraTela(cardapio)).toBe('/painel/produtos')
     expect(primeiraTela({ roles: ['loja'], permissoes: [] })).toBe('/painel/sem-acesso')
   })

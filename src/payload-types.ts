@@ -80,6 +80,7 @@ export interface Config {
     fechamentos: Fechamento;
     acertos: Acerto;
     lancamentos: Lancamento;
+    ingredientes: Ingrediente;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -100,6 +101,7 @@ export interface Config {
     fechamentos: FechamentosSelect<false> | FechamentosSelect<true>;
     acertos: AcertosSelect<false> | AcertosSelect<true>;
     lancamentos: LancamentosSelect<false> | LancamentosSelect<true>;
+    ingredientes: IngredientesSelect<false> | IngredientesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -570,6 +572,20 @@ export interface Lancamento {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientes".
+ */
+export interface Ingrediente {
+  id: number;
+  loja?: (number | null) | Loja;
+  nome: string;
+  unidade: 'un' | 'g' | 'kg' | 'ml' | 'l';
+  quantidade: number;
+  minimo: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -643,6 +659,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'lancamentos';
         value: number | Lancamento;
+      } | null)
+    | ({
+        relationTo: 'ingredientes';
+        value: number | Ingrediente;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -991,6 +1011,19 @@ export interface LancamentosSelect<T extends boolean = true> {
   diaDoMes?: T;
   pagoEm?: T;
   valorPago?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientes_select".
+ */
+export interface IngredientesSelect<T extends boolean = true> {
+  loja?: T;
+  nome?: T;
+  unidade?: T;
+  quantidade?: T;
+  minimo?: T;
   updatedAt?: T;
   createdAt?: T;
 }
