@@ -3,9 +3,11 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { PainelPedidos } from '@/components/painel/PainelPedidos'
+import { PrimeirosPassos } from '@/components/painel/PrimeirosPassos'
 import { idDoGarcom, nomesDosGarcons, sessao, sessaoGarcom } from '@/lib/painel'
 import { primeiraTela, temPermissao } from '@/lib/permissoes'
 import { inicioDoDia, ordenar } from '@/lib/pedidosDoDia'
+import { primeirosPassos } from '@/lib/primeirosPassos'
 
 export const metadata: Metadata = { title: 'Pedidos de hoje' }
 
@@ -15,8 +17,10 @@ export default async function Pedidos() {
   const { user } = await sessaoGarcom(null)
   if (!temPermissao(user, 'pedidos')) redirect(primeiraTela(user))
   const { payload, loja, comoUsuario } = await sessao('pedidos')
-  // As duas leituras não dependem uma da outra: vão juntas ao banco.
-  const [{ docs }, { docs: entregadores }] = await Promise.all([
+  // Só quem edita a loja vê a lista (é ele que pode dispensá-la), e só enquanto não a dispensou.
+  const mostrarPassos = temPermissao(user, 'loja') && !loja.passosDispensados
+  // As leituras não dependem uma da outra: vão juntas ao banco.
+  const [{ docs }, { docs: entregadores }, produtos] = await Promise.all([
     payload.find({
       collection: 'pedidos',
       where: { loja: { equals: loja.id }, createdAt: { greater_than_equal: inicioDoDia() } },
@@ -32,7 +36,13 @@ export default async function Pedidos() {
       limit: 0,
       ...comoUsuario,
     }),
+    mostrarPassos
+      ? payload.count({ collection: 'produtos', where: { loja: { equals: loja.id } }, ...comoUsuario })
+      : null,
   ])
+  const passos = mostrarPassos
+    ? primeirosPassos(loja, produtos?.totalDocs ?? 0).filter((p) => temPermissao(user, p.permissao))
+    : []
   const garcons = await nomesDosGarcons(payload, docs)
   const nomeDoEntregador = new Map(entregadores.map((e) => [e.id, e.nome]))
 
@@ -71,6 +81,7 @@ export default async function Pedidos() {
           Novo pedido
         </Link>
       </div>
+      {passos.some((p) => !p.feito) && <PrimeirosPassos passos={passos} />}
       <PainelPedidos
         pedidos={pedidos}
         loja={loja.nome}

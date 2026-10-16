@@ -744,3 +744,33 @@ details.perigo form {
     width: 58mm;
   }
 }
+
+/* Primeiros passos da loja nova (tela inicial) */
+.primeiros-passos {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.primeiros-passos ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.primeiros-passos li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+}
+.primeiros-passos li.feito a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.primeiros-passos form {
+  justify-self: start;
+}

@@ -1128,6 +1128,13 @@ function lerHorarioDoForm(form: FormData, atual: string) {
   return { ok: true as const, texto: montarHorario({ dias, abre, fecha }) }
 }
 
+/** O dono não quer mais ver a lista de primeiros passos. */
+export async function dispensarPassos() {
+  const { payload, loja, comoUsuario } = await sessao('loja')
+  await payload.update({ collection: 'lojas', id: loja.id, data: { passosDispensados: true }, ...comoUsuario })
+  revalidatePath('/painel')
+}
+
 export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao('loja')
   const nome = texto(form, 'nome')
