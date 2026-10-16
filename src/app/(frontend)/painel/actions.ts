@@ -1283,19 +1283,34 @@ export async function salvarUsuario(id: number | null, _: Estado, form: FormData
   if (!permissoes.length) return { erro: 'Marque pelo menos uma permissão.' }
   if (!contido(permissoes, efetivas(user))) return { erro: 'Você só pode dar permissões que você mesmo tem.' }
 
+  // O login é o usuário ("maria.slug-da-loja", como o garçom); o e-mail é opcional.
+  const usuario = texto(form, 'usuario').toLowerCase()
+  if (usuario && !USUARIO.test(usuario)) return { erro: 'Usuário com 3 a 20 letras, números, _ ou -, sem espaço nem acento.' }
+  const login = usuario ? loginDoGarcom(usuario, loja.slug) : undefined
+
   if (id === null) {
     const email = texto(form, 'email').toLowerCase()
     const senha = String(form.get('senha') ?? '')
-    if (!EMAIL.test(email)) return { erro: 'E-mail inválido.' }
+    if (!login) return { erro: 'Coloque o usuário (é o login).' }
+    if (email && !EMAIL.test(email)) return { erro: 'E-mail inválido.' }
     if (senha.length < 8) return { erro: 'A senha inicial precisa de pelo menos 8 caracteres.' }
     try {
       // O usuário nasce só desta loja. Criamos como o servidor, depois de conferir o login de quem cria.
       await payload.create({
         collection: 'users',
-        data: { email, password: senha, nome, roles: ['loja'], tenants: [{ tenant: loja.id }], permissoes, ativo: true },
+        data: {
+          username: login,
+          ...(email && { email }),
+          password: senha,
+          nome,
+          roles: ['loja'],
+          tenants: [{ tenant: loja.id }],
+          permissoes,
+          ativo: true,
+        },
       })
     } catch (e) {
-      return { erro: /unique|already|registrad|e-?mail/i.test(String(e)) ? 'Já existe um usuário com esse e-mail.' : mensagem(e) }
+      return { erro: /unique|already|registrad|e-?mail|username/i.test(String(e)) ? 'Já existe um usuário com esse usuário ou e-mail.' : mensagem(e) }
     }
     redirect('/painel/usuarios')
   }
@@ -1306,7 +1321,13 @@ export async function salvarUsuario(id: number | null, _: Estado, form: FormData
   if (gerentes(depois) === 0) {
     return { erro: 'A loja precisa ter pelo menos um usuário que gerencia usuários.' }
   }
-  await payload.update({ collection: 'users', id, data: { nome, permissoes } })
+  // Quem ainda não tem usuário (criado só com e-mail) pode definir um; depois de definido não muda.
+  const novoLogin = login && !r.alvo.username ? login : undefined
+  try {
+    await payload.update({ collection: 'users', id, data: { nome, permissoes, ...(novoLogin && { username: novoLogin }) } })
+  } catch (e) {
+    return { erro: /unique|already|registrad|username/i.test(String(e)) ? 'Já existe um usuário com esse usuário.' : mensagem(e) }
+  }
   redirect('/painel/usuarios')
 }
 

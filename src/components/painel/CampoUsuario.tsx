@@ -3,7 +3,7 @@
 import { useId, useState } from 'react'
 
 /** Usuário do garçom: só letras minúsculas, números, _ e -, e mostra o login completo que ele vai usar. */
-export function CampoUsuario({ slug }: { slug: string }) {
+export function CampoUsuario({ slug, quem = 'O garçom', obrigatorio = true }: { slug: string; quem?: string; obrigatorio?: boolean }) {
   const id = useId()
   const [usuario, setUsuario] = useState('')
   return (
@@ -12,7 +12,7 @@ export function CampoUsuario({ slug }: { slug: string }) {
       <input
         id={id}
         name="usuario"
-        required
+        required={obrigatorio}
         minLength={3}
         maxLength={20}
         autoCapitalize="none"
@@ -22,7 +22,7 @@ export function CampoUsuario({ slug }: { slug: string }) {
         onChange={(e) => setUsuario(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
       />
       <small>
-        O garçom entra com <b>{usuario || 'usuario'}.{slug}</b>
+        {quem} entra com <b>{usuario || 'usuario'}.{slug}</b>
       </small>
     </div>
   )

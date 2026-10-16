@@ -29,7 +29,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
     <>
       <h1>Usuários</h1>
       <p>
-        Quem entra no painel de <b>{loja.nome}</b> com e-mail e senha. Garçons ficam na tela Garçons.
+        Quem entra no painel de <b>{loja.nome}</b> com usuário (ou e-mail) e senha. Garçons ficam na tela Garçons.
       </p>
       {aviso && (
         <p role="alert" className="erro">
@@ -46,12 +46,11 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
             <Apagavel key={u.id} chave={`usuario:${u.id}`} className={u.ativo === false ? 'esgotado' : undefined}>
               <div className="lista__nome">
                 <b>
-                  {u.nome || u.email}
+                  {u.nome || u.username || u.email}
                   {eu && ' (você)'}
                 </b>
                 <span>
-                  {u.nome ? u.email : ''}
-                  {u.ativo === false && `${u.nome ? ' · ' : ''}Desligado`}
+                  {[u.username && `Login: ${u.username}`, u.email, u.ativo === false && 'Desligado'].filter(Boolean).join(' · ')}
                 </span>
                 <span>
                   {delas.length === PERMISSOES.length
@@ -66,7 +65,8 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     <FormUsuario
                       acao={salvarUsuario.bind(null, u.id)}
                       disponiveis={minhas}
-                      inicial={{ nome: u.nome ?? '', permissoes: delas }}
+                      inicial={{ nome: u.nome ?? '', permissoes: delas, semUsuario: !u.username }}
+                      slug={loja.slug}
                     />
                   </details>
                 )}
@@ -89,7 +89,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
                     <button className="botao secundario">{u.ativo === false ? 'Ligar' : 'Desligar'}</button>
                   </form>
                   {podeApagar && (
-                    <BotaoApagar chave={`usuario:${u.id}`} nome={u.nome || u.email || 'o usuário'} acao={apagarUsuario.bind(null, u.id)} />
+                    <BotaoApagar chave={`usuario:${u.id}`} nome={u.nome || u.username || u.email || 'o usuário'} acao={apagarUsuario.bind(null, u.id)} />
                   )}
                 </>
               )}
@@ -99,7 +99,7 @@ export default async function Usuarios({ searchParams }: { searchParams: Promise
       </ul>
 
       <h2>Novo usuário</h2>
-      <FormUsuario key={usuarios.length} acao={salvarUsuario.bind(null, null)} disponiveis={minhas} novo />
+      <FormUsuario key={usuarios.length} acao={salvarUsuario.bind(null, null)} disponiveis={minhas} slug={loja.slug} novo />
       <p>
         <small>
           Você só pode dar permissões que você mesmo tem. Desligar um usuário tira o acesso na hora, mas ele continua no
