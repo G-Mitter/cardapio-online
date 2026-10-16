@@ -30,6 +30,7 @@ import * as migration_20261016_174955_estoque_ingredientes from './20261016_1749
 import * as migration_20261016_175513_ficha_tecnica from './20261016_175513_ficha_tecnica';
 import * as migration_20261016_175645_modo_preparo from './20261016_175645_modo_preparo';
 import * as migration_20261016_175830_setor_categoria from './20261016_175830_setor_categoria';
+import * as migration_20261016_180008_aceite_origem from './20261016_180008_aceite_origem';
 
 export const migrations = [
   {
@@ -190,6 +191,11 @@ export const migrations = [
   {
     up: migration_20261016_175830_setor_categoria.up,
     down: migration_20261016_175830_setor_categoria.down,
-    name: '20261016_175830_setor_categoria'
+    name: '20261016_175830_setor_categoria',
+  },
+  {
+    up: migration_20261016_180008_aceite_origem.up,
+    down: migration_20261016_180008_aceite_origem.down,
+    name: '20261016_180008_aceite_origem'
   },
 ];
