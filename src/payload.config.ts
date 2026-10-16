@@ -14,6 +14,7 @@ import { Acertos } from './collections/Acertos'
 import { Carrinhos } from './collections/Carrinhos'
 import { Cupons } from './collections/Cupons'
 import { Entregadores } from './collections/Entregadores'
+import { Ingredientes } from './collections/Ingredientes'
 import { Fechamentos } from './collections/Fechamentos'
 import { Lancamentos } from './collections/Lancamentos'
 import { Lojas } from './collections/Lojas'
@@ -43,7 +44,7 @@ export default buildConfig({
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
   },
-  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores, Fechamentos, Acertos, Lancamentos],
+  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores, Fechamentos, Acertos, Lancamentos, Ingredientes],
   // Painel /admin em português
   i18n: {
     supportedLanguages: { pt },
@@ -82,6 +83,7 @@ export default buildConfig({
         fechamentos: {},
         acertos: {},
         lancamentos: {},
+        ingredientes: {},
         media: {},
       },
       userHasAccessToAllTenants: (user) => ehAdmin(user),

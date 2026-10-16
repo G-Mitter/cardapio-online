@@ -30,6 +30,7 @@ import { rotuloAgendamento } from '@/lib/agendamento'
 import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
+import { lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
 import { mover } from '@/lib/ordem'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
@@ -986,6 +987,57 @@ export async function apagarCupom(id: number): Promise<Estado> {
     where: { id: { equals: id }, loja: { equals: loja.id } },
     ...comoUsuario,
   })
+  return null
+}
+
+// ---------- Estoque ----------
+
+/** Cria (id nulo) ou edita um ingrediente. A quantidade só muda em `ajustarEstoque`, menos na criação. */
+export async function salvarIngrediente(id: number | null, _: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
+  const nome = texto(form, 'nome').slice(0, 80)
+  const minimo = texto(form, 'minimo') ? lerQuantidade(texto(form, 'minimo')) : 0
+  const inicial = texto(form, 'quantidade') ? lerQuantidade(texto(form, 'quantidade')) : 0
+  if (!nome) return { erro: 'Coloque o nome do ingrediente.' }
+  if (minimo === null) return { erro: 'Quantidade mínima inválida. Use, por exemplo, 2 ou 1,5.' }
+  if (inicial === null) return { erro: 'Quantidade inválida. Use, por exemplo, 10 ou 2,5.' }
+
+  const { totalDocs } = await payload.count({
+    collection: 'ingredientes',
+    where: { loja: { equals: loja.id }, nome: { equals: nome }, ...(id ? { id: { not_equals: id } } : {}) },
+  })
+  if (totalDocs) return { erro: `Já existe o ingrediente ${nome}.` }
+
+  try {
+    const data = { nome, unidade: lerUnidade(texto(form, 'unidade')), minimo }
+    if (id) {
+      await payload.update({ collection: 'ingredientes', where: { id: { equals: id }, loja: { equals: loja.id } }, data, ...comoUsuario })
+    } else {
+      await payload.create({ collection: 'ingredientes', data: { ...data, quantidade: inicial, loja: loja.id }, ...comoUsuario })
+    }
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect('/painel/estoque')
+}
+
+/** `somar`: entrou (ou saiu, com sinal de menos) esta quantidade. `definir`: a contagem de agora. */
+export async function ajustarEstoque(id: number, _: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao('cardapio')
+  const definir = texto(form, 'modo') === 'definir'
+  const valor = lerQuantidade(texto(form, 'valor'), { negativo: !definir })
+  if (valor === null) return { erro: definir ? 'Coloque a contagem, por exemplo 8 ou 2,5.' : 'Coloque quanto entrou (use - para tirar), por exemplo 10 ou -2,5.' }
+  const { docs } = await payload.find({ collection: 'ingredientes', where: { id: { equals: id }, loja: { equals: loja.id } }, limit: 1, depth: 0, ...comoUsuario })
+  if (!docs[0]) return { erro: 'Ingrediente não encontrado.' }
+  // ponytail: ler e gravar; duas pessoas ajustando o mesmo ingrediente no mesmo segundo podem se sobrepor. A baixa dos pedidos (#145) usa soma no banco.
+  await payload.update({ collection: 'ingredientes', id, data: { quantidade: definir ? valor : somar(docs[0].quantidade, valor) }, ...comoUsuario })
+  redirect('/painel/estoque')
+}
+
+export async function apagarIngrediente(id: number): Promise<Estado> {
+  const { payload, loja, user, comoUsuario } = await sessao('cardapio')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
+  await payload.delete({ collection: 'ingredientes', where: { id: { equals: id }, loja: { equals: loja.id } }, ...comoUsuario })
   return null
 }
 
