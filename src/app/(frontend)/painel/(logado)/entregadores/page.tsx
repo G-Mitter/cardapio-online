@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { AcertoEntregador } from '@/components/painel/AcertoEntregador'
+import { CampoTelefone } from '@/components/painel/CampoTelefone'
 import { Formulario } from '@/components/painel/Formulario'
 import { diferencaDoAcerto, intervaloDoDia, resumoPorEntregador, rotuloResumo } from '@/lib/entregadores'
 import { sessao } from '@/lib/painel'
@@ -93,10 +94,7 @@ export default async function Entregadores({ searchParams }: { searchParams: Pro
             Nome
             <input name="nome" required maxLength={80} />
           </label>
-          <label className="campo">
-            WhatsApp
-            <input name="whatsapp" type="tel" required placeholder="(31) 99999-0000" />
-          </label>
+          <CampoTelefone rotulo="WhatsApp" name="whatsapp" required />
         </div>
         <button className="botao">Cadastrar</button>
       </Formulario>

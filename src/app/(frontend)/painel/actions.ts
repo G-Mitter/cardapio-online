@@ -727,8 +727,8 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
   const preco = lerPreco(texto(form, 'preco'))
   if (!nome) return { erro: 'Coloque o nome do produto.' }
   if (preco === null) return { erro: 'Preço inválido. Use, por exemplo, 32,90.' }
-  const leve = texto(form, 'leve') ? Number(texto(form, 'leve')) : null
-  const pague = texto(form, 'pague') ? Number(texto(form, 'pague')) : null
+  const leve = Number(texto(form, 'leve')) || null
+  const pague = Number(texto(form, 'pague')) || null
   if ((leve || pague) && !promocaoDoProduto({ leve, pague })) {
     return { erro: 'Na promoção, preencha "leve" (2 ou mais) e "pague" (um número menor que o "leve"), ou deixe os dois vazios.' }
   }
@@ -953,6 +953,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   if (!taxaServico.ok) return { erro: taxaServico.erro }
   const pixelMeta = lerPixelMeta(texto(form, 'pixelMeta'))
   if (!pixelMeta.ok) return { erro: pixelMeta.erro }
+  const whatsapp = texto(form, 'whatsapp')
+  if (!whatsappUrl(whatsapp)) return { erro: 'WhatsApp incompleto. Use DDD e número, por exemplo (31) 99999-0000.' }
   const horario = lerHorarioDoForm(form, loja.horario ?? '')
   if (!horario.ok) return { erro: horario.erro }
   const tagGoogle = lerTagGoogle(texto(form, 'tagGoogle'))
@@ -966,7 +968,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
       id: loja.id,
       data: {
         nome,
-        whatsapp: texto(form, 'whatsapp'),
+        whatsapp,
         corPrincipal: texto(form, 'corPrincipal'),
         fonte: texto(form, 'fonte') as Loja['fonte'],
         horario: horario.texto,

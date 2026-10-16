@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { BotaoApagar } from '@/components/painel/Apagar'
+import { CampoDinheiro } from '@/components/painel/CampoDinheiro'
+import { Contador } from '@/components/painel/Contador'
 import { CampoComExemplo } from '@/components/painel/CampoComExemplo'
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
@@ -14,8 +16,6 @@ import type { Media } from '@/payload-types'
 import { apagarProduto, salvarProduto } from '../../../actions'
 
 export const metadata: Metadata = { title: 'Produto' }
-
-const reais = (v: number) => v.toFixed(2).replace('.', ',')
 
 /** Cadastro de um produto. /painel/produtos/novo cria; /painel/produtos/<id> edita. */
 export default async function Produto({ params }: { params: Promise<{ id: string }> }) {
@@ -70,16 +70,7 @@ export default async function Produto({ params }: { params: Promise<{ id: string
           />
         </label>
         <div className="linha">
-          <label className="campo">
-            Preço (R$)
-            <input
-              name="preco"
-              inputMode="decimal"
-              placeholder="32,90"
-              defaultValue={produto ? reais(produto.preco) : ''}
-              required
-            />
-          </label>
+          <CampoDinheiro rotulo="Preço (R$)" name="preco" inicial={produto?.preco ?? 0} />
           <label className="campo">
             Categoria
             <select name="categoria" defaultValue={categoriaAtual} required>
@@ -94,16 +85,10 @@ export default async function Produto({ params }: { params: Promise<{ id: string
         <fieldset className="opcoes">
           <legend>Promoção por quantidade (opcional)</legend>
           <div className="linha">
-            <label className="campo curto">
-              Leve
-              <input name="leve" type="number" min={2} defaultValue={produto?.leve ?? ''} placeholder="3" />
-            </label>
-            <label className="campo curto">
-              Pague
-              <input name="pague" type="number" min={1} defaultValue={produto?.pague ?? ''} placeholder="2" />
-            </label>
+            <Contador rotulo="Leve" name="leve" inicial={produto?.leve ?? 0} max={99} />
+            <Contador rotulo="Pague" name="pague" inicial={produto?.pague ?? 0} max={98} />
           </div>
-          <small>Ex.: leve 3 e pague 2. A cada 3 unidades, a mais barata sai de graça.</small>
+          <small>Ex.: leve 3 e pague 2. A cada 3 unidades, a mais barata sai de graça. Deixe os dois em 0 para não ter promoção.</small>
         </fieldset>
         <fieldset className="opcoes">
           <legend>Selos (aparecem junto do nome no cardápio)</legend>
@@ -138,10 +123,7 @@ export default async function Produto({ params }: { params: Promise<{ id: string
             <input type="checkbox" name="esgotado" defaultChecked={Boolean(produto?.esgotado)} />
             Esgotado (aparece no cardápio, mas não dá para pedir)
           </label>
-          <label className="campo curto">
-            Ordem
-            <input name="ordem" type="number" defaultValue={produto?.ordem ?? 0} />
-          </label>
+          <Contador rotulo="Ordem" name="ordem" inicial={produto?.ordem ?? 0} />
         </div>
         <button className="botao">Salvar</button>
       </Formulario>

@@ -1,17 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { salvarLoja } from '@/app/(frontend)/painel/actions'
 import { Cardapio, type CategoriaView } from '@/components/Cardapio'
 import { type Bairro, lerBairros } from '@/lib/entrega'
 import { DIAS, type EnderecoLoja, type Horario, lerEndereco, lerHorario, montarEndereco, montarHorario } from '@/lib/lojaTexto'
+import { MAX_MESAS } from '@/lib/mesas'
 import { FORMAS_PAGAMENTO, type FormaPagamento } from '@/lib/pedido'
 import { COR_PADRAO, FONTES, temaDaLoja } from '@/lib/tema'
 
-import { CampoComExemplo } from './CampoComExemplo'
+import { CampoDinheiro } from './CampoDinheiro'
 import { CampoImagem } from './CampoImagem'
+import { CampoTelefone } from './CampoTelefone'
+import { Contador } from './Contador'
 import { Formulario } from './Formulario'
+import { ListaBairros } from './ListaBairros'
 
 export type DadosLoja = {
   nome: string
@@ -47,8 +51,6 @@ const bairrosDaPrevia = (texto: string): Bairro[] => {
   return r.ok ? r.bairros : []
 }
 
-const reais = (v: number) => v.toFixed(2).replace('.', ',')
-
 /**
  * Dados da loja com a prévia do cardápio ao lado: cada mudança (nome, cor, fonte,
  * logo, capa, horário...) aparece na prévia antes de salvar.
@@ -60,6 +62,11 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
   const horarioAntigo = Boolean(loja.horario) && !lido
   const [h, setH] = useState<Horario>(lido ?? { dias: [], abre: '', fecha: '' })
   const [e, setE] = useState<EnderecoLoja>(lerEndereco(loja.endereco))
+  const mudaBairros = useCallback((bairros: string) => setD((a) => ({ ...a, bairros })), [])
+  // Mesas: só a quantidade, ou nomes (guardado como texto: "10" ou "Varanda 1, Varanda 2").
+  const [nomesDasMesas, setNomesDasMesas] = useState(Boolean(loja.mesas) && !/^\d+$/.test(loja.mesas))
+  const [quantas, setQuantas] = useState(/^\d+$/.test(loja.mesas) ? Number(loja.mesas) : 0)
+  const [mesasTexto, setMesasTexto] = useState(/^\d+$/.test(loja.mesas) ? '' : loja.mesas)
   const mudaHorario = (novo: Horario) => {
     setH(novo)
     // Sem escolher nada, o horário antigo continua valendo (e aparecendo na prévia).
@@ -85,17 +92,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
           Nome da loja
           <input name="nome" value={d.nome} onChange={muda('nome')} required maxLength={80} />
         </label>
-        <label className="campo">
-          WhatsApp que recebe os pedidos
-          <input
-            name="whatsapp"
-            type="tel"
-            value={d.whatsapp}
-            onChange={muda('whatsapp')}
-            placeholder="(31) 99999-0000"
-            required
-          />
-        </label>
+        <CampoTelefone rotulo="WhatsApp que recebe os pedidos" name="whatsapp" inicial={d.whatsapp} required aoMudar={(whatsapp) => setD((a) => ({ ...a, whatsapp }))} />
         <div className="linha">
           <label className="campo">
             Cor principal
@@ -202,20 +199,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Faz entrega
           </label>
           {d.fazEntrega && (
-            <label className="campo curto">
-              Taxa de entrega (R$)
-              <input
-                name="taxaEntrega"
-                inputMode="decimal"
-                defaultValue={reais(loja.taxaEntrega)}
-                onChange={(e) =>
-                  setD((a) => ({
-                    ...a,
-                    taxaEntrega: Number(e.target.value.replace(',', '.')) || 0,
-                  }))
-                }
-              />
-            </label>
+            <CampoDinheiro curto rotulo="Taxa de entrega (R$)" name="taxaEntrega" inicial={loja.taxaEntrega} aoMudar={(taxaEntrega) => setD((a) => ({ ...a, taxaEntrega }))} />
           )}
           <label className="marcar">
             <input
@@ -227,20 +211,37 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             Aceita retirada
           </label>
         </div>
-        <label className="campo">
-          Mesas (opcional)
-          <input name="mesas" value={d.mesas} onChange={muda('mesas')} placeholder="10 ou Varanda 1, Varanda 2" maxLength={600} />
+        <fieldset className="campo">
+          <legend>Mesas (opcional)</legend>
+          <input type="hidden" name="mesas" value={nomesDasMesas ? mesasTexto : quantas ? String(quantas) : ''} />
+          <Contador rotulo="Quantas mesas" inicial={quantas} max={MAX_MESAS} aoMudar={setQuantas} />
+          <label className="marcar">
+            <input type="checkbox" checked={nomesDasMesas} onChange={(e) => setNomesDasMesas(e.target.checked)} />
+            Dar nome às mesas (Varanda 1, Salão...)
+          </label>
+          {nomesDasMesas && (
+            <label className="campo">
+              Nomes das mesas, separados por vírgula
+              <input value={mesasTexto} onChange={(e) => setMesasTexto(e.target.value)} placeholder="Varanda 1, Varanda 2" maxLength={600} />
+            </label>
+          )}
           <small>
-            Quantidade (10 vira as mesas 1 a 10) ou nomes separados por vírgula. Depois de salvar, imprima os QR Codes em
-            Mesas.
+            Sem nomes, 10 vira as mesas 1 a 10. Depois de salvar, imprima os QR Codes em Mesas.
           </small>
-        </label>
+        </fieldset>
         <label className="campo">
-          Taxa de serviço das mesas (%)
-          <input name="taxaServico" value={d.taxaServico} onChange={muda('taxaServico')} inputMode="decimal" placeholder="10" maxLength={5} />
+          Taxa de serviço das mesas
+          <select name="taxaServico" value={d.taxaServico} onChange={muda('taxaServico')}>
+            <option value="">Sem taxa de serviço</option>
+            {[...new Set(['5', '10', '12', '15', d.taxaServico].filter(Boolean))].map((t) => (
+              <option key={t} value={t}>
+                {t}%
+              </option>
+            ))}
+          </select>
           <small>
             Aparece ao fechar a conta, e o cliente pode dispensar. É gorjeta dos funcionários: o repasse é com o seu
-            contador. Deixe vazio para não cobrar.
+            contador.
           </small>
         </label>
         <label className="campo">
@@ -262,16 +263,7 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
           Aceita pedidos agendados (dia e hora, de 1 hora até 7 dias à frente)
         </label>
         {d.fazEntrega && (
-          <CampoComExemplo
-            name="bairros"
-            rotulo="Taxa por bairro (opcional)"
-            defaultValue={loja.bairros}
-            exemplo={'Centro = 5,00\nSanta Efigênia = 8,00'}
-            aoMudar={(bairros) => setD((a) => ({ ...a, bairros }))}
-          >
-            Um bairro por linha, com o valor depois do sinal de igual. Se preencher, a loja entrega
-            só nesses bairros e a taxa única acima não é usada.
-          </CampoComExemplo>
+          <ListaBairros inicial={loja.bairros} aoMudar={mudaBairros} />
         )}
         <fieldset className="opcoes">
           <legend>Formas de pagamento aceitas</legend>
