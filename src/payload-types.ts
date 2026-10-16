@@ -450,6 +450,10 @@ export interface Categoria {
   loja?: (number | null) | Loja;
   nome: string;
   /**
+   * Cozinha, Bar, Sobremesas... A tela da cozinha filtra por setor. Vazio = Cozinha.
+   */
+  setor?: string | null;
+  /**
    * Menor aparece primeiro.
    */
   ordem?: number | null;
@@ -820,6 +824,7 @@ export interface ProdutosSelect<T extends boolean = true> {
 export interface CategoriasSelect<T extends boolean = true> {
   loja?: T;
   nome?: T;
+  setor?: T;
   ordem?: T;
   updatedAt?: T;
   createdAt?: T;

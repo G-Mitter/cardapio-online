@@ -29,6 +29,7 @@ import * as migration_20261016_154305_permissoes_usuario from './20261016_154305
 import * as migration_20261016_174955_estoque_ingredientes from './20261016_174955_estoque_ingredientes';
 import * as migration_20261016_175513_ficha_tecnica from './20261016_175513_ficha_tecnica';
 import * as migration_20261016_175645_modo_preparo from './20261016_175645_modo_preparo';
+import * as migration_20261016_175830_setor_categoria from './20261016_175830_setor_categoria';
 
 export const migrations = [
   {
@@ -184,6 +185,11 @@ export const migrations = [
   {
     up: migration_20261016_175645_modo_preparo.up,
     down: migration_20261016_175645_modo_preparo.down,
-    name: '20261016_175645_modo_preparo'
+    name: '20261016_175645_modo_preparo',
+  },
+  {
+    up: migration_20261016_175830_setor_categoria.up,
+    down: migration_20261016_175830_setor_categoria.down,
+    name: '20261016_175830_setor_categoria'
   },
 ];

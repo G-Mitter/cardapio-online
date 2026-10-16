@@ -30,6 +30,7 @@ import { rotuloAgendamento } from '@/lib/agendamento'
 import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
+import { lerSetor } from '@/lib/setores'
 import { lerFicha, lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
 import { pausarPelaFicha, refazerPausa } from '@/lib/estoque-db'
 import { mover } from '@/lib/ordem'
@@ -872,7 +873,7 @@ export async function salvarCategoria(id: number | null, _: Estado, form: FormDa
   const { payload, loja, comoUsuario } = await sessao('cardapio')
   const nome = texto(form, 'nome')
   if (!nome) return { erro: 'Coloque o nome da categoria.' }
-  const data = { nome }
+  const data = { nome, setor: lerSetor(texto(form, 'setor')) }
   try {
     if (id === null) {
       // Categoria nova entra no fim.

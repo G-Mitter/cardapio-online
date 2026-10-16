@@ -14,6 +14,12 @@ export const Categorias: CollectionConfig = {
   fields: [
     { name: 'nome', label: 'Nome', type: 'text', required: true },
     {
+      name: 'setor',
+      label: 'Setor de preparo',
+      type: 'text',
+      admin: { description: 'Cozinha, Bar, Sobremesas... A tela da cozinha filtra por setor. Vazio = Cozinha.' },
+    },
+    {
       name: 'ordem',
       label: 'Ordem no cardápio',
       type: 'number',

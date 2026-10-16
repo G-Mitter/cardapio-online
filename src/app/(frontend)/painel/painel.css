@@ -539,6 +539,22 @@ details.perigo form {
 .cozinha__obs {
   font-weight: 700;
 }
+.cozinha__setores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.cozinha__setores a {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  text-decoration: none;
+}
+.cozinha__setores a[aria-current='page'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
 .cozinha__embalagem {
   font-size: 1rem;
   font-weight: 700;
