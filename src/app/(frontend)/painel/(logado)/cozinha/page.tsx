@@ -25,6 +25,11 @@ export default async function Cozinha() {
   })
 
   const garcons = await nomesDosGarcons(payload, docs)
+  const ids = [...new Set(docs.flatMap((p) => (p.itens ?? []).flatMap((i) => (i.produto ? [i.produto] : []))))]
+  const { docs: produtos } = ids.length
+    ? await payload.find({ collection: 'produtos', where: { loja: { equals: loja.id }, id: { in: ids } }, limit: 0, depth: 0, ...comoUsuario })
+    : { docs: [] }
+  const guia = new Map(produtos.map((x) => [x.id, { comoFazer: x.modoPreparo ?? '', embalagem: x.naEmbalagem ?? '' }]))
   const pedidos = docs
     .filter((p) => naCozinha(p.agendadoPara ?? null, agora))
     .map((p) => ({
@@ -39,7 +44,14 @@ export default async function Cozinha() {
       garcom: garcons.get(idDoGarcom(p) ?? -1) ?? '',
       agendadoPara: p.agendadoPara ?? null,
       observacoes: p.observacoes ?? '',
-      itens: (p.itens ?? []).map((i) => ({ nome: i.nome, quantidade: i.quantidade, opcoes: i.opcoes ?? '' })),
+      itens: (p.itens ?? []).map((i) => ({
+        nome: i.nome,
+        quantidade: i.quantidade,
+        opcoes: i.opcoes ?? '',
+        comoFazer: guia.get(i.produto ?? -1)?.comoFazer ?? '',
+        // Para viagem (entrega ou retirada); quem come na mesa não leva embalagem.
+        embalagem: p.mesa ? '' : (guia.get(i.produto ?? -1)?.embalagem ?? ''),
+      })),
     }))
 
   return <TelaCozinha pedidos={pedidos} />

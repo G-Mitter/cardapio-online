@@ -539,6 +539,15 @@ details.perigo form {
 .cozinha__obs {
   font-weight: 700;
 }
+.cozinha__embalagem {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.cozinha__preparo {
+  margin: 0.25rem 0;
+  font-size: 1rem;
+  white-space: pre-line;
+}
 .cozinha__acao {
   margin-top: 0.5rem;
   font-size: 1rem;

@@ -758,6 +758,8 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       preco,
       categoria,
       esgotado: marcado(form, 'esgotado'),
+      modoPreparo: texto(form, 'modoPreparo').slice(0, 2000),
+      naEmbalagem: texto(form, 'naEmbalagem').slice(0, 500),
       ficha: ficha.ficha,
       opcoes: opcoes.grupos,
       leve,

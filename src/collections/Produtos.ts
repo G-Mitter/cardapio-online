@@ -75,6 +75,18 @@ export const Produtos: CollectionConfig = {
       ],
     },
     {
+      name: 'modoPreparo',
+      label: 'Como é feito',
+      type: 'textarea',
+      admin: { description: 'Passo a passo para a cozinha. Não aparece no cardápio do cliente.' },
+    },
+    {
+      name: 'naEmbalagem',
+      label: 'O que vai na embalagem',
+      type: 'textarea',
+      admin: { description: 'Ex.: talher, molho extra, guardanapo. Aparece para a cozinha nos pedidos para viagem. Não aparece no cardápio do cliente.' },
+    },
+    {
       name: 'ficha',
       label: 'Ficha técnica',
       type: 'array',

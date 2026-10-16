@@ -107,6 +107,14 @@ export default async function Produto({ params }: { params: Promise<{ id: string
           ))}
         </fieldset>
         <ListaOpcoes inicial={gruposDoProduto(produto?.opcoes)} />
+        <label className="campo">
+          Como é feito (só a cozinha vê)
+          <textarea name="modoPreparo" defaultValue={produto?.modoPreparo ?? ''} rows={4} maxLength={2000} />
+        </label>
+        <label className="campo">
+          O que vai na embalagem (pedidos para viagem)
+          <input name="naEmbalagem" defaultValue={produto?.naEmbalagem ?? ''} maxLength={500} placeholder="Talher, molho extra" />
+        </label>
         <ListaFicha
           inicial={(produto?.ficha ?? []).map((l) => ({ ingrediente: typeof l.ingrediente === 'object' ? l.ingrediente.id : l.ingrediente, quantidade: l.quantidade }))}
           ingredientes={ingredientes.docs.map((i) => ({ id: i.id, nome: i.nome, unidade: i.unidade }))}
