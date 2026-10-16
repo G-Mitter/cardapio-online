@@ -37,6 +37,7 @@ import * as migration_20261016_201352_custo_ingrediente from './20261016_201352_
 import * as migration_20261016_202253_compras_fornecedores from './20261016_202253_compras_fornecedores';
 import * as migration_20261016_203004_contatos_promocoes from './20261016_203004_contatos_promocoes';
 import * as migration_20261016_222300_cadastro_da_loja from './20261016_222300_cadastro_da_loja';
+import * as migration_20261016_223106_passos_dispensados from './20261016_223106_passos_dispensados';
 
 export const migrations = [
   {
@@ -232,6 +233,11 @@ export const migrations = [
   {
     up: migration_20261016_222300_cadastro_da_loja.up,
     down: migration_20261016_222300_cadastro_da_loja.down,
-    name: '20261016_222300_cadastro_da_loja'
+    name: '20261016_222300_cadastro_da_loja',
+  },
+  {
+    up: migration_20261016_223106_passos_dispensados.up,
+    down: migration_20261016_223106_passos_dispensados.down,
+    name: '20261016_223106_passos_dispensados'
   },
 ];

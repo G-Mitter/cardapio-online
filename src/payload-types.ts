@@ -308,6 +308,10 @@ export interface Loja {
    */
   aceitouTermosEm?: string | null;
   /**
+   * Marcado, a lista de primeiros passos não aparece mais no painel.
+   */
+  passosDispensados?: boolean | null;
+  /**
    * Desmarque para pausar os pedidos (o cardápio continua visível).
    */
   aberta?: boolean | null;
@@ -994,6 +998,7 @@ export interface LojasSelect<T extends boolean = true> {
   tagGoogle?: T;
   documento?: T;
   aceitouTermosEm?: T;
+  passosDispensados?: T;
   aberta?: T;
   updatedAt?: T;
   createdAt?: T;

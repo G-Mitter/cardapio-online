@@ -243,6 +243,13 @@ export const Lojas: CollectionConfig = {
       access: { read: adminOuDonoDaLoja, create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
     },
     {
+      name: 'passosDispensados',
+      label: 'Dispensou a lista de primeiros passos',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'Marcado, a lista de primeiros passos não aparece mais no painel.' },
+    },
+    {
       name: 'aberta',
       label: 'Recebendo pedidos agora',
       type: 'checkbox',
