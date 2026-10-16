@@ -18,6 +18,7 @@ import { Ingredientes } from './collections/Ingredientes'
 import { Caixas } from './collections/Caixas'
 import { Compras } from './collections/Compras'
 import { Fechamentos } from './collections/Fechamentos'
+import { Contatos } from './collections/Contatos'
 import { Fornecedores } from './collections/Fornecedores'
 import { Lancamentos } from './collections/Lancamentos'
 import { Lojas } from './collections/Lojas'
@@ -47,7 +48,7 @@ export default buildConfig({
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
   },
-  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores, Fechamentos, Acertos, Lancamentos, Ingredientes, Caixas, Fornecedores, Compras],
+  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores, Fechamentos, Acertos, Lancamentos, Ingredientes, Caixas, Fornecedores, Compras, Contatos],
   // Painel /admin em português
   i18n: {
     supportedLanguages: { pt },
@@ -90,6 +91,7 @@ export default buildConfig({
         caixas: {},
         fornecedores: {},
         compras: {},
+        contatos: {},
         media: {},
       },
       userHasAccessToAllTenants: (user) => ehAdmin(user),
