@@ -5,6 +5,7 @@
 - Responder em português do Brasil, com frases curtas e sem travessão.
 - Antes de editar arquivos, rodar comandos que alterem algo ou abrir PR, enviar um plano curto (o que muda, onde, riscos, o que fica de fora) e esperar o OK. Pesquisa e leitura são livres.
 - Uma issue por PR, com "Closes #N". O Guilherme cria as issues e faz os merges.
+- Ao sugerir uma issue, enviar o título e a descrição prontos para copiar e colar, no formato Para que serve, O que fazer, Fora desta issue e Pronto quando.
 - Antes de abrir o PR: rodar `npx tsc --noEmit`, `npx eslint src tests` e `npx vitest run tests/int`, e conferir a tela no navegador quando houver tela.
 - Rodar `graphify update .` em cada PR de código e incluir `graphify-out/` no mesmo PR. Com dois PRs abertos ao mesmo tempo, atualizar o grafo só depois do merge, para não dar conflito no `graph.json`.
 - Registrar na memória do projeto o que a próxima thread precisaria perguntar de novo.
