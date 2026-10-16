@@ -75,6 +75,17 @@ export const Produtos: CollectionConfig = {
       ],
     },
     {
+      name: 'ficha',
+      label: 'Ficha técnica',
+      type: 'array',
+      labels: { singular: 'Ingrediente', plural: 'Ingredientes' },
+      admin: { description: 'O que leva uma unidade do prato. O estoque baixa a cada pedido e o prato pausa quando um ingrediente acaba. O painel da loja edita isto.' },
+      fields: [
+        { name: 'ingrediente', label: 'Ingrediente', type: 'relationship', relationTo: 'ingredientes', required: true },
+        { name: 'quantidade', label: 'Quantidade por unidade', type: 'number', required: true, min: 0 },
+      ],
+    },
+    {
       type: 'row',
       fields: [
         {
@@ -87,5 +98,7 @@ export const Produtos: CollectionConfig = {
         { name: 'ordem', label: 'Ordem na categoria', type: 'number', defaultValue: 0 },
       ],
     },
+    // Marcado pelo estoque quando faltou ingrediente; some quando todos voltam. Esgotar à mão limpa esta marca.
+    { name: 'esgotadoAuto', label: 'Pausado pelo estoque', type: 'checkbox', defaultValue: false, admin: { readOnly: true } },
   ],
 }

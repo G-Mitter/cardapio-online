@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { logado } from '../access/roles'
+import { acertarEstoque } from '../lib/estoque-db'
 import { FORMAS_PAGAMENTO } from '../lib/pedido'
 
 /**
@@ -15,6 +16,16 @@ export const Pedidos: CollectionConfig = {
     defaultColumns: ['numero', 'nome', 'total', 'modo', 'status', 'createdAt'],
   },
   defaultSort: '-createdAt',
+  // Todo pedido passa por aqui (site, balcão, mesa, garçom): é o lugar certo para baixar o estoque.
+  hooks: {
+    afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        await acertarEstoque(req.payload, operation === 'create' ? null : previousDoc, doc)
+        return doc
+      },
+    ],
+    afterDelete: [async ({ doc, req }) => void (await acertarEstoque(req.payload, doc, null))],
+  },
   access: {
     create: () => false,
     read: logado,

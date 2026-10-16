@@ -415,10 +415,21 @@ export interface Produto {
       }[]
     | null;
   /**
+   * O que leva uma unidade do prato. O estoque baixa a cada pedido e o prato pausa quando um ingrediente acaba. O painel da loja edita isto.
+   */
+  ficha?:
+    | {
+        ingrediente: number | Ingrediente;
+        quantidade: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Continua no cardápio, mas não dá para pedir.
    */
   esgotado?: boolean | null;
   ordem?: number | null;
+  esgotadoAuto?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -434,6 +445,20 @@ export interface Categoria {
    * Menor aparece primeiro.
    */
   ordem?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingredientes".
+ */
+export interface Ingrediente {
+  id: number;
+  loja?: (number | null) | Loja;
+  nome: string;
+  unidade: 'un' | 'g' | 'kg' | 'ml' | 'l';
+  quantidade: number;
+  minimo: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -567,20 +592,6 @@ export interface Lancamento {
   diaDoMes?: number | null;
   pagoEm?: string | null;
   valorPago?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ingredientes".
- */
-export interface Ingrediente {
-  id: number;
-  loja?: (number | null) | Loja;
-  nome: string;
-  unidade: 'un' | 'g' | 'kg' | 'ml' | 'l';
-  quantidade: number;
-  minimo: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -779,8 +790,16 @@ export interface ProdutosSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  ficha?:
+    | T
+    | {
+        ingrediente?: T;
+        quantidade?: T;
+        id?: T;
+      };
   esgotado?: T;
   ordem?: T;
+  esgotadoAuto?: T;
   updatedAt?: T;
   createdAt?: T;
 }

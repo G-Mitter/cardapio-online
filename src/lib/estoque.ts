@@ -32,3 +32,60 @@ export const situacao = (quantidade: number, minimo: number): Situacao =>
 /** "1,5 kg", "12 un". */
 export const rotuloQuantidade = (q: number, unidade: string) =>
   `${String(q).replace('.', ',')} ${unidade}`
+
+// ---------- Ficha técnica: quanto de cada ingrediente leva uma unidade do prato ----------
+
+export type LinhaFicha = { ingrediente: number; quantidade: number }
+export type ItemConsumo = { produto?: number | null; quantidade: number }
+
+/**
+ * Ficha vinda do formulário: JSON `[{ingrediente, quantidade}]`. Ingrediente de fora da loja, repetido
+ * ou quantidade inválida/zero invalida tudo, com a mensagem para mostrar.
+ */
+export function lerFicha(json: string, ingredientesDaLoja: number[]): { ok: true; ficha: LinhaFicha[] } | { ok: false; erro: string } {
+  let cru: unknown
+  try {
+    cru = json ? JSON.parse(json) : []
+  } catch {
+    return { ok: false, erro: 'A ficha técnica veio em formato inválido. Recarregue a página.' }
+  }
+  if (!Array.isArray(cru) || cru.length > 50) return { ok: false, erro: 'A ficha técnica veio em formato inválido. Recarregue a página.' }
+  const ficha: LinhaFicha[] = []
+  for (const l of cru as Record<string, unknown>[]) {
+    const ingrediente = Number(l?.ingrediente)
+    const quantidade = typeof l?.quantidade === 'string' ? lerQuantidade(l.quantidade) : null
+    if (!ingredientesDaLoja.includes(ingrediente)) return { ok: false, erro: 'Escolha o ingrediente em todas as linhas da ficha técnica.' }
+    if (!quantidade) return { ok: false, erro: 'Na ficha técnica, coloque a quantidade de cada ingrediente (maior que zero, por exemplo 0,15).' }
+    if (ficha.some((f) => f.ingrediente === ingrediente)) return { ok: false, erro: 'Um ingrediente aparece duas vezes na ficha técnica.' }
+    ficha.push({ ingrediente, quantidade })
+  }
+  return { ok: true, ficha }
+}
+
+/** O que os itens de um pedido gastam, por ingrediente. Produto sem ficha não gasta nada. */
+export function consumo(itens: ItemConsumo[], fichas: Map<number, LinhaFicha[]>): Map<number, number> {
+  const total = new Map<number, number>()
+  for (const item of itens) {
+    for (const l of (item.produto != null && fichas.get(item.produto)) || []) {
+      total.set(l.ingrediente, somar(total.get(l.ingrediente) ?? 0, l.quantidade * item.quantidade))
+    }
+  }
+  return total
+}
+
+/**
+ * Quanto sai do estoque (valor negativo) ou volta (positivo) quando o pedido muda de `antes` para `depois`.
+ * Pedido cancelado não gasta; criar é de nada para algo, apagar é de algo para nada.
+ */
+export function variacaoDoPedido(antes: Map<number, number>, depois: Map<number, number>): Map<number, number> {
+  const v = new Map<number, number>()
+  for (const id of new Set([...antes.keys(), ...depois.keys()])) {
+    const d = somar(antes.get(id) ?? 0, -(depois.get(id) ?? 0))
+    if (d !== 0) v.set(id, d)
+  }
+  return v
+}
+
+/** Falta algum ingrediente (zero ou menos) para fazer o prato? */
+export const faltaIngrediente = (ficha: LinhaFicha[], quantidades: Map<number, number>) =>
+  ficha.some((l) => (quantidades.get(l.ingrediente) ?? 0) <= 0)
