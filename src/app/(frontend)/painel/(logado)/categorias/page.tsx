@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Apagavel, BotaoApagar } from '@/components/painel/Apagar'
 import { Formulario } from '@/components/painel/Formulario'
 import { sessao } from '@/lib/painel'
+import { SUGESTOES_SETOR } from '@/lib/setores'
 
 import { apagarCategoria, moverCategoria, salvarCategoria } from '../../actions'
 
@@ -38,12 +39,18 @@ export default async function Categorias() {
   return (
     <>
       <h1>Categorias</h1>
-      <p className="vazio">Use as setas para mudar a sequência das categorias no cardápio.</p>
+      <p className="vazio">Use as setas para mudar a sequência das categorias no cardápio. O setor (Cozinha, Bar, Sobremesas...) separa os itens na tela da cozinha; vazio vale Cozinha.</p>
+      <datalist id="setores">
+        {[...new Set([...SUGESTOES_SETOR, ...docs.flatMap((c) => (c.setor ? [c.setor] : []))])].map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
       <ul className="categorias">
         {docs.map((c, i) => (
           <Apagavel key={c.id} chave={`categoria:${c.id}`}>
             <Formulario acao={salvarCategoria.bind(null, c.id)} className="form-linha">
               <input name="nome" defaultValue={c.nome} aria-label="Nome" required maxLength={60} />
+              <input name="setor" defaultValue={c.setor ?? ''} aria-label={`Setor de ${c.nome}`} placeholder="Setor: Cozinha" list="setores" maxLength={30} />
               <button className="botao secundario">Salvar</button>
             </Formulario>
             <span className="setas">
@@ -70,6 +77,7 @@ export default async function Categorias() {
       <h2>Nova categoria</h2>
       <Formulario key={docs.length} acao={salvarCategoria.bind(null, null)} className="form-linha">
         <input name="nome" placeholder="Ex.: Sobremesas" aria-label="Nome" required maxLength={60} />
+        <input name="setor" placeholder="Setor: Cozinha" aria-label="Setor" list="setores" maxLength={30} />
         <button className="botao">Criar</button>
       </Formulario>
     </>

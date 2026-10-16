@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react'
 
@@ -20,7 +21,7 @@ type PedidoCozinha = {
   garcom: string
   agendadoPara: string | null
   observacoes: string
-  itens: { nome: string; quantidade: number; opcoes: string; comoFazer: string; embalagem: string }[]
+  itens: { nome: string; quantidade: number; opcoes: string; setor: string; comoFazer: string; embalagem: string }[]
 }
 
 const COLUNAS = ['novo', 'preparando', 'pronto'] as const
@@ -44,7 +45,7 @@ function apitar(ctx: AudioContext) {
   }
 }
 
-export function TelaCozinha({ pedidos }: { pedidos: PedidoCozinha[] }) {
+export function TelaCozinha({ pedidos, setores, setor }: { pedidos: PedidoCozinha[]; setores: string[]; setor: string }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [som, setSom] = useState(false)
@@ -98,6 +99,15 @@ export function TelaCozinha({ pedidos }: { pedidos: PedidoCozinha[] }) {
           </button>
         )}
       </div>
+      {setores.length > 0 && (
+        <nav className="cozinha__setores" aria-label="Setor">
+          {['', ...setores].map((s) => (
+            <Link key={s} href={s ? `/painel/cozinha?setor=${encodeURIComponent(s)}` : '/painel/cozinha'} aria-current={s === setor ? 'page' : undefined}>
+              {s || 'Todos'}
+            </Link>
+          ))}
+        </nav>
+      )}
       <div className="cozinha__colunas">
         {COLUNAS.map((status) => {
           const cartoes = lista.filter((p) => p.status === status)
