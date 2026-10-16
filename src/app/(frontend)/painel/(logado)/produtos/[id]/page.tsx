@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { BotaoApagar } from '@/components/painel/Apagar'
 import { CampoComExemplo } from '@/components/painel/CampoComExemplo'
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
@@ -146,13 +147,17 @@ export default async function Produto({ params }: { params: Promise<{ id: string
       </Formulario>
 
       {produto && (
-        <details className="perigo">
-          <summary>Apagar este produto</summary>
-          <form action={apagarProduto.bind(null, produto.id)}>
-            <p>O produto sai do cardápio. Isso não pode ser desfeito.</p>
-            <button className="botao perigo">Apagar {produto.nome}</button>
-          </form>
-        </details>
+        <div className="perigo">
+          <p>O produto sai do cardápio. Dá para desfazer nos primeiros segundos.</p>
+          <BotaoApagar
+            chave={`produto:${produto.id}`}
+            nome={produto.nome}
+            acao={apagarProduto.bind(null, produto.id)}
+            voltarPara="/painel/produtos"
+            className="botao perigo"
+            rotulo="Apagar este produto"
+          />
+        </div>
       )}
     </>
   )

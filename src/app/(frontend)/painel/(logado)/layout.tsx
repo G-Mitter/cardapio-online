@@ -1,4 +1,5 @@
 import { ehAdmin } from '@/access/roles'
+import { AvisosDeApagar } from '@/components/painel/Apagar'
 import { Menu } from '@/components/painel/Menu'
 import { SLUG_EXEMPLO } from '@/lib/exemplo'
 import { sessaoGarcom } from '@/lib/painel'
@@ -60,6 +61,7 @@ export default async function LayoutLogado({ children }: { children: React.React
         </nav>
       </header>
       <main className="conteudo">{children}</main>
+      <AvisosDeApagar />
     </>
   )
 }

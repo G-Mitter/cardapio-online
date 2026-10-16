@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { Apagavel } from '@/components/painel/Apagar'
 import { sessao } from '@/lib/painel'
 import { brl } from '@/lib/pedido'
 import type { Media } from '@/payload-types'
@@ -50,7 +51,7 @@ export default async function Produtos() {
               {daCategoria.map((p) => {
                 const foto = typeof p.foto === 'object' ? (p.foto as Media | null) : null
                 return (
-                  <li key={p.id} className={p.esgotado ? 'esgotado' : undefined}>
+                  <Apagavel key={p.id} chave={`produto:${p.id}`} className={p.esgotado ? 'esgotado' : undefined}>
                     <span className="miniatura">
                       {foto?.url ? <Image src={foto.url} alt="" width={52} height={52} /> : p.nome[0]}
                     </span>
@@ -66,7 +67,7 @@ export default async function Produtos() {
                         {p.esgotado ? 'Voltou' : 'Esgotou'}
                       </button>
                     </form>
-                  </li>
+                  </Apagavel>
                 )
               })}
             </ul>
