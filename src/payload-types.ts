@@ -81,6 +81,7 @@ export interface Config {
     acertos: Acerto;
     lancamentos: Lancamento;
     ingredientes: Ingrediente;
+    caixas: Caixa;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -102,6 +103,7 @@ export interface Config {
     acertos: AcertosSelect<false> | AcertosSelect<true>;
     lancamentos: LancamentosSelect<false> | LancamentosSelect<true>;
     ingredientes: IngredientesSelect<false> | IngredientesSelect<true>;
+    caixas: CaixasSelect<false> | CaixasSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -620,6 +622,34 @@ export interface Lancamento {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caixas".
+ */
+export interface Caixa {
+  id: number;
+  loja?: (number | null) | Loja;
+  abertoEm: string;
+  trocoInicial: number;
+  movimentos?:
+    | {
+        tipo: 'sangria' | 'suprimento';
+        valor: number;
+        motivo: string;
+        em: string;
+        id?: string | null;
+      }[]
+    | null;
+  fechadoEm?: string | null;
+  esperado?: number | null;
+  contado?: number | null;
+  diferenca?: number | null;
+  observacao?: string | null;
+  abertoPor?: (number | null) | User;
+  fechadoPor?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -697,6 +727,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'ingredientes';
         value: number | Ingrediente;
+      } | null)
+    | ({
+        relationTo: 'caixas';
+        value: number | Caixa;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1077,6 +1111,33 @@ export interface IngredientesSelect<T extends boolean = true> {
   unidade?: T;
   quantidade?: T;
   minimo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caixas_select".
+ */
+export interface CaixasSelect<T extends boolean = true> {
+  loja?: T;
+  abertoEm?: T;
+  trocoInicial?: T;
+  movimentos?:
+    | T
+    | {
+        tipo?: T;
+        valor?: T;
+        motivo?: T;
+        em?: T;
+        id?: T;
+      };
+  fechadoEm?: T;
+  esperado?: T;
+  contado?: T;
+  diferenca?: T;
+  observacao?: T;
+  abertoPor?: T;
+  fechadoPor?: T;
   updatedAt?: T;
   createdAt?: T;
 }
