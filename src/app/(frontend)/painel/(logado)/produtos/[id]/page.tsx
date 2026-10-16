@@ -106,13 +106,10 @@ export default async function Produto({ params }: { params: Promise<{ id: string
         </fieldset>
         <ListaOpcoes inicial={gruposDoProduto(produto?.opcoes)} />
         <CampoImagem nome="foto" rotulo="Foto" atual={foto?.url ?? null} />
-        <div className="linha">
-          <label className="marcar">
-            <input type="checkbox" name="esgotado" defaultChecked={Boolean(produto?.esgotado)} />
-            Esgotado (aparece no cardápio, mas não dá para pedir)
-          </label>
-          <Contador rotulo="Ordem" name="ordem" inicial={produto?.ordem ?? 0} />
-        </div>
+        <label className="marcar">
+          <input type="checkbox" name="esgotado" defaultChecked={Boolean(produto?.esgotado)} />
+          Esgotado (aparece no cardápio, mas não dá para pedir)
+        </label>
         <button className="botao">Salvar</button>
       </Formulario>
 

@@ -29,6 +29,7 @@ import { rotuloAgendamento } from '@/lib/agendamento'
 import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
+import { mover } from '@/lib/ordem'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
 
@@ -751,23 +752,40 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       preco,
       categoria,
       esgotado: marcado(form, 'esgotado'),
-      ordem: Number(form.get('ordem')) || 0,
       opcoes: opcoes.grupos,
       leve,
       pague,
       selos: lerSelos(form.getAll('selos')),
       ...(foto !== undefined && { foto }),
     }
+    // Produto novo (ou que mudou de categoria) entra no fim da categoria.
+    const fimDaCategoria = () =>
+      payload
+        .count({ collection: 'produtos', where: { categoria: { equals: categoria }, loja: { equals: loja.id } } })
+        .then((c) => c.totalDocs)
     if (id === null) {
-      await payload.create({ collection: 'produtos', data: { ...data, loja: loja.id }, ...comoUsuario })
-    } else {
-      const r = await payload.update({
+      await payload.create({
         collection: 'produtos',
-        where: { id: { equals: id }, loja: { equals: loja.id } },
-        data,
+        data: { ...data, ordem: await fimDaCategoria(), loja: loja.id },
         ...comoUsuario,
       })
-      if (r.docs.length !== 1) return { erro: 'Produto não encontrado.' }
+    } else {
+      const atual = await payload.find({
+        collection: 'produtos',
+        where: { id: { equals: id }, loja: { equals: loja.id } },
+        limit: 1,
+        depth: 0,
+        ...comoUsuario,
+      })
+      const antes = atual.docs[0]
+      if (!antes) return { erro: 'Produto não encontrado.' }
+      const trocouDeCategoria = (typeof antes.categoria === 'object' ? antes.categoria.id : antes.categoria) !== categoria
+      await payload.update({
+        collection: 'produtos',
+        id,
+        data: trocouDeCategoria ? { ...data, ordem: await fimDaCategoria() } : data,
+        ...comoUsuario,
+      })
     }
   } catch (e) {
     return { erro: e instanceof Error && !('data' in e) ? e.message : mensagem(e) }
@@ -793,6 +811,43 @@ export async function marcarEsgotado(id: number, esgotado: boolean) {
     data: { esgotado },
     ...comoUsuario,
   })
+  redirect('/painel/produtos')
+}
+
+/**
+ * Sobe (-1) ou desce (1) um produto dentro da categoria. A categoria é renumerada (0, 1, 2...)
+ * a cada troca, então empates antigos não atrapalham.
+ */
+export async function moverProduto(id: number, direcao: -1 | 1) {
+  const { payload, loja, comoUsuario } = await sessao()
+  const produto = await payload.find({
+    collection: 'produtos',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    limit: 1,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const categoria = produto.docs[0]?.categoria
+  if (categoria) {
+    const irmaos = await payload.find({
+      collection: 'produtos',
+      where: { categoria: { equals: typeof categoria === 'object' ? categoria.id : categoria }, loja: { equals: loja.id } },
+      sort: ['ordem', 'id'],
+      select: { ordem: true },
+      limit: 0,
+      depth: 0,
+      ...comoUsuario,
+    })
+    const ordem = mover(irmaos.docs.map((p) => p.id), id, direcao)
+    if (ordem) {
+      const antes = new Map(irmaos.docs.map((p) => [p.id, p.ordem]))
+      for (const [posicao, pid] of ordem.entries()) {
+        if (antes.get(pid) !== posicao) {
+          await payload.update({ collection: 'produtos', id: pid, data: { ordem: posicao }, ...comoUsuario })
+        }
+      }
+    }
+  }
   redirect('/painel/produtos')
 }
 

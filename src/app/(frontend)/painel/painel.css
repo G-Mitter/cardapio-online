@@ -267,6 +267,24 @@ details.perigo form {
   color: var(--muted);
   font-size: 14px;
 }
+/* Setas ↑↓ para mudar a ordem; alvo de toque de 44px no celular */
+.setas {
+  display: flex;
+  flex: none;
+}
+.setas button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  font: 700 20px var(--display);
+  color: var(--fg);
+  cursor: pointer;
+}
+.setas button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
 .lista li.esgotado .miniatura {
   filter: grayscale(1);
   opacity: 0.6;
