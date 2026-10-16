@@ -484,6 +484,7 @@ export interface Ingrediente {
   unidade: 'un' | 'g' | 'kg' | 'ml' | 'l';
   quantidade: number;
   minimo: number;
+  custo?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1111,6 +1112,7 @@ export interface IngredientesSelect<T extends boolean = true> {
   unidade?: T;
   quantidade?: T;
   minimo?: T;
+  custo?: T;
   updatedAt?: T;
   createdAt?: T;
 }

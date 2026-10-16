@@ -23,5 +23,7 @@ export const Ingredientes: CollectionConfig = {
         { name: 'minimo', label: 'Avisar quando chegar a', type: 'number', defaultValue: 0, min: 0, required: true },
       ],
     },
+    // Quanto custa uma unidade (um kg, um litro...) em reais; vazio = a loja ainda não informou.
+    { name: 'custo', label: 'Custo por unidade (R$)', type: 'number', min: 0 },
   ],
 }

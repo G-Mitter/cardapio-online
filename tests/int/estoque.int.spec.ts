@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { consumo, faltaIngrediente, lerFicha, lerQuantidade, rotuloQuantidade, situacao, somar, variacaoDoPedido } from '@/lib/estoque'
+import { consumo, custoDoPrato, faltaIngrediente, lerFicha, lerQuantidade, rotuloQuantidade, situacao, somar, textoDoCusto, variacaoDoPedido } from '@/lib/estoque'
 
 describe('estoque', () => {
   it('lê quantidades de vários jeitos', () => {
@@ -70,5 +70,30 @@ describe('ficha técnica', () => {
     expect(faltaIngrediente(ficha, new Map([[10, 1], [11, 5]]))).toBe(false)
     expect(faltaIngrediente(ficha, new Map([[10, 1], [11, 0]]))).toBe(true)
     expect(faltaIngrediente(ficha, new Map([[10, 1]]))).toBe(true) // ingrediente que não existe mais
+  })
+})
+
+describe('custo e margem do prato', () => {
+  const ficha = [{ ingrediente: 1, quantidade: 0.2 }, { ingrediente: 2, quantidade: 3 }]
+  it('soma quantidade × custo e tira a margem sobre o preço', () => {
+    const r = custoDoPrato(ficha, new Map([[1, 32], [2, 1.5]]), 30)
+    expect(r).toEqual({ ok: true, custo: 10.9, margem: 19.1, margemPct: 63.7 })
+  })
+  it('não chuta quando falta o custo de algum ingrediente', () => {
+    expect(custoDoPrato(ficha, new Map([[1, 32], [2, null]]), 30)).toEqual({ ok: false, faltam: [2] })
+    expect(custoDoPrato(ficha, new Map([[1, 32]]), 30)).toEqual({ ok: false, faltam: [2] })
+  })
+  it('custo zero é um custo informado; sem ficha não calcula', () => {
+    expect(custoDoPrato([{ ingrediente: 1, quantidade: 1 }], new Map([[1, 0]]), 10)).toMatchObject({ ok: true, custo: 0, margemPct: 100 })
+    expect(custoDoPrato([], new Map(), 10)).toBeNull()
+  })
+  it('margem negativa e preço zero não quebram', () => {
+    expect(custoDoPrato([{ ingrediente: 1, quantidade: 1 }], new Map([[1, 20]]), 15)).toMatchObject({ margem: -5, margemPct: -33.3 })
+    expect(custoDoPrato([{ ingrediente: 1, quantidade: 1 }], new Map([[1, 20]]), 0)).toMatchObject({ margemPct: 0 })
+  })
+  it('escreve o resultado em português', () => {
+    const nomes = new Map([[1, 'Mussarela'], [2, 'Molho']])
+    expect(textoDoCusto({ ok: false, faltam: [1, 2] }, nomes)).toBe('falta o custo de Mussarela, Molho')
+    expect(textoDoCusto({ ok: true, custo: 10.9, margem: 19.1, margemPct: 63.7 }, nomes)).toMatch(/custo R\$\s10,90 · margem R\$\s19,10 \(63,7%\)/)
   })
 })

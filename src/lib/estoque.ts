@@ -89,3 +89,32 @@ export function variacaoDoPedido(antes: Map<number, number>, depois: Map<number,
 /** Falta algum ingrediente (zero ou menos) para fazer o prato? */
 export const faltaIngrediente = (ficha: LinhaFicha[], quantidades: Map<number, number>) =>
   ficha.some((l) => (quantidades.get(l.ingrediente) ?? 0) <= 0)
+
+// ---------- Custo e margem do prato ----------
+
+export type CustoDoPrato = { ok: true; custo: number; margem: number; margemPct: number } | { ok: false; faltam: number[] }
+
+/**
+ * Custo de uma unidade do prato (quantidade × custo de cada ingrediente da ficha) e a margem sobre o preço.
+ * Se algum ingrediente está sem custo, não chuta: devolve quais faltam. Sem ficha, não há o que calcular.
+ */
+export function custoDoPrato(ficha: LinhaFicha[], custos: Map<number, number | null | undefined>, preco: number): CustoDoPrato | null {
+  if (!ficha.length) return null
+  const faltam = ficha.filter((l) => custos.get(l.ingrediente) == null).map((l) => l.ingrediente)
+  if (faltam.length) return { ok: false, faltam }
+  const custo = Math.round(ficha.reduce((s, l) => s + l.quantidade * (custos.get(l.ingrediente) ?? 0), 0) * 100) / 100
+  const margem = Math.round((preco - custo) * 100) / 100
+  return { ok: true, custo, margem, margemPct: preco > 0 ? Math.round((margem / preco) * 1000) / 10 : 0 }
+}
+
+/** Ficha como o Payload devolve (ingrediente pode vir como número ou objeto, conforme a profundidade). */
+export const lerFichaSalva = (ficha: { ingrediente: number | { id: number }; quantidade: number }[] | null | undefined): LinhaFicha[] =>
+  (ficha ?? []).map((l) => ({ ingrediente: typeof l.ingrediente === 'object' ? l.ingrediente.id : l.ingrediente, quantidade: l.quantidade }))
+
+const reais = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+/** "custo R$ 12,40 · margem R$ 17,60 (58,7%)", ou o que falta para calcular. */
+export function textoDoCusto(r: CustoDoPrato, nomes: Map<number, string>): string {
+  if (!r.ok) return `falta o custo de ${r.faltam.map((id) => nomes.get(id) ?? 'ingrediente').join(', ')}`
+  return `custo ${reais(r.custo)} · margem ${reais(r.margem)} (${String(r.margemPct).replace('.', ',')}%)`
+}

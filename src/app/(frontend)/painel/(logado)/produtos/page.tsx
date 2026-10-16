@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import { Apagavel } from '@/components/painel/Apagar'
+import { custoDoPrato, lerFichaSalva, textoDoCusto } from '@/lib/estoque'
 import { sessao } from '@/lib/painel'
 import { brl } from '@/lib/pedido'
 import type { Media } from '@/payload-types'
@@ -14,10 +15,13 @@ export const metadata: Metadata = { title: 'Produtos' }
 /** Produtos da loja por categoria, com "esgotado" num toque. */
 export default async function Produtos() {
   const { payload, loja, comoUsuario } = await sessao('cardapio')
-  const [categorias, produtos] = await Promise.all([
+  const [categorias, produtos, ingredientes] = await Promise.all([
     payload.find({ collection: 'categorias', where: { loja: { equals: loja.id } }, sort: 'ordem', limit: 0, depth: 0, ...comoUsuario }),
     payload.find({ collection: 'produtos', where: { loja: { equals: loja.id } }, sort: ['ordem', 'id'], limit: 0, depth: 1, ...comoUsuario }),
+    payload.find({ collection: 'ingredientes', where: { loja: { equals: loja.id } }, limit: 0, depth: 0, ...comoUsuario }),
   ])
+  const custos = new Map(ingredientes.docs.map((i) => [i.id, i.custo]))
+  const nomes = new Map(ingredientes.docs.map((i) => [i.id, i.nome]))
 
   if (!categorias.docs.length) {
     return (
@@ -50,6 +54,7 @@ export default async function Produtos() {
             <ul className="lista">
               {daCategoria.map((p, i) => {
                 const foto = typeof p.foto === 'object' ? (p.foto as Media | null) : null
+                const custo = custoDoPrato(lerFichaSalva(p.ficha), custos, p.preco)
                 return (
                   <Apagavel key={p.id} chave={`produto:${p.id}`} className={p.esgotado ? 'esgotado' : undefined}>
                     <span className="miniatura">
@@ -60,6 +65,7 @@ export default async function Produtos() {
                       <span>
                         {brl(p.preco)}
                         {p.esgotado && (p.esgotadoAuto ? ' · Esgotado (falta ingrediente)' : ' · Esgotado')}
+                        {custo && ` · ${textoDoCusto(custo, nomes)}`}
                       </span>
                     </Link>
                     <span className="setas">
