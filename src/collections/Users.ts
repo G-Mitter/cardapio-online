@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { ehAdmin, logado, soAdmin } from '../access/roles'
+import { loginDoGarcom } from '../lib/garcom'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -24,6 +25,18 @@ export const Users: CollectionConfig = {
     // Cada um edita só o próprio usuário (senha, e-mail); você edita todos.
     update: ({ req: { user } }) =>
       ehAdmin(user) || (user ? { id: { equals: user.id } } : false),
+  },
+  hooks: {
+    // Garçom criado aqui no /admin: o login vira "usuario.slug-da-loja", igual ao criado pelo painel.
+    beforeValidate: [
+      async ({ data, req }) => {
+        if (!data?.username || !data.roles?.includes('garcom') || !data.lojaDoGarcom) return data
+        const id = typeof data.lojaDoGarcom === 'object' ? data.lojaDoGarcom.id : data.lojaDoGarcom
+        const loja = await req.payload.findByID({ collection: 'lojas', id, depth: 0, req }).catch(() => null)
+        if (loja) data.username = loginDoGarcom(data.username, loja.slug)
+        return data
+      },
+    ],
   },
   // O e-mail e a senha o Payload cria sozinho (auth: true).
   // A lista de lojas do usuário ("tenants") o plugin de multi-cliente adiciona.
@@ -54,6 +67,7 @@ export const Users: CollectionConfig = {
       label: 'Loja do garçom',
       type: 'relationship',
       relationTo: 'lojas',
+      admin: { description: 'Só para o tipo Garçom. Ao salvar, o "Nome de usuário" ganha o final .slug-da-loja sozinho.' },
       access: { create: ({ req: { user } }) => ehAdmin(user), update: ({ req: { user } }) => ehAdmin(user) },
     },
     { name: 'nome', label: 'Nome', type: 'text' },
