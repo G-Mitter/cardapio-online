@@ -7,6 +7,8 @@ import { fecharPagamento, totalDaConta, valorPorPessoa } from '@/lib/conta'
 import { brl, type FormaPagamento } from '@/lib/pedido'
 import { lerPreco } from '@/lib/planilha'
 
+import { Contador } from './Contador'
+
 import { fecharContaDaMesa } from '@/app/(frontend)/painel/actions'
 
 /** "Fechar conta" de uma mesa: taxa de serviço opcional, dividir, e como a mesa pagou (uma ou mais formas). */
@@ -54,10 +56,7 @@ export function FecharConta({
         <b>Total: {brl(total)}</b>
         {taxaServico > 0 && <small> (com {brl(taxaServico)} de serviço)</small>}
       </p>
-      <label className="campo curto">
-        Dividir por (pessoas)
-        <input type="number" min={1} max={50} value={pessoas} onChange={(e) => setPessoas(Math.max(1, Number(e.target.value) || 1))} />
-      </label>
+      <Contador rotulo="Dividir por (pessoas)" inicial={1} min={1} max={50} aoMudar={setPessoas} />
       {pessoas > 1 && <p>{brl(valorPorPessoa(total, pessoas))} por pessoa</p>}
 
       <h3>Como pagou</h3>
