@@ -5,6 +5,7 @@ import { useState } from 'react'
 import type { Estado } from '@/app/(frontend)/painel/actions'
 import { PAPEIS, PERMISSOES, type Permissao } from '@/lib/permissoes'
 
+import { CampoUsuario } from './CampoUsuario'
 import { Formulario } from './Formulario'
 
 /**
@@ -17,12 +18,15 @@ export function FormUsuario({
   disponiveis,
   inicial,
   novo,
+  slug,
 }: {
   acao: (estado: Estado, form: FormData) => Promise<Estado>
   /** Permissões de quem está cadastrando. */
   disponiveis: Permissao[]
-  inicial?: { nome: string; permissoes: Permissao[] }
+  /** `semUsuario`: criado só com e-mail, ainda pode ganhar um usuário para entrar. */
+  inicial?: { nome: string; permissoes: Permissao[]; semUsuario?: boolean }
   novo?: boolean
+  slug: string
 }) {
   const [marcadas, setMarcadas] = useState<Permissao[]>(inicial?.permissoes ?? [])
   const alterna = (p: Permissao) => setMarcadas((m) => (m.includes(p) ? m.filter((x) => x !== p) : [...m, p]))
@@ -34,11 +38,12 @@ export function FormUsuario({
           Nome
           <input name="nome" defaultValue={inicial?.nome} required maxLength={80} />
         </label>
+        {(novo || inicial?.semUsuario) && <CampoUsuario slug={slug} quem="Esta pessoa" obrigatorio={Boolean(novo)} />}
         {novo && (
           <>
             <label className="campo">
-              E-mail (é o login)
-              <input name="email" type="email" autoComplete="off" required maxLength={120} />
+              E-mail (opcional)
+              <input name="email" type="email" autoComplete="off" maxLength={120} />
             </label>
             <label className="campo">
               Senha inicial
