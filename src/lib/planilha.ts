@@ -156,3 +156,71 @@ export function lerProdutos(tabela: (string | number | boolean | Date | null)[][
   })
   return { produtos, erros }
 }
+
+// ---------- Planilha de outro sistema (ERP): a IA só aponta as colunas, o código converte ----------
+
+type Celula = string | number | boolean | Date | null
+type TabelaBruta = Celula[][]
+
+/** Quais colunas (a partir de 0) têm cada dado e em que linha ficam os títulos. Só nome e preço são obrigatórios. */
+export type Mapeamento = {
+  cabecalho: number
+  nome: number
+  preco: number
+  categoria: number | null
+  descricao: number | null
+  esgotado: number | null
+  estoque: number | null
+}
+
+export const LINHAS_AMOSTRA = 30
+const COLUNAS_AMOSTRA = 40
+
+const texto = (c: Celula | undefined) => (c == null ? '' : String(c).trim())
+
+/** O que vai ao Google: só as primeiras linhas, cada célula cortada. O resto da planilha não sai do servidor. */
+export const amostraParaIA = (tabela: TabelaBruta): string[][] =>
+  tabela.slice(0, LINHAS_AMOSTRA).map((l) => l.slice(0, COLUNAS_AMOSTRA).map((c) => texto(c).slice(0, 60)))
+
+/** Resposta da IA → mapeamento. Qualquer índice fora da planilha ou repetido invalida tudo (devolve null). */
+export function lerMapeamento(json: unknown, colunas: number, linhas: number): Mapeamento | null {
+  const o = json as Record<string, unknown> | null
+  if (!o || typeof o !== 'object') return null
+  const inteiro = (x: unknown, max: number) => (typeof x === 'number' && Number.isInteger(x) && x >= 0 && x < max ? x : null)
+  const coluna = (x: unknown) => inteiro(x, colunas)
+  const m: Mapeamento = {
+    cabecalho: inteiro(o.linha_cabecalho, Math.min(linhas, LINHAS_AMOSTRA)) ?? -1,
+    nome: coluna(o.coluna_nome) ?? -1,
+    preco: coluna(o.coluna_preco) ?? -1,
+    categoria: coluna(o.coluna_categoria),
+    descricao: coluna(o.coluna_descricao),
+    esgotado: coluna(o.coluna_esgotado),
+    estoque: coluna(o.coluna_estoque),
+  }
+  if (m.cabecalho < 0 || m.nome < 0 || m.preco < 0) return null
+  const usadas = [m.nome, m.preco, m.categoria, m.descricao, m.esgotado, m.estoque].filter((x) => x !== null)
+  return new Set(usadas).size === usadas.length ? m : null
+}
+
+/** Sem estoque ("0", "-2", "0,000") conta como esgotado. */
+const semEstoque = (c: Celula | undefined) => {
+  const n = Number(texto(c).replace(',', '.'))
+  return texto(c) !== '' && Number.isFinite(n) && n <= 0
+}
+
+/** Aplica o mapeamento a todas as linhas e devolve a tabela no padrão do sistema (nome, descricao, preco, categoria, esgotado). */
+export function converterPlanilha(tabela: TabelaBruta, m: Mapeamento): string[][] {
+  const pega = (l: Celula[], j: number | null) => (j === null ? '' : texto(l[j]))
+  const linhas = tabela
+    .slice(m.cabecalho + 1)
+    .filter((l) => pega(l, m.nome) || pega(l, m.preco))
+    .map((l) => {
+      const esgotado = m.esgotado !== null ? pega(l, m.esgotado) : m.estoque !== null && semEstoque(l[m.estoque]) ? 'sim' : ''
+      return [pega(l, m.nome), pega(l, m.descricao), pega(l, m.preco), pega(l, m.categoria) || 'Geral', esgotado]
+    })
+  return [['nome', 'descricao', 'preco', 'categoria', 'esgotado'], ...linhas]
+}
+
+/** CSV com ponto e vírgula (o Excel em português abre direto). */
+export const paraCsv = (tabela: string[][]) =>
+  tabela.map((l) => l.map((c) => (/[;"\n\r]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(';')).join('\n') + '\n'

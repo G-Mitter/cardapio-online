@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from 'react'
 
-import { lerCsv } from '@/lib/planilha'
+import { lerCsv, paraCsv } from '@/lib/planilha'
 import { brl } from '@/lib/pedido'
 
 import {
   confirmarImportacao,
+  converterComIA,
   type Previa,
   previaImportacao,
   type Resultado,
@@ -43,6 +44,7 @@ export function Importador({ lojas }: { lojas: Loja[] }) {
   const [previa, setPrevia] = useState<Previa | null>(null)
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const [erroArquivo, setErroArquivo] = useState('')
+  const [convertida, setConvertida] = useState(false)
   const [ocupado, startTransition] = useTransition()
   const loja = lojas.find((l) => l.id === lojaId)
 
@@ -52,6 +54,7 @@ export function Importador({ lojas }: { lojas: Loja[] }) {
     setPrevia(null)
     setResultado(null)
     setErroArquivo('')
+    setConvertida(false)
     if (!arquivo || lojaId === undefined) return
     startTransition(async () => {
       try {
@@ -61,6 +64,18 @@ export function Importador({ lojas }: { lojas: Loja[] }) {
       } catch {
         setErroArquivo('Não consegui ler o arquivo. Envie um .csv ou .xlsx.')
       }
+    })
+  }
+
+  function converter() {
+    if (!tabela || lojaId === undefined) return
+    setErroArquivo('')
+    startTransition(async () => {
+      const c = await converterComIA(tabela)
+      if (!c.ok) return setErroArquivo(c.erro)
+      setTabela(c.tabela)
+      setConvertida(true)
+      setPrevia(await previaImportacao(lojaId, c.tabela))
     })
   }
 
@@ -118,6 +133,26 @@ export function Importador({ lojas }: { lojas: Loja[] }) {
           disabled={ocupado}
         />
       </label>
+
+      {tabela && !convertida && !resultado && (
+        <p>
+          <button type="button" className="botao" onClick={converter} disabled={ocupado}>
+            Planilha de outro sistema? Converter com IA
+          </button>{' '}
+          Envia só os títulos e 30 linhas de exemplo ao Google (Gemini) para achar as colunas.
+        </p>
+      )}
+      {convertida && tabela && (
+        <p>
+          Planilha convertida para o nosso padrão. Confira a prévia abaixo.{' '}
+          <a
+            href={`data:text/csv;charset=utf-8,${encodeURIComponent('﻿' + paraCsv(tabela as string[][]))}`}
+            download="produtos-convertidos.csv"
+          >
+            Baixar arquivo convertido
+          </a>
+        </p>
+      )}
 
       {ocupado && <p>Processando…</p>}
       {erroArquivo && <p className="erro">{erroArquivo}</p>}
