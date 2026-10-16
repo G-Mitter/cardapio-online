@@ -621,3 +621,15 @@ details.perigo form {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Horário da loja: um botão por dia da semana */
+.dias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+.painel legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 6px;
+}

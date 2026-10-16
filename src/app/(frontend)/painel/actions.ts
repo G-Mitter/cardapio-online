@@ -13,6 +13,7 @@ import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import { loginDoGarcom } from '@/lib/garcom'
+import { montarEndereco, montarHorario } from '@/lib/lojaTexto'
 import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
 import { CATEGORIAS, intervaloDoMes, lerData, proximoVencimento, somarDias, type Tipo, TIPOS } from '@/lib/financeiro'
@@ -917,6 +918,21 @@ export async function apagarCarrinho(id: number): Promise<Estado> {
 
 // ---------- Dados da loja ----------
 
+/** Horário vem em campos (dias, abre, fecha). Sem nada escolhido, mantém o texto antigo se ele não seguia o formato. */
+function lerHorarioDoForm(form: FormData, atual: string) {
+  const dias = form.getAll('dias').map((d) => Number(d))
+  const abre = texto(form, 'abre')
+  const fecha = texto(form, 'fecha')
+  if (!dias.length && !abre && !fecha) {
+    return { ok: true as const, texto: form.get('horarioAntigo') === '1' ? atual : '' }
+  }
+  const hora = /^([01]\d|2[0-3]):[0-5]\d$/
+  if (!dias.length) return { ok: false as const, erro: 'Marque os dias em que a loja abre.' }
+  if (!hora.test(abre) || !hora.test(fecha)) return { ok: false as const, erro: 'Escolha a hora em que a loja abre e a em que fecha.' }
+  if (dias.some((d) => !Number.isInteger(d) || d < 0 || d > 6)) return { ok: false as const, erro: 'Dia da semana inválido.' }
+  return { ok: true as const, texto: montarHorario({ dias, abre, fecha }) }
+}
+
 export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao()
   const nome = texto(form, 'nome')
@@ -937,6 +953,8 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
   if (!taxaServico.ok) return { erro: taxaServico.erro }
   const pixelMeta = lerPixelMeta(texto(form, 'pixelMeta'))
   if (!pixelMeta.ok) return { erro: pixelMeta.erro }
+  const horario = lerHorarioDoForm(form, loja.horario ?? '')
+  if (!horario.ok) return { erro: horario.erro }
   const tagGoogle = lerTagGoogle(texto(form, 'tagGoogle'))
   if (!tagGoogle.ok) return { erro: tagGoogle.erro }
 
@@ -951,8 +969,13 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         whatsapp: texto(form, 'whatsapp'),
         corPrincipal: texto(form, 'corPrincipal'),
         fonte: texto(form, 'fonte') as Loja['fonte'],
-        horario: texto(form, 'horario'),
-        endereco: texto(form, 'endereco'),
+        horario: horario.texto,
+        endereco: montarEndereco({
+          rua: texto(form, 'enderecoRua'),
+          numero: texto(form, 'enderecoNumero'),
+          bairro: texto(form, 'enderecoBairro'),
+          cidade: texto(form, 'enderecoCidade'),
+        }).slice(0, 200),
         aberta: marcado(form, 'aberta'),
         fazEntrega: marcado(form, 'fazEntrega'),
         taxaEntrega: taxa,

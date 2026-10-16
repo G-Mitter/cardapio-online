@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { salvarLoja } from '@/app/(frontend)/painel/actions'
 import { Cardapio, type CategoriaView } from '@/components/Cardapio'
 import { type Bairro, lerBairros } from '@/lib/entrega'
+import { DIAS, type EnderecoLoja, type Horario, lerEndereco, lerHorario, montarEndereco, montarHorario } from '@/lib/lojaTexto'
 import { FORMAS_PAGAMENTO, type FormaPagamento } from '@/lib/pedido'
 import { COR_PADRAO, FONTES, temaDaLoja } from '@/lib/tema'
 
@@ -54,6 +55,20 @@ const reais = (v: number) => v.toFixed(2).replace('.', ',')
  */
 export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: CategoriaView[] }) {
   const [d, setD] = useState(loja)
+  // Horário e endereço guardados como texto: aqui viram campos de seleção e voltam a texto ao mudar.
+  const lido = lerHorario(loja.horario)
+  const horarioAntigo = Boolean(loja.horario) && !lido
+  const [h, setH] = useState<Horario>(lido ?? { dias: [], abre: '', fecha: '' })
+  const [e, setE] = useState<EnderecoLoja>(lerEndereco(loja.endereco))
+  const mudaHorario = (novo: Horario) => {
+    setH(novo)
+    // Sem escolher nada, o horário antigo continua valendo (e aparecendo na prévia).
+    setD((a) => ({ ...a, horario: montarHorario(novo) || (horarioAntigo ? loja.horario : '') }))
+  }
+  const mudaEndereco = (novo: EnderecoLoja) => {
+    setE(novo)
+    setD((a) => ({ ...a, endereco: montarEndereco(novo) }))
+  }
   const muda = (campo: keyof DadosLoja) => (e: { target: HTMLInputElement | HTMLSelectElement }) =>
     setD((atual) => ({
       ...atual,
@@ -114,19 +129,62 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
           atual={loja.capa}
           aoMudar={(capa) => setD((a) => ({ ...a, capa }))}
         />
+        <fieldset className="campo">
+          <legend>Horário de funcionamento</legend>
+          <div className="dias">
+            {DIAS.map((nome, i) => (
+              <label key={nome} className="marcar">
+                <input
+                  type="checkbox"
+                  name="dias"
+                  value={i}
+                  checked={h.dias.includes(i)}
+                  onChange={(ev) =>
+                    mudaHorario({ ...h, dias: ev.target.checked ? [...h.dias, i] : h.dias.filter((n) => n !== i) })
+                  }
+                />
+                {nome}
+              </label>
+            ))}
+          </div>
+          <div className="linha">
+            <label className="campo curto">
+              Abre às
+              <input type="time" name="abre" value={h.abre} onChange={(ev) => mudaHorario({ ...h, abre: ev.target.value })} />
+            </label>
+            <label className="campo curto">
+              Fecha às
+              <input type="time" name="fecha" value={h.fecha} onChange={(ev) => mudaHorario({ ...h, fecha: ev.target.value })} />
+            </label>
+          </div>
+          {horarioAntigo && (
+            <>
+              <input type="hidden" name="horarioAntigo" value="1" />
+              <small>
+                Hoje o cardápio mostra &quot;{loja.horario}&quot;. Escolha os dias e as horas acima para trocar; se deixar em
+                branco, esse texto continua.
+              </small>
+            </>
+          )}
+        </fieldset>
         <div className="linha">
           <label className="campo">
-            Horário
-            <input
-              name="horario"
-              value={d.horario}
-              onChange={muda('horario')}
-              placeholder="11h às 15h"
-            />
+            Rua
+            <input name="enderecoRua" value={e.rua} onChange={(ev) => mudaEndereco({ ...e, rua: ev.target.value })} maxLength={120} autoComplete="address-line1" />
+          </label>
+          <label className="campo curto">
+            Número
+            <input name="enderecoNumero" value={e.numero} onChange={(ev) => mudaEndereco({ ...e, numero: ev.target.value })} maxLength={10} />
+          </label>
+        </div>
+        <div className="linha">
+          <label className="campo">
+            Bairro
+            <input name="enderecoBairro" value={e.bairro} onChange={(ev) => mudaEndereco({ ...e, bairro: ev.target.value })} maxLength={60} />
           </label>
           <label className="campo">
-            Endereço da loja
-            <input name="endereco" value={d.endereco} onChange={muda('endereco')} />
+            Cidade
+            <input name="enderecoCidade" value={e.cidade} onChange={(ev) => mudaEndereco({ ...e, cidade: ev.target.value })} maxLength={60} autoComplete="address-level2" />
           </label>
         </div>
         <label className="marcar">
