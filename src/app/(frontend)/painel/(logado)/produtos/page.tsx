@@ -7,7 +7,7 @@ import { sessao } from '@/lib/painel'
 import { brl } from '@/lib/pedido'
 import type { Media } from '@/payload-types'
 
-import { marcarEsgotado } from '../../actions'
+import { marcarEsgotado, moverProduto } from '../../actions'
 
 export const metadata: Metadata = { title: 'Produtos' }
 
@@ -16,7 +16,7 @@ export default async function Produtos() {
   const { payload, loja, comoUsuario } = await sessao()
   const [categorias, produtos] = await Promise.all([
     payload.find({ collection: 'categorias', where: { loja: { equals: loja.id } }, sort: 'ordem', limit: 0, depth: 0, ...comoUsuario }),
-    payload.find({ collection: 'produtos', where: { loja: { equals: loja.id } }, sort: 'ordem', limit: 0, depth: 1, ...comoUsuario }),
+    payload.find({ collection: 'produtos', where: { loja: { equals: loja.id } }, sort: ['ordem', 'id'], limit: 0, depth: 1, ...comoUsuario }),
   ])
 
   if (!categorias.docs.length) {
@@ -48,7 +48,7 @@ export default async function Produtos() {
             <h2>{c.nome}</h2>
             {!daCategoria.length && <p className="vazio">Nenhum produto nesta categoria.</p>}
             <ul className="lista">
-              {daCategoria.map((p) => {
+              {daCategoria.map((p, i) => {
                 const foto = typeof p.foto === 'object' ? (p.foto as Media | null) : null
                 return (
                   <Apagavel key={p.id} chave={`produto:${p.id}`} className={p.esgotado ? 'esgotado' : undefined}>
@@ -62,6 +62,14 @@ export default async function Produtos() {
                         {p.esgotado && ' · Esgotado'}
                       </span>
                     </Link>
+                    <span className="setas">
+                      <form action={moverProduto.bind(null, p.id, -1)}>
+                        <button aria-label={`Subir ${p.nome}`} disabled={i === 0}>↑</button>
+                      </form>
+                      <form action={moverProduto.bind(null, p.id, 1)}>
+                        <button aria-label={`Descer ${p.nome}`} disabled={i === daCategoria.length - 1}>↓</button>
+                      </form>
+                    </span>
                     <form action={marcarEsgotado.bind(null, p.id, !p.esgotado)}>
                       <button className="botao secundario">
                         {p.esgotado ? 'Voltou' : 'Esgotou'}
