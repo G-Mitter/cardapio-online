@@ -5,6 +5,7 @@
  * e a loja; as gravações vão como o usuário logado, e o Payload confere o acesso de novo.
  */
 import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getPayload, type Payload } from 'payload'
 
@@ -1739,4 +1740,16 @@ export async function registrarCompra(_: Estado, form: FormData): Promise<Estado
   }
   await refazerPausa(payload, loja.id, itens.map((i) => i.ingrediente))
   redirect('/painel/compras')
+}
+
+/** A loja marca (ou desmarca) que o cliente aceitou receber promoções. Sem linha em "contatos" = não aceitou. */
+export async function marcarPromocoes(telefone: string, aceita: boolean) {
+  const { payload, loja, comoUsuario } = await sessao('pedidos')
+  const tel = normalizarTelefone(telefone)
+  if (!tel) return
+  const data = { aceitaPromocoes: aceita, aceitouEm: aceita ? new Date().toISOString() : null }
+  const { docs } = await payload.find({ collection: 'contatos', where: { loja: { equals: loja.id }, telefone: { equals: tel } }, limit: 1, depth: 0, ...comoUsuario })
+  if (docs[0]) await payload.update({ collection: 'contatos', id: docs[0].id, data, ...comoUsuario })
+  else await payload.create({ collection: 'contatos', data: { ...data, telefone: tel, loja: loja.id }, ...comoUsuario })
+  revalidatePath('/painel/clientes')
 }

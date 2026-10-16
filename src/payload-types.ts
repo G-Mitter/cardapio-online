@@ -84,6 +84,7 @@ export interface Config {
     caixas: Caixa;
     fornecedores: Fornecedore;
     compras: Compra;
+    contatos: Contato;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -108,6 +109,7 @@ export interface Config {
     caixas: CaixasSelect<false> | CaixasSelect<true>;
     fornecedores: FornecedoresSelect<false> | FornecedoresSelect<true>;
     compras: ComprasSelect<false> | ComprasSelect<true>;
+    contatos: ContatosSelect<false> | ContatosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -692,6 +694,19 @@ export interface Compra {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contatos".
+ */
+export interface Contato {
+  id: number;
+  loja?: (number | null) | Loja;
+  telefone: string;
+  aceitaPromocoes?: boolean | null;
+  aceitouEm?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -781,6 +796,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'compras';
         value: number | Compra;
+      } | null)
+    | ({
+        relationTo: 'contatos';
+        value: number | Contato;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1226,6 +1245,18 @@ export interface ComprasSelect<T extends boolean = true> {
   vencimento?: T;
   lancamento?: T;
   observacao?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contatos_select".
+ */
+export interface ContatosSelect<T extends boolean = true> {
+  loja?: T;
+  telefone?: T;
+  aceitaPromocoes?: T;
+  aceitouEm?: T;
   updatedAt?: T;
   createdAt?: T;
 }
