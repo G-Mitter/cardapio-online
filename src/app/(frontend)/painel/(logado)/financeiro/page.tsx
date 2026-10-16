@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Apagavel, BotaoApagar } from '@/components/painel/Apagar'
 import { Formulario } from '@/components/painel/Formulario'
 import { hojeEmBrasilia } from '@/lib/entregadores'
 import { alertas, CATEGORIAS, intervaloDoMes, resumoDoMes, situacao, TIPOS } from '@/lib/financeiro'
@@ -104,7 +105,7 @@ export default async function Financeiro({ searchParams }: { searchParams: Promi
         {doTipo(aba.value).map((l) => {
           const s = situacao(l.vencimento, hoje)
           return (
-            <li key={l.id}>
+            <Apagavel key={l.id} chave={`lancamento:${l.id}`}>
               <div className="lista__nome">
                 <b>{l.descricao}</b>
                 <span>
@@ -132,12 +133,8 @@ export default async function Financeiro({ searchParams }: { searchParams: Promi
                   <small>O valor pode ser diferente do original (juros ou desconto).</small>
                 </details>
               </div>
-              <form action={apagarLancamento.bind(null, l.id)}>
-                <input type="hidden" name="aba" value={aba.value} />
-                <input type="hidden" name="mes" value={mes} />
-                <button className="botao secundario">Apagar</button>
-              </form>
-            </li>
+              <BotaoApagar chave={`lancamento:${l.id}`} nome={l.descricao} acao={apagarLancamento.bind(null, l.id)} className="botao secundario" />
+            </Apagavel>
           )
         })}
       </ul>

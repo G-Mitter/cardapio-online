@@ -774,14 +774,14 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
   redirect('/painel/produtos')
 }
 
-export async function apagarProduto(id: number) {
+export async function apagarProduto(id: number): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao()
   await payload.delete({
     collection: 'produtos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
     ...comoUsuario,
   })
-  redirect('/painel/produtos')
+  return null
 }
 
 export async function marcarEsgotado(id: number, esgotado: boolean) {
@@ -816,10 +816,10 @@ export async function salvarCategoria(id: number | null, _: Estado, form: FormDa
   } catch (e) {
     return { erro: mensagem(e) }
   }
-  redirect('/painel/categorias')
+  return null
 }
 
-export async function apagarCategoria(id: number, _: Estado): Promise<Estado> {
+export async function apagarCategoria(id: number): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao()
   const { totalDocs } = await payload.count({
     collection: 'produtos',
@@ -893,26 +893,26 @@ export async function ligarCupom(id: number, ativo: boolean) {
   redirect('/painel/cupons')
 }
 
-export async function apagarCupom(id: number) {
+export async function apagarCupom(id: number): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao()
   await payload.delete({
     collection: 'cupons',
     where: { id: { equals: id }, loja: { equals: loja.id } },
     ...comoUsuario,
   })
-  redirect('/painel/cupons')
+  return null
 }
 
 // ---------- Carrinhos abandonados ----------
 
-export async function apagarCarrinho(id: number) {
+export async function apagarCarrinho(id: number): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao()
   await payload.delete({
     collection: 'carrinhos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
     ...comoUsuario,
   })
-  redirect('/painel/carrinhos')
+  return null
 }
 
 // ---------- Dados da loja ----------
@@ -1070,14 +1070,14 @@ function voltarAoFinanceiro(form: FormData, abaPadrao: string) {
   return `/painel/financeiro?aba=${aba}&mes=${intervaloDoMes(texto(form, 'mes')).mes}`
 }
 
-export async function apagarLancamento(id: number, form: FormData) {
+export async function apagarLancamento(id: number): Promise<Estado> {
   const { payload, loja, comoUsuario } = await sessao()
   await payload.delete({
     collection: 'lancamentos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
     ...comoUsuario,
   })
-  redirect(voltarAoFinanceiro(form, 'pagar'))
+  return null
 }
 
 // ---------- Garçons ----------

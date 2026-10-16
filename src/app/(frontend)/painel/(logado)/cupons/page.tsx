@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { Apagavel, BotaoApagar } from '@/components/painel/Apagar'
 import { Formulario } from '@/components/painel/Formulario'
 import { diaDoFim, rotuloDoCupom } from '@/lib/cupom'
 import { sessao } from '@/lib/painel'
@@ -29,7 +30,7 @@ export default async function Cupons() {
       {!docs.length && <p className="vazio">Nenhum cupom ainda.</p>}
       <ul className="lista">
         {docs.map((c) => (
-          <li key={c.id} className={c.ativo === false ? 'esgotado' : undefined}>
+          <Apagavel key={c.id} chave={`cupom:${c.id}`} className={c.ativo === false ? 'esgotado' : undefined}>
             <div className="lista__nome">
               <b>{c.codigo}</b>
               <span>
@@ -43,12 +44,8 @@ export default async function Cupons() {
             <form action={ligarCupom.bind(null, c.id, c.ativo === false)}>
               <button className="botao secundario">{c.ativo === false ? 'Ligar' : 'Desligar'}</button>
             </form>
-            <form action={apagarCupom.bind(null, c.id)}>
-              <button className="sair" aria-label={`Apagar ${c.codigo}`}>
-                Apagar
-              </button>
-            </form>
-          </li>
+            <BotaoApagar chave={`cupom:${c.id}`} nome={c.codigo} acao={apagarCupom.bind(null, c.id)} />
+          </Apagavel>
         ))}
       </ul>
 

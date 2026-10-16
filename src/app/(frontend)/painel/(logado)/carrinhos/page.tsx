@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 
+import { Apagavel, BotaoApagar } from '@/components/painel/Apagar'
+
 import {
   APAGAR_APOS_DIAS,
   emMinutosAtras,
@@ -63,7 +65,7 @@ export default async function Carrinhos() {
             }),
           )
           return (
-            <li key={c.id}>
+            <Apagavel key={c.id} chave={`carrinho:${c.id}`}>
               <div className="lista__nome">
                 <b>{c.nome}</b>
                 <span>
@@ -75,12 +77,8 @@ export default async function Carrinhos() {
                   Chamar no WhatsApp
                 </a>
               )}
-              <form action={apagarCarrinho.bind(null, c.id)}>
-                <button className="sair" aria-label={`Apagar carrinho de ${c.nome}`}>
-                  Apagar
-                </button>
-              </form>
-            </li>
+              <BotaoApagar chave={`carrinho:${c.id}`} nome={`o carrinho de ${c.nome}`} acao={apagarCarrinho.bind(null, c.id)} />
+            </Apagavel>
           )
         })}
       </ul>

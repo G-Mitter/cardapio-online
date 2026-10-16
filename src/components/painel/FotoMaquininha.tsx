@@ -13,6 +13,7 @@ import {
   type VendaFoto,
   vendasParaCsv,
 } from '@/lib/fotoMaquininha'
+import { BotaoApagar } from '@/components/painel/Apagar'
 import { brl } from '@/lib/pedido'
 import { lerPreco } from '@/lib/planilha'
 
@@ -224,9 +225,15 @@ export function FotoMaquininha({ onUsar }: { onUsar: (csv: string) => void }) {
                       />
                     </td>
                     <td>
-                      <button type="button" className="botao secundario" onClick={() => setLinhas((ls) => (ls ?? leitura.vendas).filter((_, j) => j !== i))}>
-                        Apagar
-                      </button>
+                      <BotaoApagar
+                        chave={`venda-${i}`}
+                        nome={`a venda de ${brl(v.valor)}`}
+                        className="botao secundario"
+                        local={{
+                          apagar: () => setLinhas((ls) => (ls ?? leitura.vendas).filter((_, j) => j !== i)),
+                          restaurar: () => setLinhas((ls) => { const a = [...(ls ?? leitura.vendas)]; a.splice(i, 0, v); return a }),
+                        }}
+                      />
                     </td>
                   </tr>
                 ))}
