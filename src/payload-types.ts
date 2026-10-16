@@ -415,6 +415,14 @@ export interface Produto {
       }[]
     | null;
   /**
+   * Passo a passo para a cozinha. Não aparece no cardápio do cliente.
+   */
+  modoPreparo?: string | null;
+  /**
+   * Ex.: talher, molho extra, guardanapo. Aparece para a cozinha nos pedidos para viagem. Não aparece no cardápio do cliente.
+   */
+  naEmbalagem?: string | null;
+  /**
    * O que leva uma unidade do prato. O estoque baixa a cada pedido e o prato pausa quando um ingrediente acaba. O painel da loja edita isto.
    */
   ficha?:
@@ -790,6 +798,8 @@ export interface ProdutosSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  modoPreparo?: T;
+  naEmbalagem?: T;
   ficha?:
     | T
     | {

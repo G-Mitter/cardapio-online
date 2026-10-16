@@ -20,7 +20,7 @@ type PedidoCozinha = {
   garcom: string
   agendadoPara: string | null
   observacoes: string
-  itens: { nome: string; quantidade: number; opcoes: string }[]
+  itens: { nome: string; quantidade: number; opcoes: string; comoFazer: string; embalagem: string }[]
 }
 
 const COLUNAS = ['novo', 'preparando', 'pronto'] as const
@@ -137,6 +137,14 @@ export function TelaCozinha({ pedidos }: { pedidos: PedidoCozinha[] }) {
                         <li key={n}>
                           <b>{i.quantidade}×</b> {i.nome}
                           {i.opcoes && <small> ({i.opcoes})</small>}
+                          {i.embalagem && <div className="cozinha__embalagem">Embalagem: {i.embalagem}</div>}
+                          {i.comoFazer && (
+                            // Abrir e fechar não pode avançar o pedido (o cartão inteiro é um botão).
+                            <details onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                              <summary>Como fazer</summary>
+                              <p className="cozinha__preparo">{i.comoFazer}</p>
+                            </details>
+                          )}
                         </li>
                       ))}
                     </ul>
