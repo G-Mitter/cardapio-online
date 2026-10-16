@@ -14,7 +14,7 @@ import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
-import { CATEGORIAS, lerData, proximoVencimento, somarDias, type Tipo, TIPOS } from '@/lib/financeiro'
+import { CATEGORIAS, intervaloDoMes, lerData, proximoVencimento, somarDias, type Tipo, TIPOS } from '@/lib/financeiro'
 import { conferir, lerRelatorio, type PagamentoLoja, recebimentosPorData, TOLERANCIA_MIN } from '@/lib/maquininha'
 import { fecharPagamento, lerTaxaServico, type Recebido, totalDaConta } from '@/lib/conta'
 import { lerMesas } from '@/lib/mesas'
@@ -642,7 +642,9 @@ export async function fazerAcerto(
 export async function mudarPagamentoDoPedido(id: number, form: FormData) {
   const { payload, loja, comoUsuario } = await sessao()
   const forma = texto(form, 'forma') as FormaPagamento
-  if (!loja.formasPagamento?.includes(forma)) redirect('/painel/entregadores')
+  // O dia vem escondido no formulário para a tela continuar no dia que o dono estava vendo.
+  const voltar = `/painel/entregadores?dia=${intervaloDoDia(texto(form, 'dia')).dia}`
+  if (!loja.formasPagamento?.includes(forma)) redirect(voltar)
   const feito = await payload.count({
     collection: 'acertos',
     where: { loja: { equals: loja.id }, pedidos: { contains: id } },
@@ -656,7 +658,7 @@ export async function mudarPagamentoDoPedido(id: number, form: FormData) {
       ...comoUsuario,
     })
   }
-  redirect('/painel/entregadores')
+  redirect(voltar)
 }
 
 /** Põe o entregador (ou tira, com null) nos pedidos de entrega escolhidos. */
@@ -1058,17 +1060,23 @@ export async function baixarLancamento(id: number, form: FormData) {
       })
     }
   }
-  redirect(`/painel/financeiro?aba=${(conta?.tipo as Tipo | undefined) ?? 'pagar'}`)
+  redirect(voltarAoFinanceiro(form, (conta?.tipo as Tipo | undefined) ?? 'pagar'))
 }
 
-export async function apagarLancamento(id: number) {
+/** Volta ao Financeiro na mesma aba e no mesmo mês em que o dono estava (campos escondidos do formulário). */
+function voltarAoFinanceiro(form: FormData, abaPadrao: string) {
+  const aba = TIPOS.find((t) => t.value === texto(form, 'aba'))?.value ?? abaPadrao
+  return `/painel/financeiro?aba=${aba}&mes=${intervaloDoMes(texto(form, 'mes')).mes}`
+}
+
+export async function apagarLancamento(id: number, form: FormData) {
   const { payload, loja, comoUsuario } = await sessao()
   await payload.delete({
     collection: 'lancamentos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
     ...comoUsuario,
   })
-  redirect('/painel/financeiro')
+  redirect(voltarAoFinanceiro(form, 'pagar'))
 }
 
 // ---------- Garçons ----------
