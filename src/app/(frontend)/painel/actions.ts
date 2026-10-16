@@ -1142,6 +1142,7 @@ export async function salvarLoja(_: Estado, form: FormData): Promise<Estado> {
         atendimentoMesas: (['ambos', 'garcom', 'cliente'] as const).find((a) => a === texto(form, 'atendimentoMesas')) ?? 'ambos',
         aceitaRetirada: marcado(form, 'aceitaRetirada'),
         aceitaAgendamento: marcado(form, 'aceitaAgendamento'),
+        aceiteAutomatico: marcado(form, 'aceiteAutomatico'),
         formasPagamento,
         chavePix,
         pixelMeta: pixelMeta.id,

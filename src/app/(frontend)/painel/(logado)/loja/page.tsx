@@ -79,6 +79,7 @@ export default async function MinhaLoja({ searchParams }: { searchParams: Promis
           tagGoogle: loja.tagGoogle ?? '',
           aceitaRetirada: loja.aceitaRetirada !== false,
           aceitaAgendamento: loja.aceitaAgendamento === true,
+          aceiteAutomatico: loja.aceiteAutomatico === true,
           logo: url(loja.logo),
           capa: url(loja.capa),
         }}

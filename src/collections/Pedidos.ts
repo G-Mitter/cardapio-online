@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { logado } from '../access/roles'
 import { acertarEstoque } from '../lib/estoque-db'
+import { entraAceito, ORIGENS, origemDoPedido } from '../lib/origem'
 import { FORMAS_PAGAMENTO } from '../lib/pedido'
 
 /**
@@ -18,6 +19,17 @@ export const Pedidos: CollectionConfig = {
   defaultSort: '-createdAt',
   // Todo pedido passa por aqui (site, balcão, mesa, garçom): é o lugar certo para baixar o estoque.
   hooks: {
+    // Pedido novo: grava de onde veio e, se a loja aceita sozinha, já entra Preparando.
+    beforeChange: [
+      async ({ data, operation, req }) => {
+        if (operation !== 'create') return data
+        const origem = origemDoPedido(data)
+        const lojaId = typeof data.loja === 'object' && data.loja ? (data.loja as { id: number }).id : data.loja
+        const loja = lojaId ? await req.payload.findByID({ collection: 'lojas', id: lojaId, depth: 0, overrideAccess: true, select: { aceiteAutomatico: true } }).catch(() => null) : null
+        const aceito = data.status === 'novo' && entraAceito(origem, loja?.aceiteAutomatico, Boolean(data.agendadoPara))
+        return { ...data, origem, ...(aceito && { status: 'preparando' }) }
+      },
+    ],
     afterChange: [
       async ({ doc, previousDoc, operation, req }) => {
         await acertarEstoque(req.payload, operation === 'create' ? null : previousDoc, doc)
@@ -131,6 +143,7 @@ export const Pedidos: CollectionConfig = {
         { name: 'cpf', label: 'CPF na nota', type: 'text' },
       ],
     },
+    { name: 'origem', label: 'Origem', type: 'select', options: [...ORIGENS], admin: { readOnly: true } },
     { name: 'observacoes', label: 'Observações', type: 'textarea', admin: { readOnly: true } },
   ],
 }

@@ -41,6 +41,7 @@ export type DadosLoja = {
   tagGoogle: string
   aceitaRetirada: boolean
   aceitaAgendamento: boolean
+  aceiteAutomatico: boolean
   logo: string | null
   capa: string | null
 }
@@ -261,6 +262,10 @@ export function FormLoja({ loja, categorias }: { loja: DadosLoja; categorias: Ca
             onChange={muda('aceitaAgendamento')}
           />
           Aceita pedidos agendados (dia e hora, de 1 hora até 7 dias à frente)
+        </label>
+        <label className="marcar">
+          <input type="checkbox" name="aceiteAutomatico" checked={d.aceiteAutomatico} onChange={muda('aceiteAutomatico')} />
+          Aceitar pedidos automaticamente (pedido do cardápio ou do QR Code já entra como Preparando)
         </label>
         {d.fazEntrega && (
           <ListaBairros inicial={loja.bairros} aoMudar={mudaBairros} />

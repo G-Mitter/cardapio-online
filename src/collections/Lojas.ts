@@ -114,6 +114,13 @@ export const Lojas: CollectionConfig = {
       admin: { description: 'O cliente pode escolher dia e hora (de 1 hora até 7 dias à frente).' },
     },
     {
+      name: 'aceiteAutomatico',
+      label: 'Aceitar pedidos automaticamente',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'Pedido do cardápio online ou do QR Code da mesa já entra como Preparando, sem esperar alguém tocar. Pedido agendado e o que a equipe lança continuam Novo.' },
+    },
+    {
       name: 'mesas',
       label: 'Mesas',
       type: 'text',
