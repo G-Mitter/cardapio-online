@@ -12,6 +12,7 @@ import { COOKIE_LOJA, sessao, sessaoGarcom } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
+import { loginDoGarcom } from '@/lib/garcom'
 import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
 import { CATEGORIAS, intervaloDoMes, lerData, proximoVencimento, somarDias, type Tipo, TIPOS } from '@/lib/financeiro'
@@ -1096,7 +1097,7 @@ export async function salvarGarcom(_: Estado, form: FormData): Promise<Estado> {
     // O garçom não tem acesso próprio aos dados, então criamos como o servidor, depois de conferir o login do dono acima.
     await payload.create({
       collection: 'users',
-      data: { username: `${usuario}.${loja.slug}`, password: senha, nome, roles: ['garcom'], lojaDoGarcom: loja.id, ativo: true },
+      data: { username: loginDoGarcom(usuario, loja.slug), password: senha, nome, roles: ['garcom'], lojaDoGarcom: loja.id, ativo: true },
     })
   } catch (e) {
     return { erro: /unique|already|username/i.test(String(e)) ? 'Já existe um garçom com esse usuário.' : mensagem(e) }
