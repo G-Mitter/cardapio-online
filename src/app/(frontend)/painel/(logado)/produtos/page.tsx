@@ -59,7 +59,7 @@ export default async function Produtos() {
                       <b>{p.nome}</b>
                       <span>
                         {brl(p.preco)}
-                        {p.esgotado && ' · Esgotado'}
+                        {p.esgotado && (p.esgotadoAuto ? ' · Esgotado (falta ingrediente)' : ' · Esgotado')}
                       </span>
                     </Link>
                     <span className="setas">

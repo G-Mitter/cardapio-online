@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { BotaoApagar } from '@/components/painel/Apagar'
 import { CampoDinheiro } from '@/components/painel/CampoDinheiro'
 import { Contador } from '@/components/painel/Contador'
+import { ListaFicha } from '@/components/painel/ListaFicha'
 import { ListaOpcoes } from '@/components/painel/ListaOpcoes'
 import { CampoImagem } from '@/components/painel/CampoImagem'
 import { Formulario } from '@/components/painel/Formulario'
@@ -23,7 +24,8 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   const { payload, loja, comoUsuario } = await sessao('cardapio')
   const novo = id === 'novo'
 
-  const [categorias, existentes] = await Promise.all([
+  const [ingredientes, categorias, existentes] = await Promise.all([
+    payload.find({ collection: 'ingredientes', where: { loja: { equals: loja.id } }, sort: 'nome', limit: 0, depth: 0, ...comoUsuario }),
     payload.find({
       collection: 'categorias',
       where: { loja: { equals: loja.id } },
@@ -105,11 +107,16 @@ export default async function Produto({ params }: { params: Promise<{ id: string
           ))}
         </fieldset>
         <ListaOpcoes inicial={gruposDoProduto(produto?.opcoes)} />
+        <ListaFicha
+          inicial={(produto?.ficha ?? []).map((l) => ({ ingrediente: typeof l.ingrediente === 'object' ? l.ingrediente.id : l.ingrediente, quantidade: l.quantidade }))}
+          ingredientes={ingredientes.docs.map((i) => ({ id: i.id, nome: i.nome, unidade: i.unidade }))}
+        />
         <CampoImagem nome="foto" rotulo="Foto" atual={foto?.url ?? null} />
         <label className="marcar">
           <input type="checkbox" name="esgotado" defaultChecked={Boolean(produto?.esgotado)} />
           Esgotado (aparece no cardápio, mas não dá para pedir)
         </label>
+        {produto?.esgotadoAuto && <small>Pausado pelo estoque: falta um ingrediente da ficha. Volta sozinho quando o estoque for reposto.</small>}
         <button className="botao">Salvar</button>
       </Formulario>
 

@@ -23,6 +23,8 @@ export default async function Estoque() {
     depth: 0,
     ...comoUsuario,
   })
+  const { docs: comFicha } = await payload.find({ collection: 'produtos', where: { loja: { equals: loja.id }, 'ficha.ingrediente': { exists: true } }, limit: 0, depth: 0, ...comoUsuario })
+  const usados = new Set(comFicha.flatMap((p) => (p.ficha ?? []).map((l) => (typeof l.ingrediente === 'object' ? l.ingrediente.id : l.ingrediente))))
   const itens = docs
     .map((i) => ({ ...i, situacao: situacao(i.quantidade, i.minimo) }))
     .sort((a, b) => ORDEM[a.situacao] - ORDEM[b.situacao] || a.nome.localeCompare(b.nome, 'pt'))
@@ -82,7 +84,12 @@ export default async function Estoque() {
                 <button className="botao">Salvar</button>
               </Formulario>
             </details>
-            <BotaoApagar chave={`ingrediente:${i.id}`} nome={i.nome} acao={apagarIngrediente.bind(null, i.id)} />
+            <BotaoApagar
+              chave={`ingrediente:${i.id}`}
+              nome={i.nome}
+              acao={apagarIngrediente.bind(null, i.id)}
+              bloqueio={usados.has(i.id) ? `${i.nome} está na ficha técnica de um produto. Tire de lá antes de apagar.` : undefined}
+            />
           </Apagavel>
         ))}
       </ul>

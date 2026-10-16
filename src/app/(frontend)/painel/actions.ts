@@ -30,7 +30,8 @@ import { rotuloAgendamento } from '@/lib/agendamento'
 import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
-import { lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
+import { lerFicha, lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
+import { pausarPelaFicha, refazerPausa } from '@/lib/estoque-db'
 import { mover } from '@/lib/ordem'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
@@ -737,6 +738,9 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
   }
   const opcoes = lerOpcoesDaTela(texto(form, 'opcoes'))
   if (!opcoes.ok) return { erro: opcoes.erro }
+  const doEstoque = await payload.find({ collection: 'ingredientes', where: { loja: { equals: loja.id } }, limit: 0, depth: 0, select: {}, ...comoUsuario })
+  const ficha = lerFicha(texto(form, 'ficha'), doEstoque.docs.map((i) => i.id))
+  if (!ficha.ok) return { erro: ficha.erro }
 
   // A categoria precisa ser desta loja.
   const categoria = Number(form.get('categoria'))
@@ -754,6 +758,7 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       preco,
       categoria,
       esgotado: marcado(form, 'esgotado'),
+      ficha: ficha.ficha,
       opcoes: opcoes.grupos,
       leve,
       pague,
@@ -765,8 +770,9 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       payload
         .count({ collection: 'produtos', where: { categoria: { equals: categoria }, loja: { equals: loja.id } } })
         .then((c) => c.totalDocs)
+    let salvo: { id: number; esgotado?: boolean | null; esgotadoAuto?: boolean | null; ficha?: { ingrediente: unknown; quantidade: number }[] | null }
     if (id === null) {
-      await payload.create({
+      salvo = await payload.create({
         collection: 'produtos',
         data: { ...data, ordem: await fimDaCategoria(), loja: loja.id },
         ...comoUsuario,
@@ -782,13 +788,17 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
       const antes = atual.docs[0]
       if (!antes) return { erro: 'Produto não encontrado.' }
       const trocouDeCategoria = (typeof antes.categoria === 'object' ? antes.categoria.id : antes.categoria) !== categoria
-      await payload.update({
+      // Mexer no "esgotado" à mão tira a marca da pausa automática; salvar sem mexer mantém.
+      const esgotadoAuto = Boolean(antes.esgotadoAuto) && data.esgotado === Boolean(antes.esgotado)
+      salvo = await payload.update({
         collection: 'produtos',
         id,
-        data: trocouDeCategoria ? { ...data, ordem: await fimDaCategoria() } : data,
+        data: { ...(trocouDeCategoria ? { ...data, ordem: await fimDaCategoria() } : data), esgotadoAuto },
         ...comoUsuario,
       })
     }
+    // Ficha nova pode pausar o prato (já falta ingrediente) ou liberar o que estava pausado.
+    await pausarPelaFicha(payload, loja.id, [salvo])
   } catch (e) {
     return { erro: e instanceof Error && !('data' in e) ? e.message : mensagem(e) }
   }
@@ -811,7 +821,7 @@ export async function marcarEsgotado(id: number, esgotado: boolean) {
   await payload.update({
     collection: 'produtos',
     where: { id: { equals: id }, loja: { equals: loja.id } },
-    data: { esgotado },
+    data: { esgotado, esgotadoAuto: false },
     ...comoUsuario,
   })
   redirect('/painel/produtos')
@@ -1015,6 +1025,7 @@ export async function salvarIngrediente(id: number | null, _: Estado, form: Form
     } else {
       await payload.create({ collection: 'ingredientes', data: { ...data, quantidade: inicial, loja: loja.id }, ...comoUsuario })
     }
+    if (id) await refazerPausa(payload, loja.id, [id])
   } catch (e) {
     return { erro: mensagem(e) }
   }
@@ -1031,12 +1042,15 @@ export async function ajustarEstoque(id: number, _: Estado, form: FormData): Pro
   if (!docs[0]) return { erro: 'Ingrediente não encontrado.' }
   // ponytail: ler e gravar; duas pessoas ajustando o mesmo ingrediente no mesmo segundo podem se sobrepor. A baixa dos pedidos (#145) usa soma no banco.
   await payload.update({ collection: 'ingredientes', id, data: { quantidade: definir ? valor : somar(docs[0].quantidade, valor) }, ...comoUsuario })
+  await refazerPausa(payload, loja.id, [id])
   redirect('/painel/estoque')
 }
 
 export async function apagarIngrediente(id: number): Promise<Estado> {
   const { payload, loja, user, comoUsuario } = await sessao('cardapio')
   if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
+  const usado = await payload.count({ collection: 'produtos', where: { loja: { equals: loja.id }, 'ficha.ingrediente': { equals: id } } })
+  if (usado.totalDocs) return { erro: 'Este ingrediente está na ficha técnica de um produto. Tire de lá antes de apagar.' }
   await payload.delete({ collection: 'ingredientes', where: { id: { equals: id }, loja: { equals: loja.id } }, ...comoUsuario })
   return null
 }
