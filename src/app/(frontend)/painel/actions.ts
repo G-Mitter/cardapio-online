@@ -857,10 +857,12 @@ export async function salvarCategoria(id: number | null, _: Estado, form: FormDa
   const { payload, loja, comoUsuario } = await sessao()
   const nome = texto(form, 'nome')
   if (!nome) return { erro: 'Coloque o nome da categoria.' }
-  const data = { nome, ordem: Number(form.get('ordem')) || 0 }
+  const data = { nome }
   try {
     if (id === null) {
-      await payload.create({ collection: 'categorias', data: { ...data, loja: loja.id }, ...comoUsuario })
+      // Categoria nova entra no fim.
+      const { totalDocs } = await payload.count({ collection: 'categorias', where: { loja: { equals: loja.id } } })
+      await payload.create({ collection: 'categorias', data: { ...data, ordem: totalDocs, loja: loja.id }, ...comoUsuario })
     } else {
       await payload.update({
         collection: 'categorias',
@@ -873,6 +875,30 @@ export async function salvarCategoria(id: number | null, _: Estado, form: FormDa
     return { erro: mensagem(e) }
   }
   return null
+}
+
+/** Sobe (-1) ou desce (1) uma categoria; renumera todas (0, 1, 2...) a cada troca. */
+export async function moverCategoria(id: number, direcao: -1 | 1) {
+  const { payload, loja, comoUsuario } = await sessao()
+  const todas = await payload.find({
+    collection: 'categorias',
+    where: { loja: { equals: loja.id } },
+    sort: ['ordem', 'id'],
+    select: { ordem: true },
+    limit: 0,
+    depth: 0,
+    ...comoUsuario,
+  })
+  const ordem = mover(todas.docs.map((c) => c.id), id, direcao)
+  if (ordem) {
+    const antes = new Map(todas.docs.map((c) => [c.id, c.ordem]))
+    for (const [posicao, cid] of ordem.entries()) {
+      if (antes.get(cid) !== posicao) {
+        await payload.update({ collection: 'categorias', id: cid, data: { ordem: posicao }, ...comoUsuario })
+      }
+    }
+  }
+  redirect('/painel/categorias')
 }
 
 export async function apagarCategoria(id: number): Promise<Estado> {
