@@ -117,6 +117,8 @@ export default async function Financeiro({ searchParams }: { searchParams: Promi
                 <details>
                   <summary>{aba.baixa}</summary>
                   <form action={baixarLancamento.bind(null, l.id)} className="linha">
+                    <input type="hidden" name="aba" value={aba.value} />
+                    <input type="hidden" name="mes" value={mes} />
                     <label className="campo curto">
                       Data
                       <input name="pagoEm" type="date" defaultValue={hoje} required />
@@ -131,6 +133,8 @@ export default async function Financeiro({ searchParams }: { searchParams: Promi
                 </details>
               </div>
               <form action={apagarLancamento.bind(null, l.id)}>
+                <input type="hidden" name="aba" value={aba.value} />
+                <input type="hidden" name="mes" value={mes} />
                 <button className="botao secundario">Apagar</button>
               </form>
             </li>

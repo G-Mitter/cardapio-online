@@ -151,6 +151,7 @@ export default async function Entregadores({ searchParams }: { searchParams: Pro
                       </span>
                     </div>
                     <form action={mudarPagamentoDoPedido.bind(null, p.id)} className="linha">
+                      <input type="hidden" name="dia" value={dia} />
                       <select name="forma" defaultValue={p.pagamento ?? ''} aria-label={`Pagamento do pedido ${p.numero}`}>
                         {formas.map((f) => (
                           <option key={f.value} value={f.value}>
