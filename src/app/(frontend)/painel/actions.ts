@@ -37,6 +37,8 @@ import { sql } from '@payloadcms/db-postgres'
 import { lerFicha, lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
 import { pausarPelaFicha, refazerPausa } from '@/lib/estoque-db'
 import { mover } from '@/lib/ordem'
+import { diferenca, dinheiroEsperado, lerMovimento } from '@/lib/caixa'
+import { vendasDoPeriodo } from '@/lib/caixa-db'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
 
@@ -1571,4 +1573,71 @@ export async function conferirMaquininha(texto: string, lancar: boolean) {
     semPrevisao: lancar && !recebimentosPorData(leitura.vendas).length,
     lancados,
   }
+}
+
+// ---------- Caixa do dia ----------
+
+/** O caixa aberto da loja, se houver (só um por vez). */
+async function caixaAberto(payload: Payload, lojaId: number) {
+  const { docs } = await payload.find({
+    collection: 'caixas',
+    where: { loja: { equals: lojaId }, fechadoEm: { exists: false } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  return docs[0] ?? null
+}
+
+export async function abrirCaixa(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, user } = await sessao('financeiro')
+  const troco = lerPreco(texto(form, 'trocoInicial') || '0')
+  if (troco === null) return { erro: 'Troco inválido. Use, por exemplo, 100,00.' }
+  if (await caixaAberto(payload, loja.id)) return { erro: 'Já existe um caixa aberto. Feche antes de abrir outro.' }
+  await payload.create({
+    collection: 'caixas',
+    overrideAccess: true,
+    data: { loja: loja.id, abertoEm: new Date().toISOString(), trocoInicial: troco, abertoPor: user.id },
+  })
+  redirect('/painel/caixa')
+}
+
+/** Sangria (tirou dinheiro da gaveta) ou suprimento (pôs), sempre com o motivo. */
+export async function movimentarCaixa(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja } = await sessao('financeiro')
+  const tipo = lerMovimento(texto(form, 'tipo'))
+  const valor = lerPreco(texto(form, 'valor'))
+  const motivo = texto(form, 'motivo').slice(0, 120)
+  if (!tipo) return { erro: 'Escolha sangria ou suprimento.' }
+  if (valor === null || valor <= 0) return { erro: 'Valor inválido. Use, por exemplo, 50,00.' }
+  if (!motivo) return { erro: 'Diga o motivo, por exemplo "pagou o gás".' }
+  const caixa = await caixaAberto(payload, loja.id)
+  if (!caixa) return { erro: 'Não há caixa aberto.' }
+  // ponytail: ler e gravar a lista; dois lançamentos no mesmo segundo podem se sobrepor.
+  await payload.update({
+    collection: 'caixas',
+    id: caixa.id,
+    overrideAccess: true,
+    data: { movimentos: [...(caixa.movimentos ?? []), { tipo, valor, motivo, em: new Date().toISOString() }] },
+  })
+  redirect('/painel/caixa')
+}
+
+/** Fecha o caixa: o sistema calcula o esperado em dinheiro e guarda a diferença para o contado. */
+export async function fecharCaixa(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, user } = await sessao('financeiro')
+  const contado = lerPreco(texto(form, 'contado'))
+  if (contado === null) return { erro: 'Coloque o dinheiro contado na gaveta, por exemplo 350,00.' }
+  const caixa = await caixaAberto(payload, loja.id)
+  if (!caixa) return { erro: 'Não há caixa aberto.' }
+  const agora = new Date().toISOString()
+  const vendas = await vendasDoPeriodo(payload, loja.id, caixa.abertoEm, agora)
+  const esperado = dinheiroEsperado(caixa.trocoInicial, vendas.get('dinheiro') ?? 0, caixa.movimentos ?? [])
+  await payload.update({
+    collection: 'caixas',
+    id: caixa.id,
+    overrideAccess: true,
+    data: { fechadoEm: agora, esperado, contado, diferenca: diferenca(contado, esperado), observacao: texto(form, 'observacao').slice(0, 300), fechadoPor: user.id },
+  })
+  redirect('/painel/caixa')
 }

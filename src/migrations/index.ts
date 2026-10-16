@@ -32,6 +32,7 @@ import * as migration_20261016_175645_modo_preparo from './20261016_175645_modo_
 import * as migration_20261016_175830_setor_categoria from './20261016_175830_setor_categoria';
 import * as migration_20261016_180008_aceite_origem from './20261016_180008_aceite_origem';
 import * as migration_20261016_180316_impressao from './20261016_180316_impressao';
+import * as migration_20261016_184524_caixa from './20261016_184524_caixa';
 
 export const migrations = [
   {
@@ -202,6 +203,11 @@ export const migrations = [
   {
     up: migration_20261016_180316_impressao.up,
     down: migration_20261016_180316_impressao.down,
-    name: '20261016_180316_impressao'
+    name: '20261016_180316_impressao',
+  },
+  {
+    up: migration_20261016_184524_caixa.up,
+    down: migration_20261016_184524_caixa.down,
+    name: '20261016_184524_caixa'
   },
 ];
