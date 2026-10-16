@@ -82,6 +82,8 @@ export interface Config {
     lancamentos: Lancamento;
     ingredientes: Ingrediente;
     caixas: Caixa;
+    fornecedores: Fornecedore;
+    compras: Compra;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -104,6 +106,8 @@ export interface Config {
     lancamentos: LancamentosSelect<false> | LancamentosSelect<true>;
     ingredientes: IngredientesSelect<false> | IngredientesSelect<true>;
     caixas: CaixasSelect<false> | CaixasSelect<true>;
+    fornecedores: FornecedoresSelect<false> | FornecedoresSelect<true>;
+    compras: ComprasSelect<false> | ComprasSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -651,6 +655,43 @@ export interface Caixa {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fornecedores".
+ */
+export interface Fornecedore {
+  id: number;
+  loja?: (number | null) | Loja;
+  nome: string;
+  telefone?: string | null;
+  observacao?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "compras".
+ */
+export interface Compra {
+  id: number;
+  loja?: (number | null) | Loja;
+  fornecedor: number | Fornecedore;
+  data: string;
+  itens: {
+    ingrediente: number | Ingrediente;
+    quantidade: number;
+    total: number;
+    custo: number;
+    id?: string | null;
+  }[];
+  total: number;
+  aVista?: boolean | null;
+  vencimento?: string | null;
+  lancamento?: (number | null) | Lancamento;
+  observacao?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -732,6 +773,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'caixas';
         value: number | Caixa;
+      } | null)
+    | ({
+        relationTo: 'fornecedores';
+        value: number | Fornecedore;
+      } | null)
+    | ({
+        relationTo: 'compras';
+        value: number | Compra;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1140,6 +1189,43 @@ export interface CaixasSelect<T extends boolean = true> {
   observacao?: T;
   abertoPor?: T;
   fechadoPor?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fornecedores_select".
+ */
+export interface FornecedoresSelect<T extends boolean = true> {
+  loja?: T;
+  nome?: T;
+  telefone?: T;
+  observacao?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "compras_select".
+ */
+export interface ComprasSelect<T extends boolean = true> {
+  loja?: T;
+  fornecedor?: T;
+  data?: T;
+  itens?:
+    | T
+    | {
+        ingrediente?: T;
+        quantidade?: T;
+        total?: T;
+        custo?: T;
+        id?: T;
+      };
+  total?: T;
+  aVista?: T;
+  vencimento?: T;
+  lancamento?: T;
+  observacao?: T;
   updatedAt?: T;
   createdAt?: T;
 }

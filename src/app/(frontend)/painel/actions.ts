@@ -14,7 +14,7 @@ import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
 import { loginDoGarcom } from '@/lib/garcom'
 import { montarEndereco, montarHorario } from '@/lib/lojaTexto'
-import { calcularAcerto, diferencaDoAcerto, intervaloDoDia, type Parada } from '@/lib/entregadores'
+import { calcularAcerto, diferencaDoAcerto, hojeEmBrasilia, intervaloDoDia, type Parada } from '@/lib/entregadores'
 import { whatsappUrl } from '@/lib/whatsapp'
 import { CATEGORIAS, intervaloDoMes, lerData, proximoVencimento, somarDias, type Tipo, TIPOS } from '@/lib/financeiro'
 import { conferir, lerRelatorio, type PagamentoLoja, recebimentosPorData, TOLERANCIA_MIN } from '@/lib/maquininha'
@@ -37,6 +37,7 @@ import { sql } from '@payloadcms/db-postgres'
 import { lerFicha, lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
 import { pausarPelaFicha, refazerPausa } from '@/lib/estoque-db'
 import { mover } from '@/lib/ordem'
+import { lerItensCompra, totalDaCompra } from '@/lib/compras'
 import { diferenca, dinheiroEsperado, lerMovimento } from '@/lib/caixa'
 import { vendasDoPeriodo } from '@/lib/caixa-db'
 import type { Loja } from '@/payload-types'
@@ -1642,4 +1643,100 @@ export async function fecharCaixa(_: Estado, form: FormData): Promise<Estado> {
     data: { fechadoEm: agora, esperado, contado, diferenca: diferenca(contado, esperado), observacao: texto(form, 'observacao').slice(0, 300), fechadoPor: user.id },
   })
   redirect('/painel/caixa')
+}
+
+// ---------- Fornecedores e compras ----------
+
+export async function salvarFornecedor(id: number | null, _: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao('financeiro')
+  const nome = texto(form, 'nome').slice(0, 80)
+  if (!nome) return { erro: 'Coloque o nome do fornecedor.' }
+  const { totalDocs } = await payload.count({
+    collection: 'fornecedores',
+    where: { loja: { equals: loja.id }, nome: { equals: nome }, ...(id ? { id: { not_equals: id } } : {}) },
+  })
+  if (totalDocs) return { erro: `Já existe o fornecedor ${nome}.` }
+  const data = { nome, telefone: texto(form, 'telefone').slice(0, 30), observacao: texto(form, 'observacao').slice(0, 300) }
+  try {
+    if (id) await payload.update({ collection: 'fornecedores', where: { id: { equals: id }, loja: { equals: loja.id } }, data, ...comoUsuario })
+    else await payload.create({ collection: 'fornecedores', data: { ...data, loja: loja.id }, ...comoUsuario })
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect('/painel/compras')
+}
+
+export async function apagarFornecedor(id: number): Promise<Estado> {
+  const { payload, loja, user, comoUsuario } = await sessao('financeiro')
+  if (!temPermissao(user, 'excluir')) return SEM_EXCLUIR
+  const compras = await payload.count({ collection: 'compras', where: { loja: { equals: loja.id }, fornecedor: { equals: id } } })
+  if (compras.totalDocs) return { erro: 'Este fornecedor tem compras registradas e não pode ser apagado.' }
+  await payload.delete({ collection: 'fornecedores', where: { id: { equals: id }, loja: { equals: loja.id } }, ...comoUsuario })
+  return null
+}
+
+/**
+ * Registra a compra: guarda, cria a conta a pagar (já paga, se foi na hora), soma no estoque e passa
+ * o custo de cada ingrediente para o último preço pago por unidade.
+ */
+export async function registrarCompra(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja } = await sessao('financeiro')
+  const [fornecedores, ingredientes] = await Promise.all([
+    payload.find({ collection: 'fornecedores', where: { id: { equals: Number(texto(form, 'fornecedor')) || 0 }, loja: { equals: loja.id } }, limit: 1, depth: 0, overrideAccess: true }),
+    payload.find({ collection: 'ingredientes', where: { loja: { equals: loja.id } }, limit: 0, depth: 0, overrideAccess: true }),
+  ])
+  const fornecedor = fornecedores.docs[0]
+  if (!fornecedor) return { erro: 'Escolha o fornecedor.' }
+  const dia = texto(form, 'data') ? lerData(texto(form, 'data')) : hojeEmBrasilia()
+  if (!dia) return { erro: 'Data da compra inválida.' }
+  const aVista = marcado(form, 'aVista')
+  const vencimento = aVista ? dia : lerData(texto(form, 'vencimento'))
+  if (!vencimento) return { erro: 'Escolha o vencimento ou marque que pagou na hora.' }
+  const lidos = lerItensCompra(texto(form, 'itens'), ingredientes.docs.map((i) => i.id))
+  if (!lidos.ok) return { erro: lidos.erro }
+  const itens = lidos.itens
+  const total = totalDaCompra(itens)
+
+  let lancamentoId: number | undefined
+  try {
+    const lancamento = await payload.create({
+      collection: 'lancamentos',
+      overrideAccess: true,
+      data: {
+        loja: loja.id,
+        tipo: 'pagar',
+        descricao: `Compra: ${fornecedor.nome}`.slice(0, 120),
+        valor: total,
+        vencimento,
+        categoria: 'Fornecedores',
+        ...(aVista && { pagoEm: dia, valorPago: total }),
+      },
+    })
+    lancamentoId = lancamento.id
+    await payload.create({
+      collection: 'compras',
+      overrideAccess: true,
+      data: {
+        loja: loja.id,
+        fornecedor: fornecedor.id,
+        data: dia,
+        itens: itens.map((i) => ({ ingrediente: i.ingrediente, quantidade: i.quantidade, total: i.total, custo: i.custo })),
+        total,
+        aVista,
+        vencimento,
+        lancamento: lancamento.id,
+        observacao: texto(form, 'observacao').slice(0, 300),
+      },
+    })
+  } catch (e) {
+    // Sem a compra, a conta a pagar não pode ficar solta.
+    if (lancamentoId) await payload.delete({ collection: 'lancamentos', id: lancamentoId, overrideAccess: true }).catch(() => {})
+    return { erro: mensagem(e) }
+  }
+  for (const i of itens) {
+    // Soma no próprio banco, como a baixa dos pedidos: não atropela um pedido que chega no mesmo instante.
+    await payload.db.drizzle.execute(sql`UPDATE "ingredientes" SET "quantidade" = "quantidade" + ${i.quantidade}, "custo" = ${i.custo} WHERE "id" = ${i.ingrediente} AND "loja_id" = ${loja.id}`)
+  }
+  await refazerPausa(payload, loja.id, itens.map((i) => i.ingrediente))
+  redirect('/painel/compras')
 }
