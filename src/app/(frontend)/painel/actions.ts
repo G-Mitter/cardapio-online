@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getPayload, type Payload } from 'payload'
 
-import { COOKIE_LOJA, sessao, sessaoGarcom } from '@/lib/painel'
+import { COOKIE_LOJA, iniciarSessao, sessao, sessaoGarcom } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
@@ -74,14 +74,7 @@ export async function entrar(_: Estado, form: FormData): Promise<Estado> {
     return { erro: 'Usuário ou senha incorretos.' }
   }
   if (resultado.user?.ativo === false) return { erro: 'Este acesso está desligado. Fale com a loja.' }
-  // O mesmo cookie do /admin: quem entra aqui também está logado lá (e vice-versa).
-  ;(await cookies()).set(tokenCookie(payload), resultado.token ?? '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    expires: resultado.exp ? new Date(resultado.exp * 1000) : undefined,
-  })
+  await iniciarSessao(payload, resultado)
   redirect('/painel')
 }
 

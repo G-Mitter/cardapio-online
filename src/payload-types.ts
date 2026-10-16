@@ -300,6 +300,14 @@ export interface Loja {
    */
   tagGoogle?: string | null;
   /**
+   * Só números. Visível só para você e para o dono da loja.
+   */
+  documento?: string | null;
+  /**
+   * Preenchido no cadastro feito pelo próprio cliente.
+   */
+  aceitouTermosEm?: string | null;
+  /**
    * Desmarque para pausar os pedidos (o cardápio continua visível).
    */
   aberta?: boolean | null;
@@ -984,6 +992,8 @@ export interface LojasSelect<T extends boolean = true> {
   chavePix?: T;
   pixelMeta?: T;
   tagGoogle?: T;
+  documento?: T;
+  aceitouTermosEm?: T;
   aberta?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -8,7 +8,7 @@ export default function Privacidade() {
   return (
     <main className="wrap texto">
       <h1>Política de privacidade</h1>
-      <p className="vazio">Atualizada em 8 de outubro de 2026 (leitura de foto da maquininha).</p>
+      <p className="vazio">Atualizada em 16 de outubro de 2026 (cadastro da loja).</p>
 
       <h2>Quem cuida dos seus dados</h2>
       <p>
@@ -37,7 +37,7 @@ export default function Privacidade() {
         </li>
       </ul>
       <p>
-        Não pedimos e-mail, senha nem dados de cartão. O pagamento é feito direto com a loja, na
+        Do cliente que compra, não pedimos e-mail, senha nem dados de cartão. O pagamento é feito direto com a loja, na
         entrega ou na retirada. A conversa no WhatsApp segue as regras do próprio WhatsApp.
       </p>
 
@@ -56,6 +56,15 @@ export default function Privacidade() {
         (serviço de inteligência artificial, na camada gratuita, que pode usar o conteúdo para melhorar os
         produtos do Google). O relatório traz valores, horários e bandeiras, não o nome do cliente. A foto
         não é guardada por nós.
+      </p>
+
+      <h2>Cadastro da loja (só para quem contrata)</h2>
+      <p>
+        Quem cria uma loja informa nome, e-mail, senha, CPF ou CNPJ, WhatsApp e o nome da loja. O
+        CPF ou CNPJ serve para identificar o contrato e, no futuro, emitir a nota de serviço. Ele
+        não aparece no cardápio nem para os clientes da loja, e só o administrador do sistema e o
+        dono da loja o veem. Guardamos também a data em que os termos foram aceitos. A senha fica
+        protegida (guardada de forma cifrada).
       </p>
 
       <h2>Quem vê o quê</h2>

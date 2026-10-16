@@ -36,7 +36,10 @@ export default function Home() {
           <h1>Seu cardápio no celular do cliente, e o pedido pronto no seu WhatsApp.</h1>
           <p>Sem aplicativo para baixar e sem comissão por pedido. Você manda o link, o cliente pede.</p>
           <div className="acoes">
-            <Link href={EXEMPLO} className="botao">
+            <Link href="/cadastrar" className="botao">
+              Assinar ou comprar
+            </Link>
+            <Link href={EXEMPLO} className="botao secundario">
               Ver um cardápio de exemplo
             </Link>
             {contato && (
