@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { gruposDoProduto, lerOpcoes, opcoesComoTexto, resolverEscolhas } from '@/lib/opcoes'
+import { gruposDoProduto, lerOpcoes, lerOpcoesDaTela, resolverEscolhas } from '@/lib/opcoes'
 
 const texto = 'Tamanho: obrigatório\n- Média\n- Grande = 8,00\nExtras: até 2\n- Bacon = 4,00\n- Queijo = 3,50\n- Ovo = 2'
 
@@ -14,13 +14,12 @@ const grupos = () => {
 }
 
 describe('texto do painel', () => {
-  it('lê grupos, regras e itens, e devolve o mesmo texto', () => {
+  it('lê grupos, regras e itens', () => {
     const r = lerOpcoes(texto)
     expect(r.ok && r.grupos).toMatchObject([
       { nome: 'Tamanho', min: 1, max: 1, itens: [{ nome: 'Média', preco: 0 }, { nome: 'Grande', preco: 8 }] },
       { nome: 'Extras', min: 0, max: 2, itens: [{ nome: 'Bacon', preco: 4 }, { nome: 'Queijo', preco: 3.5 }, { nome: 'Ovo', preco: 2 }] },
     ])
-    expect(r.ok && opcoesComoTexto(r.grupos)).toBe(texto.replace('Ovo = 2', 'Ovo = 2,00'))
   })
 
   it('recusa item solto, grupo vazio, regra desconhecida e preço inválido', () => {
@@ -54,5 +53,35 @@ describe('escolhas do cliente', () => {
     expect(resolverEscolhas(grupos(), { g0: ['g0i0'], g1: ['g1i0', 'g1i0'] }).ok).toBe(false)
     expect(resolverEscolhas(grupos(), { g0: ['g1i0'] }).ok).toBe(false)
     expect(resolverEscolhas(grupos(), { g0: ['g0i0'], g9: ['x'] }).ok).toBe(false)
+  })
+})
+
+describe('opções da tela do painel', () => {
+  const grupo = { nome: 'Extras', obrigatorio: false, max: 5, itens: [{ nome: 'Bacon', preco: 4 }, { nome: 'Ovo', preco: 2.504 }] }
+
+  it('lê o JSON, limita o máximo aos itens e arredonda o valor', () => {
+    const r = lerOpcoesDaTela(JSON.stringify([{ ...grupo, obrigatorio: true }]))
+    expect(r.ok && r.grupos).toEqual([
+      { nome: 'Extras', min: 1, max: 2, itens: [{ nome: 'Bacon', preco: 4 }, { nome: 'Ovo', preco: 2.5 }] },
+    ])
+  })
+
+  it('vazio é sem opções', () => {
+    expect(lerOpcoesDaTela('')).toEqual({ ok: true, grupos: [] })
+    expect(lerOpcoesDaTela('[]')).toEqual({ ok: true, grupos: [] })
+  })
+
+  it('recusa lixo, nome vazio, grupo sem itens, valor negativo e máximo zero', () => {
+    for (const ruim of [
+      'não é json',
+      '{}',
+      JSON.stringify([{ ...grupo, nome: ' ' }]),
+      JSON.stringify([{ ...grupo, itens: [] }]),
+      JSON.stringify([{ ...grupo, itens: [{ nome: 'A', preco: -1 }] }]),
+      JSON.stringify([{ ...grupo, itens: [{ nome: '', preco: 1 }] }]),
+      JSON.stringify([{ ...grupo, max: 0 }]),
+    ]) {
+      expect(lerOpcoesDaTela(ruim).ok).toBe(false)
+    }
   })
 })

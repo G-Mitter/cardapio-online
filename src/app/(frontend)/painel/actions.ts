@@ -21,7 +21,7 @@ import { conferir, lerRelatorio, type PagamentoLoja, recebimentosPorData, TOLERA
 import { fecharPagamento, lerTaxaServico, type Recebido, totalDaConta } from '@/lib/conta'
 import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
-import { gruposDoProduto, lerOpcoes } from '@/lib/opcoes'
+import { gruposDoProduto, lerOpcoesDaTela } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
 import { lerSelos } from '@/lib/selos'
 import { FORMAS_PAGAMENTO, type FormaPagamento, type ItemEscolhido, mensagemPedido, montarPedido } from '@/lib/pedido'
@@ -732,7 +732,7 @@ export async function salvarProduto(id: number | null, _: Estado, form: FormData
   if ((leve || pague) && !promocaoDoProduto({ leve, pague })) {
     return { erro: 'Na promoção, preencha "leve" (2 ou mais) e "pague" (um número menor que o "leve"), ou deixe os dois vazios.' }
   }
-  const opcoes = lerOpcoes(texto(form, 'opcoes'))
+  const opcoes = lerOpcoesDaTela(texto(form, 'opcoes'))
   if (!opcoes.ok) return { erro: opcoes.erro }
 
   // A categoria precisa ser desta loja.
