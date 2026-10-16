@@ -149,6 +149,22 @@
 .painel .curto {
   max-width: 120px;
 }
+/* − número + : botões de 44px para o toque no celular */
+.painel .campo.curto:has(.contador) {
+  max-width: 190px;
+}
+.contador {
+  display: flex;
+  gap: 6px;
+}
+.contador input {
+  text-align: center;
+}
+.painel .contador .botao {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
 .linha {
   display: flex;
   flex-wrap: wrap;
@@ -160,6 +176,9 @@
 }
 .linha > .campo.curto {
   flex: 0 0 120px;
+}
+.linha > .campo.curto:has(.contador) {
+  flex-basis: 190px;
 }
 .marcar {
   display: flex;
