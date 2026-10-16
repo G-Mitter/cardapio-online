@@ -71,6 +71,6 @@ export function naCozinha(agendadoPara: string | null, agora = new Date()): bool
   return new Date(agendadoPara).getTime() - agora.getTime() <= ANTECEDENCIA_COZINHA_MIN * 60_000
 }
 
-/** Como o pedido aparece na tela: "Mesa 3", "Balcão" ou o modo. */
-export const rotuloTipo = (modo: 'entrega' | 'retirada', balcao?: boolean | null, mesa?: string | null) =>
-  mesa ? `Mesa ${mesa}` : balcao ? 'Balcão' : modo === 'entrega' ? 'Entrega' : 'Retirada'
+/** Como o pedido aparece na tela: "Mesa 3 · Garçom Ana", "Balcão" ou o modo. */
+export const rotuloTipo = (modo: 'entrega' | 'retirada', balcao?: boolean | null, mesa?: string | null, garcom?: string) =>
+  mesa ? `Mesa ${mesa}${garcom ? ` · Garçom ${garcom}` : ''}` : balcao ? 'Balcão' : modo === 'entrega' ? 'Entrega' : 'Retirada'

@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 import { cache } from 'react'
 
 import config from '@/payload.config'
@@ -63,3 +63,29 @@ export const sessaoGarcom = cache(async () => {
     comoUsuario: { user, overrideAccess: false } as const,
   }
 })
+
+/** Nome de cada garçom (por id) para mostrar nos pedidos de mesa. O garçom não tem acesso próprio: o servidor lê. */
+export async function nomesDosGarcons(
+  payload: Payload,
+  pedidos: { garcom?: number | { id: number } | null }[],
+) {
+  const ids = [
+    ...new Set(
+      pedidos.flatMap((p) =>
+        p.garcom ? [typeof p.garcom === 'object' ? p.garcom.id : p.garcom] : [],
+      ),
+    ),
+  ]
+  if (!ids.length) return new Map<number, string>()
+  const { docs } = await payload.find({
+    collection: 'users',
+    where: { id: { in: ids } },
+    limit: ids.length,
+    depth: 0,
+  })
+  return new Map(docs.map((g) => [g.id, g.nome ?? g.username ?? 'Garçom']))
+}
+
+/** Id do garçom que lançou o pedido, ou null. */
+export const idDoGarcom = (p: { garcom?: number | { id: number } | null }) =>
+  p.garcom ? (typeof p.garcom === 'object' ? p.garcom.id : p.garcom) : null

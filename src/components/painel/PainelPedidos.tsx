@@ -23,6 +23,8 @@ export type PedidoView = {
   balcao: boolean
   /** Pedido do QR Code da mesa; vazio nos demais. */
   mesa: string
+  /** Nome do garçom que lançou o pedido da mesa; vazio se foi o cliente ou a loja. */
+  garcom: string
   endereco: string
   /** Quem leva a entrega, se já escolhido. */
   entregadorId: number | null
@@ -113,14 +115,16 @@ export function PainelPedidos({
               <span className="pedido__status">{ROTULO[p.status]}</span>
             </header>
             <div>
-              <b>{p.nome}</b>
+              {/* Pedido de mesa tem nome "Mesa 2": o tipo logo abaixo já diz isso. */}
+              {!p.mesa && <b>{p.nome}</b>}
               {p.telefone && (
                 <>
                   {' '}
                   · <a href={`tel:${p.telefone}`}>{p.telefone}</a>
                 </>
               )}{' '}
-              · {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : rotuloTipo(p.modo, p.balcao, p.mesa)}
+              {!p.mesa && '· '}
+              {p.modo === 'entrega' ? `Entrega: ${p.endereco}` : rotuloTipo(p.modo, p.balcao, p.mesa, p.garcom)}
             </div>
             {p.modo === 'entrega' && p.endereco && PROXIMO[p.status] && (
               <label className="marcar">
