@@ -121,6 +121,30 @@ export const Lojas: CollectionConfig = {
       admin: { description: 'Pedido do cardápio online ou do QR Code da mesa já entra como Preparando, sem esperar alguém tocar. Pedido agendado e o que a equipe lança continuam Novo.' },
     },
     {
+      type: 'row',
+      fields: [
+        { name: 'impressaoAutomatica', label: 'Imprimir pedidos automaticamente', type: 'checkbox', defaultValue: false },
+        { name: 'larguraTicket', label: 'Largura do papel', type: 'select', defaultValue: '80', options: [{ label: '80 mm', value: '80' }, { label: '58 mm', value: '58' }] },
+        { name: 'viasTicket', label: 'Vias de cada ticket', type: 'number', defaultValue: 1, min: 1, max: 3 },
+      ],
+    },
+    // Quando a impressão foi ligada: só pedidos feitos depois disso saem na impressora (não despeja os de antes).
+    { name: 'impressaoDesde', label: 'Impressão ligada em', type: 'date', admin: { readOnly: true } },
+    {
+      name: 'imprimirOrigens',
+      label: 'Imprimir pedidos de',
+      type: 'select',
+      hasMany: true,
+      defaultValue: ['site', 'mesa', 'garcom', 'balcao', 'ifood'],
+      options: [
+        { label: 'Cardápio online', value: 'site' },
+        { label: 'QR Code da mesa', value: 'mesa' },
+        { label: 'Garçom', value: 'garcom' },
+        { label: 'Balcão', value: 'balcao' },
+        { label: 'iFood', value: 'ifood' },
+      ],
+    },
+    {
       name: 'mesas',
       label: 'Mesas',
       type: 'text',

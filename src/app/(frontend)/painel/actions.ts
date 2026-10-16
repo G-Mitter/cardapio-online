@@ -31,6 +31,9 @@ import { normalizarTelefone } from '@/lib/cliente'
 import { comCidade, linkMaps, MAX_PARADAS } from '@/lib/rota'
 import { lerPreco } from '@/lib/planilha'
 import { lerSetor } from '@/lib/setores'
+import { ORIGENS } from '@/lib/origem'
+import { lerLargura, lerVias } from '@/lib/ticket'
+import { sql } from '@payloadcms/db-postgres'
 import { lerFicha, lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
 import { pausarPelaFicha, refazerPausa } from '@/lib/estoque-db'
 import { mover } from '@/lib/ordem'
@@ -1056,6 +1059,44 @@ export async function apagarIngrediente(id: number): Promise<Estado> {
   if (usado.totalDocs) return { erro: 'Este ingrediente está na ficha técnica de um produto. Tire de lá antes de apagar.' }
   await payload.delete({ collection: 'ingredientes', where: { id: { equals: id }, loja: { equals: loja.id } }, ...comoUsuario })
   return null
+}
+
+// ---------- Impressão ----------
+
+/** Configuração da impressão automática (quem edita a loja). Ligar marca o momento: o que veio antes não sai impresso. */
+export async function salvarImpressao(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja, comoUsuario } = await sessao('loja')
+  const ligada = marcado(form, 'impressaoAutomatica')
+  const origens = ORIGENS.map((o) => o.value).filter((o) => form.getAll('imprimirOrigens').includes(o))
+  try {
+    await payload.update({
+      collection: 'lojas',
+      id: loja.id,
+      data: {
+        impressaoAutomatica: ligada,
+        larguraTicket: lerLargura(texto(form, 'larguraTicket')),
+        viasTicket: lerVias(texto(form, 'viasTicket')),
+        imprimirOrigens: origens,
+        ...(ligada && !loja.impressaoAutomatica && { impressaoDesde: new Date().toISOString() }),
+      },
+      ...comoUsuario,
+    })
+  } catch (e) {
+    return { erro: mensagem(e) }
+  }
+  redirect('/painel/impressao')
+}
+
+/**
+ * Reserva o pedido para imprimir: só uma tela consegue (a primeira que pedir). Reservar antes de imprimir
+ * evita ticket em dobro com duas abas abertas; se a impressora falhar, o pedido tem o botão Reimprimir.
+ */
+export async function reservarImpressao(id: number): Promise<boolean> {
+  const { payload, loja } = await sessao('pedidos')
+  const r = await payload.db.drizzle.execute(
+    sql`UPDATE "pedidos" SET "impresso" = true WHERE "id" = ${id} AND "loja_id" = ${loja.id} AND "impresso" IS NOT TRUE RETURNING "id"`,
+  )
+  return r.rows.length > 0
 }
 
 // ---------- Carrinhos abandonados ----------

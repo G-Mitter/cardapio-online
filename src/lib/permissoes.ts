@@ -35,6 +35,7 @@ export const TELAS = [
   ['/painel', 'Pedidos', 'pedidos'],
   ['/painel/cozinha', 'Cozinha', 'pedidos'],
   ['/painel/mesas', 'Mesas', 'pedidos'],
+  ['/painel/impressao', 'Impressão', 'pedidos'],
   ['/painel/entregadores', 'Entregadores', 'equipe'],
   ['/painel/garcons', 'Garçons', 'equipe'],
   ['/painel/usuarios', 'Usuários', 'usuarios'],

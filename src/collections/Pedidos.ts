@@ -143,6 +143,8 @@ export const Pedidos: CollectionConfig = {
         { name: 'cpf', label: 'CPF na nota', type: 'text' },
       ],
     },
+    // Marcado quando o ticket sai na impressora (ou é reservado para sair); evita imprimir duas vezes.
+    { name: 'impresso', label: 'Impresso', type: 'checkbox', defaultValue: false, admin: { readOnly: true } },
     { name: 'origem', label: 'Origem', type: 'select', options: [...ORIGENS], admin: { readOnly: true } },
     { name: 'observacoes', label: 'Observações', type: 'textarea', admin: { readOnly: true } },
   ],
