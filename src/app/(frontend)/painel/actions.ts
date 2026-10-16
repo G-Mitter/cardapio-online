@@ -23,7 +23,7 @@ import { lerMesas } from '@/lib/mesas'
 import { lerPixelMeta, lerTagGoogle } from '@/lib/pixel'
 import { gruposDoProduto, lerOpcoesDaTela } from '@/lib/opcoes'
 import { promocaoDoProduto } from '@/lib/promocao'
-import { SEM_EXCLUIR, temPermissao } from '@/lib/permissoes'
+import { contido, efetivas, gerentes, lerPermissoes, SEM_EXCLUIR, temPermissao } from '@/lib/permissoes'
 import { lerSelos } from '@/lib/selos'
 import { FORMAS_PAGAMENTO, type FormaPagamento, type ItemEscolhido, mensagemPedido, montarPedido } from '@/lib/pedido'
 import { rotuloAgendamento } from '@/lib/agendamento'
@@ -1239,6 +1239,114 @@ export async function trocarSenhaGarcom(id: number, _: Estado, form: FormData): 
   if (senha.length < 6) return { erro: 'A senha precisa de pelo menos 6 caracteres.' }
   await mudarGarcom(id, { password: senha })
   redirect('/painel/garcons')
+}
+
+// ---------- Usuários da loja ----------
+
+type Contexto = Awaited<ReturnType<typeof sessao>>
+
+/** Usuários de painel desta loja (nunca administrador nem garçom), do mais antigo ao mais novo. */
+async function usuariosDaLoja({ payload, loja }: Pick<Contexto, 'payload' | 'loja'>) {
+  const { docs } = await payload.find({
+    collection: 'users',
+    where: { 'tenants.tenant': { equals: loja.id }, roles: { contains: 'loja' } },
+    sort: 'createdAt',
+    limit: 0,
+    depth: 0,
+  })
+  return docs.filter((u) => !u.roles?.includes('admin') && !u.roles?.includes('garcom'))
+}
+
+/**
+ * Confere antes de mexer em outro usuário: ele é desta loja, o usuário de quem mexe não é ele mesmo
+ * (ninguém tira o próprio acesso por engano) e não tem permissões que quem mexe não tem.
+ */
+async function alvoDoUsuario(ctx: Contexto, id: number) {
+  const todos = await usuariosDaLoja(ctx)
+  const alvo = todos.find((u) => u.id === id)
+  if (!alvo) return { erro: 'Usuário não encontrado.' } as const
+  if (alvo.id === ctx.user.id) return { erro: 'Você não pode fazer isso com o seu próprio usuário.' } as const
+  if (!contido(efetivas(alvo), efetivas(ctx.user))) {
+    return { erro: 'Este usuário tem permissões que você não tem. Peça a quem tem.' } as const
+  }
+  return { alvo, todos } as const
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export async function salvarUsuario(id: number | null, _: Estado, form: FormData): Promise<Estado> {
+  const ctx = await sessao('usuarios')
+  const { payload, loja, user } = ctx
+  const nome = texto(form, 'nome').slice(0, 80)
+  if (!nome) return { erro: 'Coloque o nome do usuário.' }
+  const permissoes = lerPermissoes(form.getAll('permissoes'))
+  if (!permissoes.length) return { erro: 'Marque pelo menos uma permissão.' }
+  if (!contido(permissoes, efetivas(user))) return { erro: 'Você só pode dar permissões que você mesmo tem.' }
+
+  if (id === null) {
+    const email = texto(form, 'email').toLowerCase()
+    const senha = String(form.get('senha') ?? '')
+    if (!EMAIL.test(email)) return { erro: 'E-mail inválido.' }
+    if (senha.length < 8) return { erro: 'A senha inicial precisa de pelo menos 8 caracteres.' }
+    try {
+      // O usuário nasce só desta loja. Criamos como o servidor, depois de conferir o login de quem cria.
+      await payload.create({
+        collection: 'users',
+        data: { email, password: senha, nome, roles: ['loja'], tenants: [{ tenant: loja.id }], permissoes, ativo: true },
+      })
+    } catch (e) {
+      return { erro: /unique|already|registrad|e-?mail/i.test(String(e)) ? 'Já existe um usuário com esse e-mail.' : mensagem(e) }
+    }
+    redirect('/painel/usuarios')
+  }
+
+  const r = await alvoDoUsuario(ctx, id)
+  if (!r.alvo) return { erro: r.erro }
+  const depois = r.todos.map((u) => (u.id === id ? { ...u, permissoes } : u))
+  if (gerentes(depois) === 0) {
+    return { erro: 'A loja precisa ter pelo menos um usuário que gerencia usuários.' }
+  }
+  await payload.update({ collection: 'users', id, data: { nome, permissoes } })
+  redirect('/painel/usuarios')
+}
+
+/** Quando o erro não tem formulário (botão Ligar/Desligar), a tela mostra o aviso que vai na URL. */
+const avisoUsuarios = (erro: string) => redirect(`/painel/usuarios?aviso=${encodeURIComponent(erro)}`)
+
+export async function ligarUsuario(id: number, ativo: boolean) {
+  const ctx = await sessao('usuarios')
+  const r = await alvoDoUsuario(ctx, id)
+  if (!r.alvo) return avisoUsuarios(r.erro)
+  if (!ativo && gerentes(r.todos.map((u) => (u.id === id ? { ...u, ativo: false } : u))) === 0) {
+    return avisoUsuarios('A loja precisa ter pelo menos um usuário que gerencia usuários.')
+  }
+  await ctx.payload.update({ collection: 'users', id, data: { ativo } })
+  redirect('/painel/usuarios')
+}
+
+/** Troca a senha de um usuário da loja, ou a sua própria. */
+export async function trocarSenhaUsuario(id: number, _: Estado, form: FormData): Promise<Estado> {
+  const ctx = await sessao('usuarios')
+  const senha = String(form.get('senha') ?? '')
+  if (senha.length < 8) return { erro: 'A senha precisa de pelo menos 8 caracteres.' }
+  if (id !== ctx.user.id) {
+    const r = await alvoDoUsuario(ctx, id)
+    if (!r.alvo) return { erro: r.erro }
+  }
+  await ctx.payload.update({ collection: 'users', id, data: { password: senha } })
+  redirect('/painel/usuarios')
+}
+
+export async function apagarUsuario(id: number): Promise<Estado> {
+  const ctx = await sessao('usuarios')
+  if (!temPermissao(ctx.user, 'excluir')) return SEM_EXCLUIR
+  const r = await alvoDoUsuario(ctx, id)
+  if (!r.alvo) return { erro: r.erro }
+  if (gerentes(r.todos.filter((u) => u.id !== id)) === 0) {
+    return { erro: 'A loja precisa ter pelo menos um usuário que gerencia usuários.' }
+  }
+  await ctx.payload.delete({ collection: 'users', id })
+  return null
 }
 
 /**

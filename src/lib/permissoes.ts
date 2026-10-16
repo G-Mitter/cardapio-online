@@ -37,6 +37,7 @@ export const TELAS = [
   ['/painel/mesas', 'Mesas', 'pedidos'],
   ['/painel/entregadores', 'Entregadores', 'equipe'],
   ['/painel/garcons', 'Garçons', 'equipe'],
+  ['/painel/usuarios', 'Usuários', 'usuarios'],
   ['/painel/produtos', 'Produtos', 'cardapio'],
   ['/painel/categorias', 'Categorias', 'cardapio'],
   ['/painel/cupons', 'Cupons', 'cardapio'],
@@ -53,3 +54,24 @@ export const primeiraTela = (user: Usuario): string => telasDoUsuario(user)[0]?.
 
 /** Resposta das ações de apagar quando falta "excluir". */
 export const SEM_EXCLUIR = { erro: 'Você não tem permissão para apagar.' } as const
+
+const TODAS = PERMISSOES.map((p) => p.valor)
+
+/** O que o usuário pode de fato: tudo (administrador ou sem lista) ou a lista dele. */
+export const efetivas = (user: Usuario): Permissao[] =>
+  user?.roles?.includes('admin') || !Array.isArray(user?.permissoes) ? [...TODAS] : lerPermissoes(user.permissoes)
+
+/** Atalhos da tela Usuários: marcam várias permissões de uma vez. */
+export const PAPEIS: readonly { nome: string; permissoes: readonly Permissao[] }[] = [
+  { nome: 'Gerente', permissoes: TODAS },
+  { nome: 'Atendente', permissoes: ['pedidos'] },
+  { nome: 'Caixa', permissoes: ['pedidos', 'financeiro'] },
+  { nome: 'Cozinha', permissoes: ['pedidos'] },
+]
+
+/** Tudo o que `a` tem também está em `b`? Vale para "só dá o que tem" e "só mexe em quem tem o mesmo ou menos". */
+export const contido = (a: readonly Permissao[], b: readonly Permissao[]) => a.every((p) => b.includes(p))
+
+/** Quantos usuários ativos ainda gerenciam usuários: a loja nunca pode ficar com zero. */
+export const gerentes = (usuarios: { ativo?: boolean | null; roles?: string[] | null; permissoes?: unknown }[]) =>
+  usuarios.filter((u) => u.ativo !== false && temPermissao(u, 'usuarios')).length
