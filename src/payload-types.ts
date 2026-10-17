@@ -82,6 +82,7 @@ export interface Config {
     lancamentos: Lancamento;
     ingredientes: Ingrediente;
     caixas: Caixa;
+    'caixas-cadastrados': CaixasCadastrado;
     fornecedores: Fornecedore;
     compras: Compra;
     contatos: Contato;
@@ -107,6 +108,7 @@ export interface Config {
     lancamentos: LancamentosSelect<false> | LancamentosSelect<true>;
     ingredientes: IngredientesSelect<false> | IngredientesSelect<true>;
     caixas: CaixasSelect<false> | CaixasSelect<true>;
+    'caixas-cadastrados': CaixasCadastradosSelect<false> | CaixasCadastradosSelect<true>;
     fornecedores: FornecedoresSelect<false> | FornecedoresSelect<true>;
     compras: ComprasSelect<false> | ComprasSelect<true>;
     contatos: ContatosSelect<false> | ContatosSelect<true>;
@@ -210,6 +212,7 @@ export interface Pedido {
   cpf?: string | null;
   impresso?: boolean | null;
   origem?: ('site' | 'mesa' | 'garcom' | 'balcao' | 'ifood') | null;
+  caixa?: (number | null) | Caixa;
   observacoes?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -410,6 +413,51 @@ export interface Entregadore {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caixas".
+ */
+export interface Caixa {
+  id: number;
+  loja?: (number | null) | Loja;
+  cadastro?: (number | null) | CaixasCadastrado;
+  abertoEm: string;
+  trocoInicial: number;
+  movimentos?:
+    | {
+        tipo: 'sangria' | 'suprimento';
+        valor: number;
+        motivo: string;
+        em: string;
+        id?: string | null;
+      }[]
+    | null;
+  fechadoEm?: string | null;
+  esperado?: number | null;
+  contado?: number | null;
+  diferenca?: number | null;
+  observacao?: string | null;
+  abertoPor?: (number | null) | User;
+  fechadoPor?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caixas-cadastrados".
+ */
+export interface CaixasCadastrado {
+  id: number;
+  loja?: (number | null) | Loja;
+  nome: string;
+  /**
+   * O dinheiro do acerto dos entregadores entra neste caixa.
+   */
+  delivery?: boolean | null;
+  ativo?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "produtos".
  */
 export interface Produto {
@@ -583,6 +631,7 @@ export interface Fechamento {
   troco?: number | null;
   garcom?: (number | null) | User;
   fechadoPor?: (number | null) | User;
+  caixa?: (number | null) | Caixa;
   updatedAt: string;
   createdAt: string;
 }
@@ -606,6 +655,7 @@ export interface Acerto {
   entregue: number;
   diferenca: number;
   conferidoPor?: (number | null) | User;
+  caixa?: (number | null) | Caixa;
   updatedAt: string;
   createdAt: string;
 }
@@ -636,34 +686,6 @@ export interface Lancamento {
   diaDoMes?: number | null;
   pagoEm?: string | null;
   valorPago?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "caixas".
- */
-export interface Caixa {
-  id: number;
-  loja?: (number | null) | Loja;
-  abertoEm: string;
-  trocoInicial: number;
-  movimentos?:
-    | {
-        tipo: 'sangria' | 'suprimento';
-        valor: number;
-        motivo: string;
-        em: string;
-        id?: string | null;
-      }[]
-    | null;
-  fechadoEm?: string | null;
-  esperado?: number | null;
-  contado?: number | null;
-  diferenca?: number | null;
-  observacao?: string | null;
-  abertoPor?: (number | null) | User;
-  fechadoPor?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -802,6 +824,10 @@ export interface PayloadLockedDocument {
         value: number | Caixa;
       } | null)
     | ({
+        relationTo: 'caixas-cadastrados';
+        value: number | CaixasCadastrado;
+      } | null)
+    | ({
         relationTo: 'fornecedores';
         value: number | Fornecedore;
       } | null)
@@ -897,6 +923,7 @@ export interface PedidosSelect<T extends boolean = true> {
   cpf?: T;
   impresso?: T;
   origem?: T;
+  caixa?: T;
   observacoes?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1141,6 +1168,7 @@ export interface FechamentosSelect<T extends boolean = true> {
   troco?: T;
   garcom?: T;
   fechadoPor?: T;
+  caixa?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1163,6 +1191,7 @@ export interface AcertosSelect<T extends boolean = true> {
   entregue?: T;
   diferenca?: T;
   conferidoPor?: T;
+  caixa?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1205,6 +1234,7 @@ export interface IngredientesSelect<T extends boolean = true> {
  */
 export interface CaixasSelect<T extends boolean = true> {
   loja?: T;
+  cadastro?: T;
   abertoEm?: T;
   trocoInicial?: T;
   movimentos?:
@@ -1223,6 +1253,18 @@ export interface CaixasSelect<T extends boolean = true> {
   observacao?: T;
   abertoPor?: T;
   fechadoPor?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "caixas-cadastrados_select".
+ */
+export interface CaixasCadastradosSelect<T extends boolean = true> {
+  loja?: T;
+  nome?: T;
+  delivery?: T;
+  ativo?: T;
   updatedAt?: T;
   createdAt?: T;
 }

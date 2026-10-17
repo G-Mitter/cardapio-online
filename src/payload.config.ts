@@ -16,6 +16,7 @@ import { Cupons } from './collections/Cupons'
 import { Entregadores } from './collections/Entregadores'
 import { Ingredientes } from './collections/Ingredientes'
 import { Caixas } from './collections/Caixas'
+import { CaixasCadastrados } from './collections/CaixasCadastrados'
 import { Compras } from './collections/Compras'
 import { Fechamentos } from './collections/Fechamentos'
 import { Contatos } from './collections/Contatos'
@@ -48,7 +49,7 @@ export default buildConfig({
       breakpoints: [{ label: 'Celular', name: 'celular', width: 390, height: 844 }],
     },
   },
-  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores, Fechamentos, Acertos, Lancamentos, Ingredientes, Caixas, Fornecedores, Compras, Contatos],
+  collections: [Pedidos, Produtos, Categorias, Lojas, Media, Users, Clientes, Cupons, Carrinhos, Entregadores, Fechamentos, Acertos, Lancamentos, Ingredientes, Caixas, CaixasCadastrados, Fornecedores, Compras, Contatos],
   // Painel /admin em português
   i18n: {
     supportedLanguages: { pt },
@@ -89,6 +90,7 @@ export default buildConfig({
         lancamentos: {},
         ingredientes: {},
         caixas: {},
+        'caixas-cadastrados': {},
         fornecedores: {},
         compras: {},
         contatos: {},

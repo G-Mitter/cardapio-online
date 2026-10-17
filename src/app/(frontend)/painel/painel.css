@@ -774,3 +774,6 @@ details.perigo form {
 .primeiros-passos form {
   justify-self: start;
 }
+
+/* Cada caixa aberto fica separado dos outros na tela do caixa. */
+.caixa-aberto { border-top: 1px solid var(--line); margin-top: 1.5rem; padding-top: 0.5rem; }

@@ -6,7 +6,7 @@ import { MOVIMENTOS } from '../lib/caixa'
 /**
  * Caixa do dia: abre com o troco, recebe sangrias e suprimentos e fecha com o dinheiro contado.
  * Criado e fechado só pelo painel (/painel/caixa); as contas ficam em src/lib/caixa.ts.
- * Sem `fechadoEm`, o caixa está aberto (um por loja).
+ * Sem `fechadoEm`, o caixa está aberto (um por caixa cadastrado).
  */
 export const Caixas: CollectionConfig = {
   slug: 'caixas',
@@ -15,6 +15,8 @@ export const Caixas: CollectionConfig = {
   defaultSort: '-abertoEm',
   access: { read: logado, create: () => false, update: () => false, delete: logado },
   fields: [
+    // Qual caixa cadastrado foi aberto; vazio nos caixas de antes do cadastro.
+    { name: 'cadastro', label: 'Caixa', type: 'relationship', relationTo: 'caixas-cadastrados' },
     { name: 'abertoEm', label: 'Aberto em', type: 'date', required: true, index: true },
     { name: 'trocoInicial', label: 'Troco inicial (R$)', type: 'number', required: true, min: 0 },
     {

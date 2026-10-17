@@ -26,5 +26,7 @@ export const Acertos: CollectionConfig = {
     { name: 'entregue', label: 'Entregou (R$)', type: 'number', required: true },
     { name: 'diferenca', label: 'Diferença (R$)', type: 'number', required: true },
     { name: 'conferidoPor', label: 'Conferido por', type: 'relationship', relationTo: 'users' },
+    // Caixa que recebeu o dinheiro do acerto (o do delivery, se houver um aberto).
+    { name: 'caixa', label: 'Caixa', type: 'relationship', relationTo: 'caixas', index: true },
   ],
 }

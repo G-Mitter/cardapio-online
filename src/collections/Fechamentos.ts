@@ -31,5 +31,7 @@ export const Fechamentos: CollectionConfig = {
     // Garçom da conta: quem fechou, se for garçom; senão quem lançou o primeiro pedido dele.
     { name: 'garcom', label: 'Garçom', type: 'relationship', relationTo: 'users' },
     { name: 'fechadoPor', label: 'Fechada por', type: 'relationship', relationTo: 'users' },
+    // Caixa aberto que recebeu o pagamento (conta do dinheiro dele).
+    { name: 'caixa', label: 'Caixa', type: 'relationship', relationTo: 'caixas', index: true },
   ],
 }

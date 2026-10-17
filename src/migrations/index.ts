@@ -38,6 +38,7 @@ import * as migration_20261016_202253_compras_fornecedores from './20261016_2022
 import * as migration_20261016_203004_contatos_promocoes from './20261016_203004_contatos_promocoes';
 import * as migration_20261016_222300_cadastro_da_loja from './20261016_222300_cadastro_da_loja';
 import * as migration_20261016_223106_passos_dispensados from './20261016_223106_passos_dispensados';
+import * as migration_20261017_144625_caixas_cadastrados from './20261017_144625_caixas_cadastrados';
 
 export const migrations = [
   {
@@ -238,6 +239,11 @@ export const migrations = [
   {
     up: migration_20261016_223106_passos_dispensados.up,
     down: migration_20261016_223106_passos_dispensados.down,
-    name: '20261016_223106_passos_dispensados'
+    name: '20261016_223106_passos_dispensados',
+  },
+  {
+    up: migration_20261017_144625_caixas_cadastrados.up,
+    down: migration_20261017_144625_caixas_cadastrados.down,
+    name: '20261017_144625_caixas_cadastrados'
   },
 ];

@@ -146,6 +146,8 @@ export const Pedidos: CollectionConfig = {
     // Marcado quando o ticket sai na impressora (ou é reservado para sair); evita imprimir duas vezes.
     { name: 'impresso', label: 'Impresso', type: 'checkbox', defaultValue: false, admin: { readOnly: true } },
     { name: 'origem', label: 'Origem', type: 'select', options: [...ORIGENS], admin: { readOnly: true } },
+    // Caixa aberto que recebeu o pagamento; entra na conta de dinheiro dele. Vazio até alguém receber.
+    { name: 'caixa', label: 'Caixa', type: 'relationship', relationTo: 'caixas', index: true, admin: { readOnly: true } },
     { name: 'observacoes', label: 'Observações', type: 'textarea', admin: { readOnly: true } },
   ],
 }

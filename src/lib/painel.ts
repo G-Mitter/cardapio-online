@@ -9,6 +9,9 @@ import config from '@/payload.config'
 /** Cookie com a loja escolhida no painel, para quem tem mais de uma (você, como administrador). */
 export const COOKIE_LOJA = 'painel-loja'
 
+/** Cookie com o caixa aberto em que este aparelho está trabalhando (o do balcão, por exemplo). */
+export const COOKIE_CAIXA = 'painel-caixa'
+
 /**
  * Quem está usando o painel e de qual loja. Sem login, manda para a tela de entrar.
  * Usado em toda página e em toda ação do painel: nada é salvo sem passar por aqui.
