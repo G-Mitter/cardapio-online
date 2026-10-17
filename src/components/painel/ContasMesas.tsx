@@ -15,10 +15,14 @@ export function ContasMesas({
   contas,
   taxaPct,
   formas,
+  caixas,
+  caixaInicial,
 }: {
   contas: Conta[]
   taxaPct: number
   formas: { value: FormaPagamento; label: string }[]
+  caixas: { id: number; nome: string }[]
+  caixaInicial: number | null
 }) {
   if (!contas.length) return <p className="vazio">Nenhuma mesa com conta aberta.</p>
   return (
@@ -47,7 +51,7 @@ export function ContasMesas({
           ))}
           <footer>
             <b>Total: {brl(c.total)}</b>
-            <FecharConta mesa={c.mesa} subtotal={c.total} taxaPct={taxaPct} formas={formas} />
+            <FecharConta mesa={c.mesa} subtotal={c.total} taxaPct={taxaPct} formas={formas} caixas={caixas} caixaInicial={caixaInicial} />
           </footer>
         </article>
       ))}

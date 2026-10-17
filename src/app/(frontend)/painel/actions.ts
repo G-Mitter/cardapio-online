@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getPayload, type Payload } from 'payload'
 
-import { COOKIE_LOJA, iniciarSessao, sessao, sessaoGarcom } from '@/lib/painel'
+import { COOKIE_CAIXA, COOKIE_LOJA, iniciarSessao, sessao, sessaoGarcom } from '@/lib/painel'
 import { STATUS, type Status } from '@/lib/pedidosDoDia'
 import { fimDoDia, normalizarCodigo } from '@/lib/cupom'
 import { lerBairros, taxaDoBairro } from '@/lib/entrega'
@@ -39,8 +39,8 @@ import { lerFicha, lerQuantidade, lerUnidade, somar } from '@/lib/estoque'
 import { pausarPelaFicha, refazerPausa } from '@/lib/estoque-db'
 import { mover } from '@/lib/ordem'
 import { lerItensCompra, totalDaCompra } from '@/lib/compras'
-import { diferenca, dinheiroEsperado, lerMovimento } from '@/lib/caixa'
-import { vendasDoPeriodo } from '@/lib/caixa-db'
+import { diferenca, dinheiroEsperado, escolherCaixa, lerMovimento } from '@/lib/caixa'
+import { atribuirSemCaixa, caixasAbertos, vendasDoCaixa } from '@/lib/caixa-db'
 import type { Loja } from '@/payload-types'
 import config from '@/payload.config'
 
@@ -57,6 +57,17 @@ function mensagem(e: unknown): string {
 }
 
 const tokenCookie = (payload: Payload) => `${payload.config.cookiePrefix}-token`
+
+/**
+ * Em qual caixa aberto cai uma venda recebida agora: o que veio da tela (ex.: o caixa escolhido ao fechar a mesa),
+ * o caixa em que este aparelho trabalha, ou o único aberto. Com vários abertos e nenhum escolhido, nenhum:
+ * a venda fica sem caixa e aparece no aviso da tela do caixa.
+ */
+async function caixaDaVenda(payload: Payload, lojaId: number, escolhido?: number | null) {
+  const abertos = await caixasAbertos(payload, lojaId)
+  const doAparelho = Number((await cookies()).get(COOKIE_CAIXA)?.value)
+  return escolherCaixa(abertos, [Number(escolhido), doAparelho])
+}
 
 // ---------- Entrar e sair ----------
 
@@ -106,6 +117,7 @@ export async function mudarStatus(
 ): Promise<{ ok: boolean; erro?: string }> {
   if (!STATUS.includes(status)) return { ok: false }
   const { payload, loja, comoUsuario } = await sessao('pedidos')
+  let caixa: number | null = null
   try {
     if (status === 'entregue') {
       const { docs } = await payload.find({
@@ -119,12 +131,14 @@ export async function mudarStatus(
       if (p?.modo === 'retirada' && p.codigoRetirada && p.codigoRetirada !== codigo?.trim()) {
         return { ok: false, erro: 'Código não confere. Peça para o cliente mostrar de novo.' }
       }
+      // Entregue na loja (não é entrega nem mesa): o dinheiro entra no caixa de quem entregou.
+      if (p && p.modo !== 'entrega' && !p.mesa && !p.caixa) caixa = await caixaDaVenda(payload, loja.id)
     }
     // where com a loja: mesmo o administrador só mexe nos pedidos da loja aberta no painel.
     const r = await payload.update({
       collection: 'pedidos',
       where: { id: { equals: id }, loja: { equals: loja.id } },
-      data: { status },
+      data: { status, ...(caixa ? { caixa } : {}) },
       ...comoUsuario,
     })
     return { ok: r.docs.length === 1 }
@@ -284,6 +298,8 @@ export async function criarPedidoPainel(
   // ponytail: mesmo número do site (total de pedidos + 1), com a mesma chance de repetir em pedidos no mesmo instante.
   const total = await payload.count({ collection: 'pedidos', where: { loja: { equals: loja.id } }, overrideAccess: true })
   const numero = total.totalDocs + 1
+  // Balcão e retirada recebem no caixa de quem lançou; entrega entra no caixa só pelo acerto do entregador.
+  const caixa = modo === 'entrega' ? null : await caixaDaVenda(payload, loja.id)
   try {
     await payload.create({
       collection: 'pedidos',
@@ -292,6 +308,7 @@ export async function criarPedidoPainel(
         loja: loja.id,
         numero,
         status: 'novo',
+        ...(caixa ? { caixa } : {}),
         itens: pedido.itens.map(({ produto, nome, quantidade, precoUnitario, opcoes, escolhas }) => ({
           produto: Number(produto),
           nome,
@@ -391,6 +408,8 @@ export async function fecharContaDaMesa(
   mesa: string,
   cobrarTaxa: boolean,
   recebido: Recebido[],
+  /** Caixa que recebeu o pagamento (o garçom entrega o dinheiro lá). Vazio: o do aparelho ou o único aberto. */
+  caixaEscolhido?: number | null,
 ): Promise<{ ok: true; troco: number } | { ok: false; erro: string }> {
   const { payload, loja, user, garcom: ehGarcom, comoUsuario } = await sessaoGarcom('pedidos')
   const { docs } = await payload.find({
@@ -414,6 +433,7 @@ export async function fecharContaDaMesa(
   const pago = fecharPagamento(total, formas)
   if (!pago.ok) return pago
 
+  const caixa = await caixaDaVenda(payload, loja.id, caixaEscolhido)
   const garcomDaConta =
     (ehGarcom ? user.id : null) ?? docs.map((p) => (typeof p.garcom === 'object' ? p.garcom?.id : p.garcom)).find(Boolean)
   try {
@@ -431,6 +451,7 @@ export async function fecharContaDaMesa(
         troco: pago.troco,
         garcom: garcomDaConta ?? undefined,
         fechadoPor: user.id,
+        caixa: caixa ?? undefined,
       },
     })
     await payload.update({
@@ -618,6 +639,10 @@ export async function fazerAcerto(
   if (!pedidos.length) return { ok: false, erro: 'Não há entregas para acertar neste dia.' }
   const c = calcularAcerto(pedidos, trocoR, descontouTaxa === true)
   const d = diferencaDoAcerto(entregueR, c.esperado)
+  // O dinheiro do acerto entra no caixa do delivery, se houver um aberto; senão no caixa de quem acertou.
+  const abertos = await caixasAbertos(payload, loja.id)
+  const doDelivery = abertos.find((a) => typeof a.cadastro === 'object' && a.cadastro?.delivery)
+  const caixa = doDelivery?.id ?? (await caixaDaVenda(payload, loja.id))
   try {
     await payload.create({
       collection: 'acertos',
@@ -637,6 +662,7 @@ export async function fazerAcerto(
         entregue: entregueR,
         diferenca: d.valor,
         conferidoPor: user.id,
+        caixa: caixa ?? undefined,
       },
     })
   } catch {
@@ -1581,28 +1607,91 @@ export async function conferirMaquininha(texto: string, lancar: boolean) {
 
 // ---------- Caixa do dia ----------
 
-/** O caixa aberto da loja, se houver (só um por vez). */
-async function caixaAberto(payload: Payload, lojaId: number) {
-  const { docs } = await payload.find({
-    collection: 'caixas',
-    where: { loja: { equals: lojaId }, fechadoEm: { exists: false } },
-    limit: 1,
+const quandoAbriu = (iso: string) =>
+  new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
+
+/** Um caixa aberto desta loja, pelo id que veio da tela; null se não existe, é de outra loja ou já fechou. */
+async function caixaDaTela(payload: Payload, lojaId: number, form: FormData) {
+  const id = Number(form.get('caixa'))
+  return (await caixasAbertos(payload, lojaId)).find((c) => c.id === id) ?? null
+}
+
+/** Cadastra um caixa da loja (101, 102, Delivery...). O nome não repete dentro da loja. */
+export async function salvarCaixaCadastrado(_: Estado, form: FormData): Promise<Estado> {
+  const { payload, loja } = await sessao('financeiro')
+  const nome = texto(form, 'nome').slice(0, 30)
+  if (!nome) return { erro: 'Dê um nome ou número ao caixa, por exemplo 101.' }
+  // `like` ignora maiúsculas e minúsculas e acha pedaços; confere o nome inteiro para "10" não barrar "101".
+  const parecidos = await payload.find({
+    collection: 'caixas-cadastrados',
+    where: { loja: { equals: loja.id }, nome: { like: nome } },
+    limit: 0,
     depth: 0,
     overrideAccess: true,
   })
-  return docs[0] ?? null
+  const mesmo = parecidos.docs.some((c) => c.nome.toLowerCase() === nome.toLowerCase())
+  if (mesmo) return { erro: `Já existe o caixa ${nome}.` }
+  await payload.create({
+    collection: 'caixas-cadastrados',
+    overrideAccess: true,
+    data: { loja: loja.id, nome, delivery: marcado(form, 'delivery'), ativo: true },
+  })
+  revalidatePath('/painel/caixa')
+  return null
 }
 
+/** Liga ou desliga um caixa cadastrado (desligado não aparece para abrir). */
+export async function ligarCaixaCadastrado(id: number, ativo: boolean) {
+  const { payload, loja } = await sessao('financeiro')
+  await payload.update({
+    collection: 'caixas-cadastrados',
+    where: { id: { equals: id }, loja: { equals: loja.id } },
+    data: { ativo },
+    overrideAccess: true,
+  })
+  revalidatePath('/painel/caixa')
+}
+
+/** Abre um caixa cadastrado com o fundo de troco. O mesmo caixa não abre duas vezes. */
 export async function abrirCaixa(_: Estado, form: FormData): Promise<Estado> {
   const { payload, loja, user } = await sessao('financeiro')
   const troco = lerPreco(texto(form, 'trocoInicial') || '0')
   if (troco === null) return { erro: 'Troco inválido. Use, por exemplo, 100,00.' }
-  if (await caixaAberto(payload, loja.id)) return { erro: 'Já existe um caixa aberto. Feche antes de abrir outro.' }
-  await payload.create({
+  const { docs } = await payload.find({
+    collection: 'caixas-cadastrados',
+    where: { id: { equals: Number(form.get('cadastro')) }, loja: { equals: loja.id }, ativo: { equals: true } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const cadastro = docs[0]
+  if (!cadastro) return { erro: 'Escolha o caixa que vai abrir.' }
+  // ponytail: confere antes de criar; dois toques no mesmo segundo podem abrir o mesmo caixa duas vezes.
+  const aberto = (await caixasAbertos(payload, loja.id)).find((c) => (typeof c.cadastro === 'object' ? c.cadastro?.id : c.cadastro) === cadastro.id)
+  if (aberto) return { erro: `O caixa ${cadastro.nome} já está aberto desde ${quandoAbriu(aberto.abertoEm)}. Feche antes de abrir de novo.` }
+  const novo = await payload.create({
     collection: 'caixas',
     overrideAccess: true,
-    data: { loja: loja.id, abertoEm: new Date().toISOString(), trocoInicial: troco, abertoPor: user.id },
+    data: { loja: loja.id, cadastro: cadastro.id, abertoEm: new Date().toISOString(), trocoInicial: troco, abertoPor: user.id },
   })
+  // Quem abre passa a trabalhar nele neste aparelho.
+  ;(await cookies()).set(COOKIE_CAIXA, String(novo.id), { httpOnly: true, sameSite: 'lax', path: '/' })
+  redirect('/painel/caixa')
+}
+
+/** Neste aparelho, as vendas passam a entrar no caixa escolhido. */
+export async function trabalharNoCaixa(form: FormData) {
+  const { payload, loja } = await sessao('financeiro')
+  const caixa = await caixaDaTela(payload, loja.id, form)
+  if (caixa) (await cookies()).set(COOKIE_CAIXA, String(caixa.id), { httpOnly: true, sameSite: 'lax', path: '/' })
+  redirect('/painel/caixa')
+}
+
+/** Põe no caixa escolhido as vendas que ficaram sem caixa desde que ele abriu. */
+export async function atribuirVendasSemCaixa(form: FormData) {
+  const { payload, loja } = await sessao('financeiro')
+  const caixa = await caixaDaTela(payload, loja.id, form)
+  if (caixa) await atribuirSemCaixa(payload, loja.id, caixa.id, (await caixasAbertos(payload, loja.id))[0].abertoEm)
   redirect('/painel/caixa')
 }
 
@@ -1615,8 +1704,8 @@ export async function movimentarCaixa(_: Estado, form: FormData): Promise<Estado
   if (!tipo) return { erro: 'Escolha sangria ou suprimento.' }
   if (valor === null || valor <= 0) return { erro: 'Valor inválido. Use, por exemplo, 50,00.' }
   if (!motivo) return { erro: 'Diga o motivo, por exemplo "pagou o gás".' }
-  const caixa = await caixaAberto(payload, loja.id)
-  if (!caixa) return { erro: 'Não há caixa aberto.' }
+  const caixa = await caixaDaTela(payload, loja.id, form)
+  if (!caixa) return { erro: 'Este caixa não está aberto.' }
   // ponytail: ler e gravar a lista; dois lançamentos no mesmo segundo podem se sobrepor.
   await payload.update({
     collection: 'caixas',
@@ -1627,22 +1716,23 @@ export async function movimentarCaixa(_: Estado, form: FormData): Promise<Estado
   redirect('/painel/caixa')
 }
 
-/** Fecha o caixa: o sistema calcula o esperado em dinheiro e guarda a diferença para o contado. */
+/** Fecha um caixa: o sistema calcula o esperado em dinheiro e guarda a diferença para o contado. */
 export async function fecharCaixa(_: Estado, form: FormData): Promise<Estado> {
   const { payload, loja, user } = await sessao('financeiro')
   const contado = lerPreco(texto(form, 'contado'))
   if (contado === null) return { erro: 'Coloque o dinheiro contado na gaveta, por exemplo 350,00.' }
-  const caixa = await caixaAberto(payload, loja.id)
-  if (!caixa) return { erro: 'Não há caixa aberto.' }
-  const agora = new Date().toISOString()
-  const vendas = await vendasDoPeriodo(payload, loja.id, caixa.abertoEm, agora)
+  const caixa = await caixaDaTela(payload, loja.id, form)
+  if (!caixa) return { erro: 'Este caixa não está aberto.' }
+  const vendas = await vendasDoCaixa(payload, loja.id, caixa.id)
   const esperado = dinheiroEsperado(caixa.trocoInicial, vendas.get('dinheiro') ?? 0, caixa.movimentos ?? [])
   await payload.update({
     collection: 'caixas',
     id: caixa.id,
     overrideAccess: true,
-    data: { fechadoEm: agora, esperado, contado, diferenca: diferenca(contado, esperado), observacao: texto(form, 'observacao').slice(0, 300), fechadoPor: user.id },
+    data: { fechadoEm: new Date().toISOString(), esperado, contado, diferenca: diferenca(contado, esperado), observacao: texto(form, 'observacao').slice(0, 300), fechadoPor: user.id },
   })
+  const jar = await cookies()
+  if (jar.get(COOKIE_CAIXA)?.value === String(caixa.id)) jar.delete(COOKIE_CAIXA)
   redirect('/painel/caixa')
 }
 

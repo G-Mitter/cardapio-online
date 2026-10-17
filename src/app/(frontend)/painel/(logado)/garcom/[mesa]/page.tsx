@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { FecharConta } from '@/components/painel/FecharConta'
 import { NovoPedido } from '@/components/painel/NovoPedido'
+import { caixasParaMesa } from '@/lib/caixa-db'
 import { gruposDoProduto } from '@/lib/opcoes'
 import { lerMesas } from '@/lib/mesas'
 import { sessaoGarcom } from '@/lib/painel'
@@ -41,6 +42,7 @@ export default async function MesaDoGarcom({ params }: { params: Promise<{ mesa:
       ...comoUsuario,
     }),
   ])
+  const { caixas, caixaInicial } = await caixasParaMesa(payload, loja.id)
   const total = pedidos.docs.reduce((s, p) => s + Math.round(p.total * 100), 0) / 100
 
   return (
@@ -71,6 +73,8 @@ export default async function MesaDoGarcom({ params }: { params: Promise<{ mesa:
             subtotal={total}
             taxaPct={loja.taxaServico ?? 0}
             formas={FORMAS_PAGAMENTO.filter((f) => loja.formasPagamento?.includes(f.value))}
+            caixas={caixas}
+            caixaInicial={caixaInicial}
           />
         </>
       )}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { ContasMesas } from '@/components/painel/ContasMesas'
+import { caixasParaMesa } from '@/lib/caixa-db'
 import { agruparMesas } from '@/lib/mesas'
 import { sessao } from '@/lib/painel'
 import { FORMAS_PAGAMENTO } from '@/lib/pedido'
@@ -24,6 +25,8 @@ export default async function Mesas() {
     limit: 500,
     ...comoUsuario,
   })
+
+  const { caixas, caixaInicial } = await caixasParaMesa(payload, loja.id)
 
   // Quem pediu a conta vai para o começo da lista.
   const contas = agruparMesas(
@@ -51,6 +54,8 @@ export default async function Mesas() {
         contas={contas}
         taxaPct={loja.taxaServico ?? 0}
         formas={FORMAS_PAGAMENTO.filter((f) => loja.formasPagamento?.includes(f.value))}
+        caixas={caixas}
+        caixaInicial={caixaInicial}
       />
     </>
   )

@@ -17,17 +17,23 @@ export function FecharConta({
   subtotal,
   taxaPct,
   formas,
+  caixas = [],
+  caixaInicial = null,
 }: {
   mesa: string
   subtotal: number
   taxaPct: number
   formas: { value: FormaPagamento; label: string }[]
+  /** Caixas abertos; com mais de um, quem fecha a conta diz em qual o pagamento entrou. */
+  caixas?: { id: number; nome: string }[]
+  caixaInicial?: number | null
 }) {
   const router = useRouter()
   const [aberto, setAberto] = useState(false)
   const [cobrar, setCobrar] = useState(true)
   const [pessoas, setPessoas] = useState(1)
   const [valores, setValores] = useState<Record<string, string>>({})
+  const [caixa, setCaixa] = useState(caixaInicial ? String(caixaInicial) : '')
   const [erro, setErro] = useState('')
   const [fechando, startTransition] = useTransition()
 
@@ -74,6 +80,19 @@ export function FecharConta({
           </label>
         ))}
       </div>
+      {caixas.length > 1 && (
+        <label className="campo">
+          Caixa que recebeu
+          <select value={caixa} onChange={(e) => setCaixa(e.target.value)}>
+            <option value="">Escolha o caixa</option>
+            {caixas.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {pago.ok ? (
         <p>{pago.troco > 0 ? <b>Troco: {brl(pago.troco)}</b> : 'Valor confere.'}</p>
       ) : (
@@ -88,10 +107,10 @@ export function FecharConta({
         <button
           type="button"
           className="botao"
-          disabled={fechando || !pago.ok}
+          disabled={fechando || !pago.ok || (caixas.length > 1 && !caixa)}
           onClick={() =>
             startTransition(async () => {
-              const r = await fecharContaDaMesa(mesa, cobrar, recebido)
+              const r = await fecharContaDaMesa(mesa, cobrar, recebido, caixa ? Number(caixa) : null)
               if (r.ok) router.refresh()
               else setErro(r.erro)
             })
